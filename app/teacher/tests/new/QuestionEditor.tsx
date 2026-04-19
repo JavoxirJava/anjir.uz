@@ -139,8 +139,8 @@ export function QuestionEditor({ index, form, onRemove, onMoveUp, onMoveDown, ca
               <FormItem>
                 <FormLabel>Savol turi</FormLabel>
                 <Select
-                  value={field.value}
-                  onValueChange={(v) => { field.onChange(v); handleTypeChange(v); }}
+                  value={field.value ?? ""}
+                  onValueChange={(v) => { field.onChange(v); if (v) handleTypeChange(v); }}
                 >
                   <FormControl>
                     <SelectTrigger>

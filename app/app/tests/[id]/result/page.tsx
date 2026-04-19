@@ -21,12 +21,13 @@ export default async function TestResultPage({ params, searchParams }: Props) {
   let attemptData: { score: number | null; finished_at: string | null } | null = null;
 
   if (attemptId) {
-    const { data } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (supabase as any)
       .from("test_attempts")
       .select("score, finished_at")
       .eq("id", attemptId)
-      .single();
-    attemptData = data as typeof attemptData;
+      .single() as { data: { score: number | null; finished_at: string | null } | null };
+    attemptData = data;
     if (attemptData?.score !== undefined && attemptData.score !== null) {
       score = Math.round(attemptData.score);
     }

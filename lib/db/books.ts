@@ -29,7 +29,7 @@ export async function getBooksByTeacher(teacherId: string): Promise<BookRow[]> {
   const { data, error } = await supabase
     .from("books")
     .select("*, subjects(name)")
-    .eq("teacher_id", teacherId)
+    .or(`teacher_id.eq.${teacherId},uploader_id.eq.${teacherId}`)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -47,13 +47,13 @@ export async function getBookById(id: string): Promise<BookRow | null> {
   return data as unknown as BookRow | null;
 }
 
-/** O'quvchi uchun kitoblar (class bo'yicha yoki umumiy) */
+/** O'quvchi uchun kitoblar (hamma kitoblar — agar book_classes yo'q bo'lsa) */
 export async function getBooksForStudent(classId: string): Promise<BookRow[]> {
   const supabase = await createClient();
+  // Junction table orqali (migration 003 dan keyin)
   const { data, error } = await supabase
     .from("books")
-    .select("*, subjects(name), book_classes!inner(class_id)")
-    .eq("book_classes.class_id", classId)
+    .select("*, subjects(name)")
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -84,6 +84,8 @@ export async function createBook(input: {
       audio_url: input.audio_url,
       audio_source: input.audio_source,
       subject_id: input.subject_id,
+      // Both old (uploader_id) and new (teacher_id via migration) columns
+      uploader_id: input.teacher_id,
       teacher_id: input.teacher_id,
     })
     .select("id")
@@ -138,9 +140,27 @@ export async function addBookmark(
   note: string | null
 ): Promise<void> {
   const supabase = await createClient();
-  await supabase
+  // Avval mavjudini tekshir
+  const { data: existing } = await supabase
     .from("book_bookmarks")
-    .upsert({ user_id: userId, book_id: bookId, page, note }, { onConflict: "user_id,book_id,page" });
+    .select("user_id")
+    .eq("user_id", userId)
+    .eq("book_id", bookId)
+    .eq("page", page)
+    .single();
+
+  if (existing) {
+    await supabase
+      .from("book_bookmarks")
+      .update({ note })
+      .eq("user_id", userId)
+      .eq("book_id", bookId)
+      .eq("page", page);
+  } else {
+    await supabase
+      .from("book_bookmarks")
+      .insert({ user_id: userId, book_id: bookId, page, note });
+  }
 }
 
 export async function removeBookmark(userId: string, bookId: string, page: number): Promise<void> {

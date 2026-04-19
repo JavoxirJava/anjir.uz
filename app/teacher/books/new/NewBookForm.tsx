@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createBookAction } from "@/app/actions/books";
-import { useFileUpload } from "@/hooks/useFileUpload";
 import { FileUploadField } from "@/components/lectures/FileUploadField";
 import { uz } from "@/lib/strings/uz";
 import { Button } from "@/components/ui/button";
@@ -28,18 +27,6 @@ export function NewBookForm({
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [pdfUrl, setPdfUrl] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
-
-  const pdfUpload = useFileUpload({
-    accept: ".pdf",
-    maxMb: 50,
-    onSuccess: (url) => setPdfUrl(url),
-  });
-
-  const audioUpload = useFileUpload({
-    accept: ".mp3,.wav,.ogg",
-    maxMb: 200,
-    onSuccess: (url) => setAudioUrl(url),
-  });
 
   function toggleClass(id: string) {
     setSelectedClasses((prev) =>
@@ -137,9 +124,9 @@ export function NewBookForm({
           <FileUploadField
             label="PDF fayl yuklang"
             accept=".pdf"
-            maxMb={50}
-            uploadState={pdfUpload}
-            id="book-pdf"
+            maxSizeMb={50}
+            onUploaded={(url) => setPdfUrl(url)}
+            folder="books"
           />
           {pdfUrl && (
             <p className="text-xs text-green-600 mt-2">✓ PDF yuklandi</p>
@@ -158,9 +145,9 @@ export function NewBookForm({
           <FileUploadField
             label="Audio fayl yuklang (MP3, WAV, OGG)"
             accept=".mp3,.wav,.ogg"
-            maxMb={200}
-            uploadState={audioUpload}
-            id="book-audio"
+            maxSizeMb={200}
+            onUploaded={(url) => setAudioUrl(url)}
+            folder="books-audio"
           />
           {audioUrl && (
             <p className="text-xs text-green-600 mt-2">✓ Audio yuklandi</p>

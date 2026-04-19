@@ -338,41 +338,32 @@ create index idx_notifications_read on public.notifications(user_id, read);
 -- 12. LEADERBOARD VIEW
 -- =============================================================
 
+-- NOTE: leaderboard view lar migration 003 da to'liq qayta yoziladi.
+-- Bu yerda vaqtinchalik versiya (003 ustiga yozadi).
 create or replace view public.leaderboard_all_time as
 select
-  u.id as student_id,
+  u.id          as user_id,
   u.first_name,
   u.last_name,
-  sp.class_id,
-  sp.school_id,
-  count(ta.id)::int as total_attempts,
-  round(
-    sum(coalesce(ta.score, 0)) / nullif(count(ta.id), 0), 2
-  ) as avg_score,
-  max(ta.finished_at) as last_activity
+  coalesce(sum(ta.score), 0)::numeric as total_score,
+  row_number() over (order by coalesce(sum(ta.score), 0) desc)::int as rank
 from public.users u
-join public.student_profiles sp on sp.user_id = u.id
-left join public.test_attempts ta on ta.student_id = u.id
-  and ta.finished_at is not null
+left join public.test_attempts ta
+  on ta.student_id = u.id and ta.finished_at is not null
 where u.role = 'student' and u.status = 'active'
-group by u.id, u.first_name, u.last_name, sp.class_id, sp.school_id;
+group by u.id, u.first_name, u.last_name;
 
 create or replace view public.leaderboard_weekly as
 select
-  u.id as student_id,
+  u.id          as user_id,
   u.first_name,
   u.last_name,
-  sp.class_id,
-  sp.school_id,
-  count(ta.id)::int as total_attempts,
-  round(
-    sum(coalesce(ta.score, 0)) / nullif(count(ta.id), 0), 2
-  ) as avg_score,
-  max(ta.finished_at) as last_activity
+  coalesce(sum(ta.score), 0)::numeric as total_score,
+  row_number() over (order by coalesce(sum(ta.score), 0) desc)::int as rank
 from public.users u
-join public.student_profiles sp on sp.user_id = u.id
-left join public.test_attempts ta on ta.student_id = u.id
+left join public.test_attempts ta
+  on ta.student_id = u.id
   and ta.finished_at is not null
-  and ta.finished_at >= date_trunc('week', now())
+  and ta.finished_at >= now() - interval '7 days'
 where u.role = 'student' and u.status = 'active'
-group by u.id, u.first_name, u.last_name, sp.class_id, sp.school_id;
+group by u.id, u.first_name, u.last_name;

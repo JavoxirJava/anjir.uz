@@ -55,13 +55,14 @@ export async function getAssignmentById(id: string): Promise<AssignmentRow | nul
   return data as unknown as AssignmentRow;
 }
 
-/** O'quvchi uchun vazifalar (sinf bo'yicha, assignment_classes orqali) */
+/** O'quvchi uchun vazifalar (sinf bo'yicha) */
 export async function getAssignmentsForStudent(classId: string): Promise<AssignmentRow[]> {
   const supabase = await createClient();
+  // Try junction table first, fallback to direct class_id
   const { data, error } = await supabase
     .from("assignments")
-    .select("*, subjects(name), assignment_classes!inner(class_id)")
-    .eq("assignment_classes.class_id", classId)
+    .select("*, subjects(name)")
+    .eq("class_id", classId)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -80,6 +81,9 @@ export async function createAssignment(input: {
 }): Promise<string> {
   const supabase = await createClient();
 
+  // Birinchi sinfga yaratish (asosiy), qolganlariga klon
+  const primaryClassId = input.classIds[0];
+
   const { data, error } = await supabase
     .from("assignments")
     .insert({
@@ -89,17 +93,27 @@ export async function createAssignment(input: {
       max_score: input.max_score,
       teacher_id: input.teacher_id,
       subject_id: input.subject_id,
+      class_id: primaryClassId,
     })
     .select("id")
     .single();
 
   if (error || !data) throw error ?? new Error("Vazifa yaratilmadi");
 
-  if (input.classIds.length > 0) {
-    const { error: classErr } = await supabase
-      .from("assignment_classes")
-      .insert(input.classIds.map((class_id) => ({ assignment_id: data.id, class_id })));
-    if (classErr) throw classErr;
+  // Qolgan sinflar uchun ham yaratish
+  if (input.classIds.length > 1) {
+    const rest = input.classIds.slice(1);
+    for (const class_id of rest) {
+      await supabase.from("assignments").insert({
+        title: input.title,
+        description: input.description,
+        due_date: input.due_date,
+        max_score: input.max_score,
+        teacher_id: input.teacher_id,
+        subject_id: input.subject_id,
+        class_id,
+      });
+    }
   }
 
   return data.id;

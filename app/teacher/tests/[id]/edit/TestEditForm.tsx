@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { testSchema, type TestInput, type QuestionInput } from "@/lib/validations/test";
-import { createTestAction } from "@/app/actions/tests";
+import { updateTestAction } from "@/app/actions/tests";
 import { uz } from "@/lib/strings/uz";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { QuestionEditor } from "./QuestionEditor";
+import { QuestionEditor } from "@/app/teacher/tests/new/QuestionEditor";
 
 interface Subject { id: string; name: string }
 interface ClassItem { id: string; grade: number; letter: string }
@@ -32,29 +32,21 @@ const TEST_TYPES = [
   { value: "home_study", label: uz.tests.homeStudy },
 ] as const;
 
-export function TestBuilderForm({
-  subjects,
-  classes,
-}: {
+interface Props {
+  testId: string;
+  initialValues: TestInput;
   subjects: Subject[];
   classes: ClassItem[];
-}) {
+}
+
+export function TestEditForm({ testId, initialValues, subjects, classes }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<TestInput>({
     resolver: zodResolver(testSchema) as any,
-    defaultValues: {
-      title: "",
-      description: "",
-      subjectId: "",
-      classIds: [],
-      testType: "home_study",
-      timeLimit: null,
-      maxAttempts: null,
-      questions: [defaultQuestion()],
-    },
+    defaultValues: initialValues,
   });
 
   const { fields: questionFields, append, remove, move } = useFieldArray({
@@ -79,11 +71,11 @@ export function TestBuilderForm({
 
   function onSubmit(values: TestInput) {
     startTransition(async () => {
-      const result = await createTestAction(values);
+      const result = await updateTestAction(testId, values);
       if (result?.error) {
         toast.error(result.error);
       } else {
-        toast.success("Test muvaffaqiyatli yaratildi");
+        toast.success("Test yangilandi");
         router.push("/teacher/tests");
       }
     });
@@ -97,10 +89,9 @@ export function TestBuilderForm({
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         noValidate
-        aria-label={uz.teacher.addTest}
+        aria-label="Testni tahrirlash"
         className="space-y-6"
       >
-        {/* Test ma'lumotlari */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Test ma&apos;lumotlari</CardTitle>
@@ -180,25 +171,17 @@ export function TestBuilderForm({
               />
             </div>
 
-            {/* Sinflar (multiple) */}
             <FormField
               control={form.control}
               name="classIds"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Sinflar <span aria-hidden="true" className="text-destructive">*</span></FormLabel>
-                  <div
-                    role="group"
-                    aria-label="Sinflarni tanlang"
-                    className="flex flex-wrap gap-3"
-                  >
+                  <div role="group" aria-label="Sinflarni tanlang" className="flex flex-wrap gap-3">
                     {classes.map((c) => {
                       const checked = field.value.includes(c.id);
                       return (
-                        <label
-                          key={c.id}
-                          className="flex items-center gap-2 cursor-pointer"
-                        >
+                        <label key={c.id} className="flex items-center gap-2 cursor-pointer">
                           <Checkbox
                             checked={checked}
                             onCheckedChange={(v) => {
@@ -218,22 +201,17 @@ export function TestBuilderForm({
             />
 
             <div className="grid grid-cols-2 gap-4">
-              {/* Vaqt chegarasi */}
               <div className="space-y-2">
-                <Label htmlFor="timeLimit">{uz.tests.timeLimit}</Label>
+                <Label>{uz.tests.timeLimit}</Label>
                 <div className="flex items-center gap-2">
                   <Checkbox
-                    id="timeLimitToggle"
-                    checked={timeLimitValue !== null}
+                    checked={timeLimitValue !== null && timeLimitValue !== undefined}
                     onCheckedChange={(v) => form.setValue("timeLimit", v ? 30 : null)}
                     aria-label="Vaqt chegarasini yoqish"
                   />
-                  <label htmlFor="timeLimitToggle" className="text-sm cursor-pointer">
-                    Vaqt chegarasi
-                  </label>
-                  {timeLimitValue !== null && (
+                  <span className="text-sm cursor-pointer">Vaqt chegarasi</span>
+                  {timeLimitValue !== null && timeLimitValue !== undefined && (
                     <Input
-                      id="timeLimit"
                       type="number"
                       min={1}
                       max={180}
@@ -246,17 +224,16 @@ export function TestBuilderForm({
                 </div>
               </div>
 
-              {/* Max urinishlar */}
               <div className="space-y-2">
                 <Label>{uz.tests.maxAttempts}</Label>
                 <div className="flex items-center gap-2">
                   <Checkbox
-                    checked={maxAttemptsValue !== null}
+                    checked={maxAttemptsValue !== null && maxAttemptsValue !== undefined}
                     onCheckedChange={(v) => form.setValue("maxAttempts", v ? 3 : null)}
                     aria-label="Urinishlar sonini cheklash"
                   />
                   <span className="text-sm cursor-pointer">Cheklash</span>
-                  {maxAttemptsValue !== null && (
+                  {maxAttemptsValue !== null && maxAttemptsValue !== undefined && (
                     <Input
                       type="number"
                       min={1}
@@ -275,7 +252,6 @@ export function TestBuilderForm({
 
         <Separator />
 
-        {/* Savollar */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">

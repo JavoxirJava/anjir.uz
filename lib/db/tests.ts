@@ -143,6 +143,66 @@ function getOptionsForType(q: TestInput["questions"][0]) {
   return q.options ?? [];
 }
 
+export async function updateTest(
+  testId: string,
+  input: TestInput
+): Promise<void> {
+  const supabase = await createClient();
+
+  // 1. Test ma'lumotlarini yangilash
+  await supabase
+    .from("tests")
+    .update({
+      subject_id: input.subjectId,
+      title: input.title,
+      description: input.description ?? null,
+      time_limit: input.timeLimit ?? null,
+      test_type: input.testType,
+      max_attempts: input.maxAttempts ?? null,
+    })
+    .eq("id", testId);
+
+  // 2. Eski sinflarni o'chirib, yangilarini qo'shish
+  await supabase.from("test_classes").delete().eq("test_id", testId);
+  if (input.classIds.length > 0) {
+    await supabase.from("test_classes").insert(
+      input.classIds.map((cid) => ({ test_id: testId, class_id: cid }))
+    );
+  }
+
+  // 3. Eski savollarni o'chirib, yangilarini qo'shish (cascade deletes options)
+  await supabase.from("questions").delete().eq("test_id", testId);
+
+  for (const [i, q] of input.questions.entries()) {
+    const { data: question } = await supabase
+      .from("questions")
+      .insert({
+        test_id: testId,
+        question_text: q.question_text,
+        question_type: q.question_type,
+        image_url: q.image_url ?? null,
+        image_alt: q.image_alt ?? null,
+        points: q.points,
+        order: i,
+      })
+      .select("id")
+      .single();
+
+    if (!question) continue;
+
+    const options = getOptionsForType(q);
+    if (options.length > 0) {
+      await supabase.from("question_options").insert(
+        options.map((o) => ({
+          question_id: question.id,
+          option_text: o.option_text,
+          is_correct: o.is_correct,
+        }))
+      );
+    }
+  }
+}
+
 export async function deleteTest(id: string): Promise<void> {
   const supabase = await createClient();
   await supabase.from("tests").delete().eq("id", id);

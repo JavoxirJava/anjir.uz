@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createTest, deleteTest, finishAttempt } from "@/lib/db/tests";
+import { createTest, updateTest, deleteTest, finishAttempt } from "@/lib/db/tests";
 import { testSchema } from "@/lib/validations/test";
 import { uz } from "@/lib/strings/uz";
 
@@ -21,6 +21,26 @@ export async function createTestAction(payload: unknown) {
     const testId = await createTest(user.id, parsed.data);
     revalidatePath("/teacher/tests");
     return { success: true, testId };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : uz.common.error };
+  }
+}
+
+export async function updateTestAction(testId: string, payload: unknown) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: uz.errors.unauthorized };
+
+  const parsed = testSchema.safeParse(payload);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  try {
+    await updateTest(testId, parsed.data);
+    revalidatePath("/teacher/tests");
+    revalidatePath(`/teacher/tests/${testId}/edit`);
+    return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : uz.common.error };
   }
