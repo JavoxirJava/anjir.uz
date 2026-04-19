@@ -126,5 +126,53 @@
   }
   html {
     @apply font-sans;
+    /* Accessibility: shrift o'lchami CSS variable orqali boshqariladi */
+    font-size: var(--user-font-size, 16px);
   }
+
+  /* Klaviatura navigatsiyasi uchun aniq focus ko'rsatkichi */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  /* Minimum touch target — 44x44px */
+  button, a, input, select, textarea {
+    min-height: 44px;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Accessibility rejimlari */
+[data-font-size="small"] { --user-font-size: 14px; }
+[data-font-size="medium"] { --user-font-size: 16px; }
+[data-font-size="large"] { --user-font-size: 20px; }
+[data-font-size="xlarge"] { --user-font-size: 24px; }
+
+/* Yuqori kontrast rejimi */
+[data-contrast="high"] {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0 0 0);
+  --border: oklch(0 0 0);
+  --primary: oklch(0 0 0);
+  --primary-foreground: oklch(1 0 0);
+  --muted-foreground: oklch(0.2 0 0);
+}
+
+/* Rang ko'rligi moslashuvi */
+[data-color-blind="protanopia"] {
+  filter: url('#protanopia-filter');
+}
+[data-color-blind="deuteranopia"] {
+  filter: url('#deuteranopia-filter');
+}
+[data-color-blind="tritanopia"] {
+  filter: url('#tritanopia-filter');
 }
