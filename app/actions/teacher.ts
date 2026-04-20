@@ -127,7 +127,7 @@ export async function rejectStudentAction(userId: string, reason: string) {
 
   const { error: e1 } = await admin
     .from("student_profiles")
-    .update({ rejected_at: new Date().toISOString(), rejection_reason: reason.trim() })
+    .update({ rejection_reason: reason.trim(), approved_at: null })
     .eq("user_id", userId);
   if (e1) return { error: e1.message };
 

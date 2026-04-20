@@ -8,13 +8,15 @@ import { uz } from "@/lib/strings/uz";
 interface Props {
   userId: string;
   approved: boolean;
+  rejected?: boolean;
 }
 
-export function StudentActionButtons({ userId, approved }: Props) {
+export function StudentActionButtons({ userId, approved, rejected }: Props) {
   const [isPending, startTransition] = useTransition();
   const [rejectMode, setRejectMode] = useState(false);
   const [reason, setReason] = useState("");
   const [isDone, setIsDone] = useState(approved);
+  const [isRejected, setIsRejected] = useState(rejected ?? false);
 
   function handleApprove() {
     startTransition(async () => {
@@ -32,12 +34,16 @@ export function StudentActionButtons({ userId, approved }: Props) {
       if (res?.error) { toast.error(res.error); return; }
       toast.success(uz.teacher.studentRejected);
       setRejectMode(false);
-      setIsDone(true);
+      setIsRejected(true);
     });
   }
 
   if (isDone) {
     return <span className="text-xs text-green-600">✓ Tasdiqlangan</span>;
+  }
+
+  if (isRejected) {
+    return <span className="text-xs text-red-500">✕ Rad etilgan</span>;
   }
 
   if (rejectMode) {
