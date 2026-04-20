@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EditSchoolClassForm } from "./EditSchoolClassForm";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: `${uz.profile.title} — Anjir.uz`,
 };

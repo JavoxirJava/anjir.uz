@@ -4,6 +4,8 @@ import { RegisterForm } from "./RegisterForm";
 import { uz } from "@/lib/strings/uz";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: `${uz.auth.register} — Anjir.uz`,
 };
