@@ -52,34 +52,28 @@ export default async function TeacherDashboard() {
   return (
     <div className="space-y-8">
       {/* Greeting */}
-      <div className="rounded-3xl p-8 gradient-primary text-white relative overflow-hidden">
-        <div aria-hidden="true" className="absolute top-[-40px] right-[-40px] w-[200px] h-[200px] rounded-full opacity-20"
+      <div className="rounded-2xl sm:rounded-3xl p-5 sm:p-8 gradient-primary text-white relative overflow-hidden">
+        <div aria-hidden="true" className="absolute top-[-40px] right-[-40px] w-[160px] h-[160px] sm:w-[200px] sm:h-[200px] rounded-full opacity-20 pointer-events-none"
           style={{ background: "radial-gradient(circle, white, transparent)" }} />
-        <h1 className="text-2xl sm:text-3xl font-black relative z-10">
+        <h1 className="text-xl sm:text-3xl font-black relative z-10">
           Xush kelibsiz, {firstName}! 👋
         </h1>
-        <p className="text-white/80 mt-2 relative z-10">Bugun o&apos;quvchilaringiz uchun nima tayyorlaysiz?</p>
+        <p className="text-white/80 mt-1 text-sm relative z-10">Bugun o&apos;quvchilaringiz uchun nima tayyorlaysiz?</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {stats.map((s) => (
           <Link key={s.href} href={s.href} className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-2xl">
-            <div className={`rounded-2xl p-5 border bg-card hover:shadow-glow transition-all hover:border-primary/30 cursor-pointer ${s.highlight ? "border-orange-300 bg-orange-50" : ""}`}>
-              <div className="flex items-center justify-between mb-3">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-                  style={{ background: `${s.color}22` }}
-                  aria-hidden="true"
-                >
+            <div className={`rounded-2xl p-4 border bg-card hover:shadow-glow transition-all hover:border-primary/30 cursor-pointer ${s.highlight ? "border-orange-300 bg-orange-50" : ""}`}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg" style={{ background: `${s.color}22` }} aria-hidden="true">
                   {s.icon}
                 </div>
-                {s.highlight && (
-                  <span className="w-2.5 h-2.5 rounded-full bg-orange-400 animate-pulse" aria-label="Yangi" />
-                )}
+                {s.highlight && <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" aria-label="Yangi" />}
               </div>
-              <p className="text-3xl font-black" style={{ color: s.color }}>{s.value}</p>
-              <p className="text-xs text-muted-foreground mt-1 font-medium">{s.label}</p>
+              <p className="text-2xl sm:text-3xl font-black" style={{ color: s.color }}>{s.value}</p>
+              <p className="text-xs text-muted-foreground mt-1 font-medium leading-tight">{s.label}</p>
             </div>
           </Link>
         ))}
@@ -88,18 +82,20 @@ export default async function TeacherDashboard() {
       {/* Quick actions */}
       <div>
         <h2 className="text-lg font-bold mb-4">Tezkor harakatlar</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           {quickActions.map((a) => (
             <Link
               key={a.href}
               href={a.href}
-              className="group rounded-2xl p-5 border bg-card hover:shadow-glow hover:border-primary/30 transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="group rounded-2xl p-4 border bg-card hover:shadow-glow hover:border-primary/30 transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring flex items-center gap-3 sm:flex-col sm:items-start sm:p-5"
             >
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl mb-3 transition-transform group-hover:scale-110" aria-hidden="true">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-xl sm:text-2xl flex-shrink-0 transition-transform group-hover:scale-110" aria-hidden="true">
                 {a.icon}
               </div>
-              <p className="font-bold text-sm">{a.label}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{a.desc}</p>
+              <div>
+                <p className="font-bold text-sm leading-tight">{a.label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">{a.desc}</p>
+              </div>
             </Link>
           ))}
         </div>

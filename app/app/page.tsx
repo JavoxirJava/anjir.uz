@@ -80,29 +80,27 @@ export default async function StudentDashboard() {
   return (
     <div className="space-y-8">
       {/* Greeting banner */}
-      <div className="rounded-3xl p-8 gradient-primary text-white relative overflow-hidden">
-        <div aria-hidden="true" className="absolute top-[-40px] right-[-40px] w-[200px] h-[200px] rounded-full opacity-20"
+      <div className="rounded-2xl sm:rounded-3xl p-5 sm:p-8 gradient-primary text-white relative overflow-hidden">
+        <div aria-hidden="true" className="absolute top-[-40px] right-[-40px] w-[160px] h-[160px] sm:w-[200px] sm:h-[200px] rounded-full opacity-20 pointer-events-none"
           style={{ background: "radial-gradient(circle, white, transparent)" }} />
-        <div aria-hidden="true" className="absolute bottom-[-60px] right-[20%] w-[150px] h-[150px] rounded-full opacity-10"
-          style={{ background: "radial-gradient(circle, white, transparent)" }} />
-        <h1 className="text-2xl sm:text-3xl font-black relative z-10">
+        <h1 className="text-xl sm:text-3xl font-black relative z-10">
           Salom, {firstName}! 👋
         </h1>
-        <p className="text-white/80 mt-2 relative z-10">Bugungi darslaringiz tayyor. Davom eting!</p>
+        <p className="text-white/80 mt-1 text-sm relative z-10">Bugungi darslaringiz tayyor. Davom eting!</p>
         {/* Mini stats */}
-        <div className="flex gap-6 mt-5 relative z-10">
+        <div className="flex flex-wrap gap-4 mt-4 relative z-10">
           <div>
-            <div className="text-2xl font-black">{completedCount}</div>
+            <div className="text-xl sm:text-2xl font-black">{completedCount}</div>
             <div className="text-xs text-white/70">Yakunlangan test</div>
           </div>
           {bestScore !== null && (
             <div>
-              <div className="text-2xl font-black">{bestScore}%</div>
+              <div className="text-xl sm:text-2xl font-black">{bestScore}%</div>
               <div className="text-xs text-white/70">Eng yaxshi ball</div>
             </div>
           )}
           <div>
-            <div className="text-2xl font-black">{lectures.length}</div>
+            <div className="text-xl sm:text-2xl font-black">{lectures.length}</div>
             <div className="text-xs text-white/70">Mavjud dars</div>
           </div>
         </div>
@@ -196,20 +194,20 @@ export default async function StudentDashboard() {
               <li key={t.id}>
                 <Link
                   href={`/app/tests/${t.id}`}
-                  className="flex items-center justify-between rounded-2xl border bg-card px-5 py-4 hover:shadow-glow hover:border-primary/30 transition-all focus-visible:outline-2"
+                  className="flex items-center justify-between rounded-2xl border bg-card px-4 py-3 hover:shadow-glow hover:border-primary/30 transition-all focus-visible:outline-2 gap-2"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-xl flex-shrink-0" aria-hidden="true">📝</div>
-                    <div>
-                      <p className="font-semibold text-sm">{t.title}</p>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-lg flex-shrink-0" aria-hidden="true">📝</div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate">{t.title}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">{TYPE_TEST[t.test_type]}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground flex-shrink-0">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     {t.time_limit && (
-                      <Badge variant="outline" className="text-xs">⏱ {t.time_limit} daq</Badge>
+                      <Badge variant="outline" className="text-xs hidden sm:flex">⏱ {t.time_limit} daq</Badge>
                     )}
-                    <span aria-hidden="true" className="text-primary">→</span>
+                    <span aria-hidden="true" className="text-primary text-sm">→</span>
                   </div>
                 </Link>
               </li>

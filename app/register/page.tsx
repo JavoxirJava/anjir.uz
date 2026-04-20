@@ -3,6 +3,7 @@ import Link from "next/link";
 import { RegisterForm } from "./RegisterForm";
 import { uz } from "@/lib/strings/uz";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { AnjirLogo } from "@/components/AnjirLogo";
 
 export const dynamic = "force-dynamic";
 
@@ -34,9 +35,7 @@ export default async function RegisterPage() {
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 w-fit focus-visible:outline-2 focus-visible:outline-white">
-          <div className="w-11 h-11 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center text-2xl shadow-lg">
-            🍑
-          </div>
+          <AnjirLogo size={44} />
           <span className="text-2xl font-black tracking-tight">Anjir.uz</span>
         </Link>
 
@@ -98,9 +97,7 @@ export default async function RegisterPage() {
         {/* Mobile header */}
         <div className="flex items-center justify-between px-6 py-4 lg:hidden border-b border-border/50">
           <Link href="/" className="flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-primary">
-            <div className="w-8 h-8 gradient-primary rounded-xl flex items-center justify-center text-base shadow-sm">
-              🍑
-            </div>
+            <AnjirLogo size={32} />
             <span className="font-black text-gradient">Anjir.uz</span>
           </Link>
           <Link href="/login" className="text-sm text-primary font-semibold hover:underline">

@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { uz } from "@/lib/strings/uz";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { StudentActionButtons } from "./StudentActionButtons";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: `${uz.teacher.myStudents} — Anjir.uz`,
@@ -27,8 +30,10 @@ interface StudentRow {
 }
 
 export default async function TeacherStudentsPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // Auth uchun oddiy client, ma'lumotlar uchun admin client (RLS bypass)
+  const authClient = await createClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  const supabase = createAdminClient();
 
   // Mening sinf ID'larim
   const { data: assignments } = await supabase

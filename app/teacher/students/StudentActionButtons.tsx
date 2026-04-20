@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
+import { approveStudentAction, rejectStudentAction } from "@/app/actions/teacher";
 import { uz } from "@/lib/strings/uz";
 
 interface Props {
@@ -16,44 +16,23 @@ export function StudentActionButtons({ userId, approved }: Props) {
   const [reason, setReason] = useState("");
   const [isDone, setIsDone] = useState(approved);
 
-  async function approveStudent() {
+  function handleApprove() {
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("student_profiles")
-        .update({ approved_at: new Date().toISOString(), rejected_at: null, rejection_reason: null })
-        .eq("user_id", userId);
-
-      if (error) { toast.error("Xatolik yuz berdi"); return; }
-
-      await supabase
-        .from("users")
-        .update({ status: "active" })
-        .eq("id", userId);
-
+      const res = await approveStudentAction(userId);
+      if (res?.error) { toast.error(res.error); return; }
       toast.success(uz.teacher.studentApproved);
       setIsDone(true);
     });
   }
 
-  async function rejectStudent() {
+  function handleReject() {
     if (!reason.trim()) { toast.error(uz.teacher.rejectReasonRequired); return; }
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("student_profiles")
-        .update({ rejected_at: new Date().toISOString(), rejection_reason: reason.trim() })
-        .eq("user_id", userId);
-
-      if (error) { toast.error("Xatolik yuz berdi"); return; }
-
-      await supabase
-        .from("users")
-        .update({ status: "rejected" })
-        .eq("id", userId);
-
+      const res = await rejectStudentAction(userId, reason);
+      if (res?.error) { toast.error(res.error); return; }
       toast.success(uz.teacher.studentRejected);
       setRejectMode(false);
+      setIsDone(true);
     });
   }
 
@@ -76,7 +55,7 @@ export function StudentActionButtons({ userId, approved }: Props) {
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={rejectStudent}
+            onClick={handleReject}
             disabled={isPending}
             className="text-sm text-destructive border border-destructive rounded px-2 py-1 hover:bg-destructive/10 focus-visible:outline-2 disabled:opacity-50"
           >
@@ -98,9 +77,9 @@ export function StudentActionButtons({ userId, approved }: Props) {
     <div className="flex gap-2">
       <button
         type="button"
-        onClick={approveStudent}
+        onClick={handleApprove}
         disabled={isPending}
-        aria-label={`${uz.teacher.approveStudent}`}
+        aria-label={uz.teacher.approveStudent}
         className="text-sm text-green-700 border border-green-600 rounded px-3 py-1 hover:bg-green-50 dark:hover:bg-green-950/30 focus-visible:outline-2 disabled:opacity-50 transition-colors"
       >
         {isPending ? "..." : uz.teacher.approveStudent}

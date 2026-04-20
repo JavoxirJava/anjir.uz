@@ -37,7 +37,7 @@ export default async function AdminDashboard() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{uz.admin.dashboard}</h1>
 
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {stats.map((s) => (
           <Link key={`${s.href}-${s.label}`} href={s.href} className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-xl">
             <Card className="hover:bg-muted/50 transition-colors">
@@ -54,19 +54,20 @@ export default async function AdminDashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {[
-          { href: "/admin/schools", label: uz.admin.addSchool },
-          { href: "/admin/directors", label: uz.admin.addDirector },
-          { href: "/admin/subjects", label: uz.admin.addSubject },
-          { href: "/admin/analytics", label: uz.admin.analytics },
+          { href: "/admin/schools",   label: uz.admin.addSchool,   icon: "🏫" },
+          { href: "/admin/directors", label: uz.admin.addDirector, icon: "👔" },
+          { href: "/admin/subjects",  label: uz.admin.addSubject,  icon: "📖" },
+          { href: "/admin/analytics", label: uz.admin.analytics,   icon: "📊" },
         ].map((a) => (
           <Link
             key={a.href}
             href={a.href}
-            className="flex items-center justify-center rounded-lg border px-4 py-3 text-sm font-medium hover:bg-muted focus-visible:outline-2 transition-colors text-center"
+            className="flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium hover:bg-muted focus-visible:outline-2 transition-colors"
           >
-            {a.label}
+            <span aria-hidden="true">{a.icon}</span>
+            <span className="truncate">{a.label}</span>
           </Link>
         ))}
       </div>

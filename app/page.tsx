@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AnjirLogo } from "@/components/AnjirLogo";
 
 const FEATURES = [
   {
@@ -53,7 +54,7 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 glass border-b">
         <div className="container mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-2xl" aria-hidden="true">🍑</span>
+            <AnjirLogo size={28} />
             <span className="font-bold text-xl tracking-tight text-gradient">Anjir.uz</span>
           </div>
           <nav className="flex items-center gap-3">
@@ -227,7 +228,7 @@ export default function HomePage() {
       <footer className="border-t py-8 px-4 bg-background">
         <div className="container mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <span aria-hidden="true">🍑</span>
+            <AnjirLogo size={20} />
             <span className="font-semibold text-foreground">Anjir.uz</span>
             <span>— Inklyuziv ta&apos;lim platformasi</span>
           </div>

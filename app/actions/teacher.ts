@@ -95,6 +95,52 @@ export async function removeTeacherSchoolAction(schoolId: string) {
   return { success: true };
 }
 
+export async function approveStudentAction(userId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Tizimga kiring" };
+
+  const admin = createAdminClient();
+
+  const { error: e1 } = await admin
+    .from("student_profiles")
+    .update({ approved_at: new Date().toISOString(), rejected_at: null, rejection_reason: null })
+    .eq("user_id", userId);
+  if (e1) return { error: e1.message };
+
+  const { error: e2 } = await admin
+    .from("users")
+    .update({ status: "active" })
+    .eq("id", userId);
+  if (e2) return { error: e2.message };
+
+  revalidatePath("/teacher/students");
+  return { success: true };
+}
+
+export async function rejectStudentAction(userId: string, reason: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Tizimga kiring" };
+
+  const admin = createAdminClient();
+
+  const { error: e1 } = await admin
+    .from("student_profiles")
+    .update({ rejected_at: new Date().toISOString(), rejection_reason: reason.trim() })
+    .eq("user_id", userId);
+  if (e1) return { error: e1.message };
+
+  const { error: e2 } = await admin
+    .from("users")
+    .update({ status: "rejected" })
+    .eq("id", userId);
+  if (e2) return { error: e2.message };
+
+  revalidatePath("/teacher/students");
+  return { success: true };
+}
+
 export async function updateTeacherPasswordAction(formData: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
