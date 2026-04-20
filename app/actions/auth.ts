@@ -65,13 +65,13 @@ export async function registerAction(formData: FormData) {
   const teacherClassIds = formData.getAll("teacherClassIds") as string[];
 
   const raw = {
-    firstName: formData.get("firstName") as string,
-    lastName: formData.get("lastName") as string,
-    phone: formData.get("phone") as string,
-    password: formData.get("password") as string,
+    firstName: (formData.get("firstName") as string) || "",
+    lastName: (formData.get("lastName") as string) || "",
+    phone: (formData.get("phone") as string) || "",
+    password: (formData.get("password") as string) || "",
     role: (formData.get("role") as string) || "student",
-    schoolId: formData.get("schoolId") as string,
-    classId: formData.get("classId") as string,
+    schoolId: (formData.get("schoolId") as string) || "",
+    classId: (formData.get("classId") as string) || "",
     teacherSchoolId: (formData.get("teacherSchoolId") as string) || "",
     teacherClassIds,
   };
@@ -149,7 +149,7 @@ export async function registerAction(formData: FormData) {
     password: parsed.data.password,
   });
 
-  redirect("/pending");
+  redirect("/onboarding");
 }
 
 export async function logoutAction() {

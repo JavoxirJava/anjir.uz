@@ -2,14 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { RegisterForm } from "./RegisterForm";
 import { uz } from "@/lib/strings/uz";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
   title: `${uz.auth.register} — Anjir.uz`,
 };
 
 export default async function RegisterPage() {
-  const supabase = await createClient();
+  // Admin client ishlatamiz — ro'yxatdan o'tish sahifasida foydalanuvchi
+  // hali login qilmagan, shuning uchun RLS auth.uid() = null qaytaradi
+  const supabase = createAdminClient();
   const { data: schools } = await supabase.from("schools").select("id, name").order("name");
 
   return (

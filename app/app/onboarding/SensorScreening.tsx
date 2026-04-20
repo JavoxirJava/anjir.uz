@@ -69,12 +69,12 @@ export function SensorScreening() {
       reduceMotion: motorOk === false,
     });
     localStorage.setItem("anjir_onboarding", "1");
-    router.push("/app");
+    router.push("/pending");
   }
 
   function skip() {
     localStorage.setItem("anjir_onboarding", "1");
-    router.push("/app");
+    router.push("/pending");
   }
 
   // ---- Intro ----

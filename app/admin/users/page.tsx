@@ -3,15 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { uz } from "@/lib/strings/uz";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { UserActions, StatusBadge } from "./UserActions";
 
 export const metadata: Metadata = {
   title: `${uz.admin.users} — Anjir.uz`,
-};
-
-const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  active: "default",
-  pending: "secondary",
-  rejected: "destructive",
 };
 
 const ROLE_LABELS: Record<string, string> = {
@@ -54,7 +49,8 @@ export default async function AdminUsersPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">{ROLE_LABELS[u.role] ?? u.role}</Badge>
-                  <Badge variant={STATUS_VARIANT[u.status] ?? "outline"}>{u.status}</Badge>
+                  <StatusBadge status={u.status} />
+                  <UserActions userId={u.id} status={u.status} />
                 </div>
               </CardContent>
             </Card>

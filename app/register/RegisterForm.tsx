@@ -232,7 +232,9 @@ export function RegisterForm({ schools }: Props) {
               disabled={isPending}
             >
               <SelectTrigger id="schoolId" className="h-11 rounded-xl">
-                <SelectValue placeholder={uz.auth.schoolPlaceholder} />
+                <SelectValue placeholder={uz.auth.schoolPlaceholder}>
+                  {schoolId ? (schools.find((s) => s.id === schoolId)?.name ?? uz.auth.schoolPlaceholder) : uz.auth.schoolPlaceholder}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {schools.length === 0 ? (
@@ -258,7 +260,11 @@ export function RegisterForm({ schools }: Props) {
               disabled={!schoolId || loadingClasses || isPending}
             >
               <SelectTrigger id="classId" className="h-11 rounded-xl">
-                <SelectValue placeholder={loadingClasses ? uz.common.loading : uz.auth.classPlaceholder} />
+                <SelectValue placeholder={loadingClasses ? uz.common.loading : uz.auth.classPlaceholder}>
+                  {classId
+                    ? (() => { const c = classes.find((c) => c.id === classId); return c ? `${c.grade}-sinf ${c.letter}` : uz.auth.classPlaceholder; })()
+                    : (loadingClasses ? uz.common.loading : uz.auth.classPlaceholder)}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {classes.map((c) => (
@@ -283,7 +289,9 @@ export function RegisterForm({ schools }: Props) {
               disabled={isPending}
             >
               <SelectTrigger id="teacherSchoolId" className="h-11 rounded-xl">
-                <SelectValue placeholder={uz.auth.schoolPlaceholder} />
+                <SelectValue placeholder={uz.auth.schoolPlaceholder}>
+                  {teacherSchoolId ? (schools.find((s) => s.id === teacherSchoolId)?.name ?? uz.auth.schoolPlaceholder) : uz.auth.schoolPlaceholder}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {schools.length === 0 ? (
