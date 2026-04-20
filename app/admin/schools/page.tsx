@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { uz } from "@/lib/strings/uz";
 import { Card, CardContent } from "@/components/ui/card";
 import { AddSchoolForm } from "./AddSchoolForm";
+import { SchoolActions } from "./SchoolActions";
 
 export const metadata: Metadata = {
   title: `${uz.admin.schools} — Anjir.uz`,
@@ -43,6 +44,7 @@ export default async function AdminSchoolsPage() {
                           </p>
                         )}
                       </div>
+                      <SchoolActions school={{ id: school.id, name: school.name, address: school.address }} />
                     </div>
                   </CardContent>
                 </Card>

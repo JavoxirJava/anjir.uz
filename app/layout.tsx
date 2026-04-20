@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
 import { SkipLink } from "@/components/a11y/SkipLink";
 import { Toaster } from "@/components/ui/sonner";
@@ -41,6 +42,14 @@ export default function RootLayout({
           </defs>
         </svg>
 
+        <NextTopLoader
+          color="oklch(0.55 0.22 270)"
+          height={3}
+          showSpinner={false}
+          shadow="0 0 10px oklch(0.55 0.22 270 / 0.5)"
+          easing="ease"
+          speed={200}
+        />
         <SkipLink />
         <AccessibilityProvider>
           <main id="main-content" className="flex-1 flex flex-col" tabIndex={-1}>

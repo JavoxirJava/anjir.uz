@@ -18,16 +18,15 @@ export const loginSchema = z.object({
 export const registerSchema = z.object({
   firstName: z.string().min(1, uz.auth.firstNameRequired).max(50),
   lastName: z.string().min(1, uz.auth.lastNameRequired).max(50),
-  phone: z
-    .string()
-    .min(1, uz.auth.phoneRequired)
-    .regex(phoneRegex, uz.auth.phoneInvalid),
-  password: z
-    .string()
-    .min(1, uz.auth.passwordRequired)
-    .min(8, uz.auth.passwordMinLength),
-  schoolId: z.string().min(1, uz.auth.schoolRequired),
-  classId: z.string().min(1, uz.auth.classRequired),
+  phone: z.string().min(1, uz.auth.phoneRequired).regex(phoneRegex, uz.auth.phoneInvalid),
+  password: z.string().min(1, uz.auth.passwordRequired).min(8, uz.auth.passwordMinLength),
+  role: z.enum(["student", "teacher"]).default("student"),
+  // student fields
+  schoolId: z.string().optional().default(""),
+  classId: z.string().optional().default(""),
+  // teacher fields — comma-separated classIds per school
+  teacherSchoolId: z.string().optional().default(""),
+  teacherClassIds: z.array(z.string()).optional().default([]),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
