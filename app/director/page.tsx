@@ -21,14 +21,36 @@ export default async function DirectorDashboard() {
 
   const schoolId = (school as { id: string } | null)?.id;
 
+  // O'qituvchilar soni — teacher_assignments orqali (school_id bo'yicha)
+  const { data: teacherAssignments } = schoolId
+    ? await supabase
+        .from("teacher_assignments")
+        .select("teacher_id")
+        .eq("school_id", schoolId)
+    : { data: [] };
+  const uniqueTeacherIds = [...new Set((teacherAssignments ?? []).map((a: { teacher_id: string }) => a.teacher_id))];
+  const teacherCount = uniqueTeacherIds.length;
+
+  // O'quvchilar soni — student_profiles → classes (school_id bo'yicha)
+  const { data: schoolClasses } = schoolId
+    ? await supabase
+        .from("classes")
+        .select("id")
+        .eq("school_id", schoolId)
+    : { data: [] };
+  const classIdList = (schoolClasses ?? []).map((c: { id: string }) => c.id);
+
+  const { count: studentCount } = classIdList.length > 0
+    ? await supabase
+        .from("student_profiles")
+        .select("*", { count: "exact", head: true })
+        .in("class_id", classIdList)
+    : { count: 0 };
+
   const [
-    { count: teacherCount },
-    { count: studentCount },
     { count: classCount },
     { count: lectureCount },
   ] = await Promise.all([
-    supabase.from("users").select("*", { count: "exact", head: true }).eq("role", "teacher").eq("school_id" as never, schoolId ?? ""),
-    supabase.from("users").select("*", { count: "exact", head: true }).eq("role", "student").eq("school_id" as never, schoolId ?? ""),
     supabase.from("classes").select("*", { count: "exact", head: true }).eq("school_id", schoolId ?? ""),
     supabase.from("lectures").select("*", { count: "exact", head: true }),
   ]);

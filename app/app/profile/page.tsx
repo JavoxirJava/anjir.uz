@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { uz } from "@/lib/strings/uz";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EditSchoolClassForm } from "./EditSchoolClassForm";
 
 export const metadata: Metadata = {
   title: `${uz.profile.title} — Anjir.uz`,
@@ -22,9 +24,16 @@ export default async function ProfilePage() {
 
   const { data: profile } = await supabase
     .from("student_profiles")
-    .select("class_id, classes(grade, letter, school_id, schools(name))")
+    .select("class_id, classes(grade, letter, school_id, schools(id, name))")
     .eq("user_id", user.id)
     .single();
+
+  // Barcha maktablar — admin client (RLS bypass)
+  const admin = createAdminClient();
+  const { data: schools } = await admin
+    .from("schools")
+    .select("id, name")
+    .order("name");
 
   // Test natijalari
   const { data: attempts } = await supabase
@@ -47,6 +56,9 @@ export default async function ProfilePage() {
   const schoolInfo = classInfo
     ? (Array.isArray(classInfo.schools) ? classInfo.schools[0] : classInfo.schools)
     : null;
+
+  const currentClassId = (profile as any)?.class_id ?? null;
+  const currentSchoolId = schoolInfo?.id ?? null;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -76,7 +88,7 @@ export default async function ProfilePage() {
             <div>
               <p className="text-muted-foreground">Sinf</p>
               <p className="font-medium">
-                {classInfo ? `${classInfo.grade}${classInfo.letter}` : "—"}
+                {classInfo ? `${classInfo.grade}-sinf ${classInfo.letter}` : "—"}
               </p>
             </div>
             <div>
@@ -84,6 +96,18 @@ export default async function ProfilePage() {
               <p className="font-medium">{schoolInfo?.name ?? "—"}</p>
             </div>
           </div>
+
+          {!currentClassId && (
+            <p className="text-sm text-orange-600 font-medium mt-2">
+              ⚠️ Sinf tanlanmagan — quyida tanlang
+            </p>
+          )}
+
+          <EditSchoolClassForm
+            schools={(schools ?? []).map((s: { id: string; name: string }) => ({ id: s.id, name: s.name }))}
+            currentClassId={currentClassId}
+            currentSchoolId={currentSchoolId}
+          />
         </CardContent>
       </Card>
 

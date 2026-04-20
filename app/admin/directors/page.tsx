@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { uz } from "@/lib/strings/uz";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { AddDirectorForm } from "./AddDirectorForm";
 
 export const metadata: Metadata = {
   title: `${uz.admin.directors} — Anjir.uz`,
@@ -26,7 +27,8 @@ export default async function AdminDirectorsPage() {
   // Maktablar bilan bog'lash
   const { data: schools } = await supabase
     .from("schools")
-    .select("id, name, director_id");
+    .select("id, name, director_id")
+    .order("name");
 
   const schoolByDirector = Object.fromEntries(
     (schools ?? []).map((s: { id: string; name: string; director_id: string | null }) => [
@@ -40,11 +42,14 @@ export default async function AdminDirectorsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">{uz.admin.directors}</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {(directors ?? []).length} ta direktor
-        </p>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold">{uz.admin.directors}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {(directors ?? []).length} ta direktor
+          </p>
+        </div>
+        <AddDirectorForm schools={(schools ?? []).map((s: { id: string; name: string }) => ({ id: s.id, name: s.name }))} />
       </div>
 
       {(directors ?? []).length === 0 ? (
