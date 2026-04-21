@@ -36,7 +36,17 @@ export default function LoginPage() {
             <h1 className="text-4xl xl:text-5xl font-black leading-tight">
               Hamma uchun<br />ta&apos;lim platforma
             </h1>
-            <p className="text-white/75 text-lg leading-relaxed max-w-sm">
+            {/* Shior */}
+            <div className="relative pl-5 py-1">
+              <div className="absolute left-0 top-0 bottom-0 w-1 rounded-full bg-white/60" />
+              <p className="text-white text-2xl xl:text-3xl font-black leading-tight tracking-tight">
+                Ilmda chegara yo&apos;q,
+              </p>
+              <p className="text-white/90 text-2xl xl:text-3xl font-black leading-tight tracking-tight italic">
+                I-Imkonda to&apos;siq!
+              </p>
+            </div>
+            <p className="text-white/65 text-base leading-relaxed max-w-sm">
               5–9-sinf o&apos;quvchilari uchun inklyuziv ta&apos;lim —
               testlar, o&apos;yinlar va interaktiv darslar.
             </p>
