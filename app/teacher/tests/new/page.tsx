@@ -4,7 +4,7 @@ import { uz } from "@/lib/strings/uz";
 import { TestBuilderForm } from "./TestBuilderForm";
 
 export const metadata: Metadata = {
-  title: `${uz.teacher.addTest} — Anjir.uz`,
+  title: `${uz.teacher.addTest} — I-Imkon.uz`,
 };
 
 export default async function NewTestPage() {

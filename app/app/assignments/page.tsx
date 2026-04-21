@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-  title: `${uz.student.assignments} — Anjir.uz`,
+  title: `${uz.student.assignments} — I-Imkon.uz`,
 };
 
 function formatDate(iso: string | null) {

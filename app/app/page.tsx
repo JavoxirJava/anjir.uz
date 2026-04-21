@@ -5,7 +5,7 @@ import { uz } from "@/lib/strings/uz";
 import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = {
-  title: `${uz.student.dashboard} — Anjir.uz`,
+  title: `${uz.student.dashboard} — I-Imkon.uz`,
 };
 
 const CONTENT_EMOJI: Record<string, string> = {

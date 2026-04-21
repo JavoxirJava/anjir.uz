@@ -3,7 +3,7 @@ import { uz } from "@/lib/strings/uz";
 import { AccessibilitySettingsPanel } from "./AccessibilitySettingsPanel";
 
 export const metadata: Metadata = {
-  title: `${uz.a11y.accessibilitySettings} — Anjir.uz`,
+  title: `${uz.a11y.accessibilitySettings} — I-Imkon.uz`,
 };
 
 export default function SettingsPage() {

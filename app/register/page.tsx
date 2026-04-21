@@ -3,12 +3,12 @@ import Link from "next/link";
 import { RegisterForm } from "./RegisterForm";
 import { uz } from "@/lib/strings/uz";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { AnjirLogo } from "@/components/AnjirLogo";
+import { IImkonLogo } from "@/components/IImkonLogo";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: `${uz.auth.register} — Anjir.uz`,
+  title: `${uz.auth.register} — I-Imkon.uz`,
 };
 
 export default async function RegisterPage() {
@@ -35,8 +35,8 @@ export default async function RegisterPage() {
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 w-fit focus-visible:outline-2 focus-visible:outline-white">
-          <AnjirLogo size={44} />
-          <span className="text-2xl font-black tracking-tight">Anjir.uz</span>
+          <IImkonLogo size={44} />
+          <span className="text-2xl font-black tracking-tight">I-Imkon.uz</span>
         </Link>
 
         {/* Asosiy matn */}
@@ -89,7 +89,7 @@ export default async function RegisterPage() {
           </div>
         </div>
 
-        <p className="text-white/40 text-sm relative z-10">© 2026 Anjir.uz</p>
+        <p className="text-white/40 text-sm relative z-10">© 2026 I-Imkon.uz</p>
       </div>
 
       {/* ===== O'NG: Forma ===== */}
@@ -97,8 +97,8 @@ export default async function RegisterPage() {
         {/* Mobile header */}
         <div className="flex items-center justify-between px-6 py-4 lg:hidden border-b border-border/50">
           <Link href="/" className="flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-primary">
-            <AnjirLogo size={32} />
-            <span className="font-black text-gradient">Anjir.uz</span>
+            <IImkonLogo size={32} />
+            <span className="font-black text-gradient">I-Imkon.uz</span>
           </Link>
           <Link href="/login" className="text-sm text-primary font-semibold hover:underline">
             Kirish →

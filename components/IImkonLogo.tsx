@@ -4,11 +4,10 @@ interface Props {
 }
 
 /**
- * Anjir.uz logotipi — gradient doira ichida "A" harfi
- * Anjir.uz rasmiy logotipi
+ * I-Imkon.uz rasmiy logotipi
  */
-export function AnjirLogo({ size = 28, className = "" }: Props) {
-  const id = "anjir-grad";
+export function IImkonLogo({ size = 28, className = "" }: Props) {
+  const id = "iimkon-grad";
   return (
     <svg
       width={size}
@@ -25,25 +24,22 @@ export function AnjirLogo({ size = 28, className = "" }: Props) {
           <stop offset="100%" stopColor="#4F46E5" />
         </linearGradient>
       </defs>
-      {/* Doira fon */}
       <rect width="40" height="40" rx="12" fill={`url(#${id})`} />
-      {/* Anjir bargi shakli — oddiy "A" harfi + ustidagi nuqta (anjir mevasi) */}
-      {/* "A" harfi */}
+      {/* "I" harfi */}
       <text
         x="20"
         y="28"
         textAnchor="middle"
-        fontSize="22"
+        fontSize="24"
         fontWeight="900"
         fontFamily="system-ui, -apple-system, sans-serif"
         fill="white"
-        letterSpacing="-1"
       >
-        A
+        I
       </text>
-      {/* Barcha anjir rasmidagi kichik bargi — ustdagi yumaloq nuqta */}
+      {/* Ustidagi nuqta */}
       <circle cx="20" cy="7" r="3" fill="white" fillOpacity="0.85" />
-      {/* Bargi poyasi */}
+      {/* Poya */}
       <line x1="20" y1="10" x2="20" y2="14" stroke="white" strokeWidth="1.5" strokeOpacity="0.7" strokeLinecap="round" />
     </svg>
   );

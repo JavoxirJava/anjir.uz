@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { StudentActions } from "./StudentActions";
 
 export const metadata: Metadata = {
-  title: `${uz.director.students} — Anjir.uz`,
+  title: `${uz.director.students} — I-Imkon.uz`,
 };
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {

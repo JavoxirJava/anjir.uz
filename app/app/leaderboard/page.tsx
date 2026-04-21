@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = {
-  title: `${uz.leaderboard.title} — Anjir.uz`,
+  title: `${uz.leaderboard.title} — I-Imkon.uz`,
 };
 
 interface LeaderboardEntry {

@@ -4,7 +4,7 @@ import { uz } from "@/lib/strings/uz";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-  title: `${uz.admin.analytics} — Anjir.uz`,
+  title: `${uz.admin.analytics} — I-Imkon.uz`,
 };
 
 export default async function AdminAnalyticsPage() {

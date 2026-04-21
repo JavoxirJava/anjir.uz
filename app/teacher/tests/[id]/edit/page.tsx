@@ -5,7 +5,7 @@ import { getTestById } from "@/lib/db/tests";
 import type { TestInput } from "@/lib/validations/test";
 import { TestEditForm } from "./TestEditForm";
 
-export const metadata: Metadata = { title: "Testni tahrirlash — Anjir.uz" };
+export const metadata: Metadata = { title: "Testni tahrirlash — I-Imkon.uz" };
 
 interface Props {
   params: Promise<{ id: string }>;

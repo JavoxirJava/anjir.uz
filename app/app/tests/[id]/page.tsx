@@ -11,7 +11,7 @@ interface Props { params: Promise<{ id: string }> }
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const test = await getTestById(id);
-  return { title: test ? `${test.title} — Anjir.uz` : "Test" };
+  return { title: test ? `${test.title} — I-Imkon.uz` : "Test" };
 }
 
 export default async function TestPage({ params }: Props) {

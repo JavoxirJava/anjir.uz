@@ -6,7 +6,7 @@ import { uz } from "@/lib/strings/uz";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-  title: `${uz.student.subjects} — Anjir.uz`,
+  title: `${uz.student.subjects} — I-Imkon.uz`,
 };
 
 export default async function StudentSubjectsPage() {

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { uz } from "@/lib/strings/uz";
 import { logoutAction } from "@/app/actions/auth";
 import { MobileMenu } from "./MobileMenu";
-import { AnjirLogo } from "@/components/AnjirLogo";
+import { IImkonLogo } from "@/components/IImkonLogo";
 
 const NAV_ITEMS = [
   { href: "/teacher",             label: "Asosiy",        exact: true, icon: "🏠" },
@@ -31,9 +31,9 @@ export function TeacherNav({ userName }: Props) {
         <div className="flex h-14 items-center gap-3">
 
           {/* Logo */}
-          <Link href="/teacher" className="flex items-center gap-1.5 flex-shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" aria-label="Anjir.uz">
-            <AnjirLogo size={28} />
-            <span className="font-black text-base text-gradient">Anjir.uz</span>
+          <Link href="/teacher" className="flex items-center gap-1.5 flex-shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" aria-label="I-Imkon.uz">
+            <IImkonLogo size={28} />
+            <span className="font-black text-base text-gradient">I-Imkon.uz</span>
           </Link>
 
           {/* Desktop nav */}

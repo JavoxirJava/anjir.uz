@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TestDeleteButton } from "./TestDeleteButton";
 
 export const metadata: Metadata = {
-  title: `${uz.teacher.myTests} — Anjir.uz`,
+  title: `${uz.teacher.myTests} — I-Imkon.uz`,
 };
 
 const TYPE_LABELS: Record<string, string> = {

@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AddClassForm } from "./AddClassForm";
 
 export const metadata: Metadata = {
-  title: `${uz.director.classes} — Anjir.uz`,
+  title: `${uz.director.classes} — I-Imkon.uz`,
 };
 
 export default async function DirectorClassesPage() {

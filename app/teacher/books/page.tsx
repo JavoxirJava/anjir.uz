@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { BookDeleteButton } from "./BookDeleteButton";
 
 export const metadata: Metadata = {
-  title: `${uz.books.title} — Anjir.uz`,
+  title: `${uz.books.title} — I-Imkon.uz`,
 };
 
 export default async function TeacherBooksPage() {

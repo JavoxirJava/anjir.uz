@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = {
-  title: `${uz.director.teachers} — Anjir.uz`,
+  title: `${uz.director.teachers} — I-Imkon.uz`,
 };
 
 export default async function DirectorTeachersPage() {

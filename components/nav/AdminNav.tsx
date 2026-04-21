@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { uz } from "@/lib/strings/uz";
 import { logoutAction } from "@/app/actions/auth";
 import { MobileMenu } from "./MobileMenu";
-import { AnjirLogo } from "@/components/AnjirLogo";
+import { IImkonLogo } from "@/components/IImkonLogo";
 
 const NAV_ITEMS = [
   { href: "/admin",           label: "Asosiy",           exact: true, icon: "🏠" },
@@ -27,8 +27,8 @@ export function AdminNav({ userName }: { userName: string }) {
 
           {/* Logo */}
           <Link href="/admin" className="flex items-center gap-1.5 flex-shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" aria-label="Admin panel">
-            <AnjirLogo size={26} />
-            <span className="font-black text-base text-gradient hidden sm:block">Anjir.uz</span>
+            <IImkonLogo size={26} />
+            <span className="font-black text-base text-gradient hidden sm:block">I-Imkon.uz</span>
             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full gradient-primary text-white">Admin</span>
           </Link>
 

@@ -5,7 +5,7 @@ import { uz } from "@/lib/strings/uz";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-  title: `${uz.director.dashboard} — Anjir.uz`,
+  title: `${uz.director.dashboard} — I-Imkon.uz`,
 };
 
 export default async function DirectorDashboard() {

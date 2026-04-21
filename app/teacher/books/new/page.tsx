@@ -4,7 +4,7 @@ import { uz } from "@/lib/strings/uz";
 import { NewBookForm } from "./NewBookForm";
 
 export const metadata: Metadata = {
-  title: `${uz.books.add} — Anjir.uz`,
+  title: `${uz.books.add} — I-Imkon.uz`,
 };
 
 export default async function NewBookPage() {

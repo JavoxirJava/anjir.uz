@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AnjirLogo } from "@/components/AnjirLogo";
+import { IImkonLogo } from "@/components/IImkonLogo";
 
 const FEATURES = [
   {
@@ -54,8 +54,8 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 glass border-b">
         <div className="container mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <AnjirLogo size={28} />
-            <span className="font-bold text-xl tracking-tight text-gradient">Anjir.uz</span>
+            <IImkonLogo size={28} />
+            <span className="font-bold text-xl tracking-tight text-gradient">I-Imkon.uz</span>
           </div>
           <nav className="flex items-center gap-3">
             <Link
@@ -97,7 +97,7 @@ export default function HomePage() {
             </div>
 
             <h1 className="text-5xl sm:text-7xl font-black tracking-tight leading-tight">
-              <span className="text-gradient">Anjir.uz</span>
+              <span className="text-gradient">I-Imkon.uz</span>
               <br />
               <span className="text-foreground text-3xl sm:text-4xl font-bold">
                 Hamma uchun ta&apos;lim
@@ -147,7 +147,7 @@ export default function HomePage() {
             <div className="text-center mb-16 space-y-4">
               <h2 id="features-heading" className="text-3xl sm:text-4xl font-black">
                 Nima uchun{" "}
-                <span className="text-gradient">Anjir.uz</span>?
+                <span className="text-gradient">I-Imkon.uz</span>?
               </h2>
               <p className="text-muted-foreground text-lg max-w-xl mx-auto">
                 Zamonaviy pedagogika va inklyuziv dizayn birlashgan platforma
@@ -228,8 +228,8 @@ export default function HomePage() {
       <footer className="border-t py-8 px-4 bg-background">
         <div className="container mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <AnjirLogo size={20} />
-            <span className="font-semibold text-foreground">Anjir.uz</span>
+            <IImkonLogo size={20} />
+            <span className="font-semibold text-foreground">I-Imkon.uz</span>
             <span>— Inklyuziv ta&apos;lim platformasi</span>
           </div>
           <div className="flex items-center gap-6">

@@ -4,7 +4,7 @@ import { uz } from "@/lib/strings/uz";
 import { GameBuilderForm } from "./GameBuilderForm";
 
 export const metadata: Metadata = {
-  title: `${uz.teacher.addGame} — Anjir.uz`,
+  title: `${uz.teacher.addGame} — I-Imkon.uz`,
 };
 
 export default async function NewGamePage() {

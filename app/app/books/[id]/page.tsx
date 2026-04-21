@@ -11,7 +11,7 @@ interface Props { params: Promise<{ id: string }> }
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const book = await getBookById(id);
-  return { title: book ? `${book.title} — Anjir.uz` : "Kitob" };
+  return { title: book ? `${book.title} — I-Imkon.uz` : "Kitob" };
 }
 
 export default async function StudentBookPage({ params }: Props) {

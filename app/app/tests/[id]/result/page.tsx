@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { uz } from "@/lib/strings/uz";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export const metadata: Metadata = { title: "Test natijasi — Anjir.uz" };
+export const metadata: Metadata = { title: "Test natijasi — I-Imkon.uz" };
 
 interface Props {
   params: Promise<{ id: string }>;

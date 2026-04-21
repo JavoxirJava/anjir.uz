@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-  title: `${uz.student.lectures} — Anjir.uz`,
+  title: `${uz.student.lectures} — I-Imkon.uz`,
 };
 
 const TYPE_LABELS: Record<string, string> = {

@@ -13,7 +13,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Anjir.uz — Inklyuziv ta'lim platformasi",
+  title: "I-Imkon.uz — Inklyuziv ta'lim platformasi",
   description:
     "5–9-sinf o'quvchilari uchun inklyuziv ta'lim-test platformasi. Imkoniyati cheklangan o'quvchilar uchun to'liq moslashtirilgan.",
   keywords: ["ta'lim", "test", "maktab", "inklyuziv", "o'zbek"],

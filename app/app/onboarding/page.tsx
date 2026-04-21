@@ -3,7 +3,7 @@ import { uz } from "@/lib/strings/uz";
 import { SensorScreening } from "./SensorScreening";
 
 export const metadata: Metadata = {
-  title: `${uz.a11y.screeningTitle} — Anjir.uz`,
+  title: `${uz.a11y.screeningTitle} — I-Imkon.uz`,
 };
 
 export default function OnboardingPage() {

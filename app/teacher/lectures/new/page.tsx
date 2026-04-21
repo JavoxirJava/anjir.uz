@@ -4,7 +4,7 @@ import { uz } from "@/lib/strings/uz";
 import { NewLectureForm } from "./NewLectureForm";
 
 export const metadata: Metadata = {
-  title: `${uz.teacher.addLecture} — Anjir.uz`,
+  title: `${uz.teacher.addLecture} — I-Imkon.uz`,
 };
 
 export default async function NewLecturePage() {

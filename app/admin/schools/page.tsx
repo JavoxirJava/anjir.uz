@@ -6,7 +6,7 @@ import { AddSchoolForm } from "./AddSchoolForm";
 import { SchoolActions } from "./SchoolActions";
 
 export const metadata: Metadata = {
-  title: `${uz.admin.schools} — Anjir.uz`,
+  title: `${uz.admin.schools} — I-Imkon.uz`,
 };
 
 export default async function AdminSchoolsPage() {

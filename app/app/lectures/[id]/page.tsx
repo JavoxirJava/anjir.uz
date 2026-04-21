@@ -16,7 +16,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const lecture = await getLectureById(id);
-  return { title: lecture ? `${lecture.title} — Anjir.uz` : "Ma'ruza" };
+  return { title: lecture ? `${lecture.title} — I-Imkon.uz` : "Ma'ruza" };
 }
 
 export default async function LecturePage({ params }: Props) {

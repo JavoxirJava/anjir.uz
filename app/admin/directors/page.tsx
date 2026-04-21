@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { AddDirectorForm } from "./AddDirectorForm";
 
 export const metadata: Metadata = {
-  title: `${uz.admin.directors} — Anjir.uz`,
+  title: `${uz.admin.directors} — I-Imkon.uz`,
 };
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {

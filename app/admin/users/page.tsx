@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { UserActions, StatusBadge } from "./UserActions";
 
 export const metadata: Metadata = {
-  title: `${uz.admin.users} — Anjir.uz`,
+  title: `${uz.admin.users} — I-Imkon.uz`,
 };
 
 const ROLE_LABELS: Record<string, string> = {

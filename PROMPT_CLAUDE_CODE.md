@@ -1,5 +1,5 @@
 # Claude Code uchun prompt
-## "Anjir.uz" — inklyuziv ta'lim-test platformasi
+## "I-Imkon.uz" — inklyuziv ta'lim-test platformasi
 
 ---
 

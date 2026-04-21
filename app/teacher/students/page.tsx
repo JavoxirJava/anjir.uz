@@ -9,7 +9,7 @@ import { StudentActionButtons } from "./StudentActionButtons";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "O'quvchilarim — Anjir.uz",
+  title: "O'quvchilarim — I-Imkon.uz",
 };
 
 interface StudentRow {

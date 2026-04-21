@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { logoutAction } from "@/app/actions/auth";
 
 export const metadata: Metadata = {
-  title: `${uz.pending.title} — Anjir.uz`,
+  title: `${uz.pending.title} — I-Imkon.uz`,
 };
 
 export default async function PendingPage() {

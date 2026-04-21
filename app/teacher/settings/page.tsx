@@ -9,7 +9,7 @@ import { TeacherProfileEditForm } from "./TeacherProfileEditForm";
 import { TeacherSchoolForm } from "./TeacherSchoolForm";
 
 export const metadata: Metadata = {
-  title: "Sozlamalar — Anjir.uz",
+  title: "Sozlamalar — I-Imkon.uz",
 };
 
 export default async function TeacherSettingsPage() {

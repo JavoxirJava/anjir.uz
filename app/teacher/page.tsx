@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { uz } from "@/lib/strings/uz";
 
 export const metadata: Metadata = {
-  title: `${uz.teacher.dashboard} — Anjir.uz`,
+  title: `${uz.teacher.dashboard} — I-Imkon.uz`,
 };
 
 export default async function TeacherDashboard() {

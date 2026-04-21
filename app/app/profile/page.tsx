@@ -10,7 +10,7 @@ import { EditSchoolClassForm } from "./EditSchoolClassForm";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: `${uz.profile.title} — Anjir.uz`,
+  title: `${uz.profile.title} — I-Imkon.uz`,
 };
 
 export default async function ProfilePage() {

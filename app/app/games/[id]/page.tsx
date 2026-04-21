@@ -11,7 +11,7 @@ interface Props { params: Promise<{ id: string }> }
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const game = await getGameById(id);
-  return { title: game ? `${game.title} — Anjir.uz` : "O'yin" };
+  return { title: game ? `${game.title} — I-Imkon.uz` : "O'yin" };
 }
 
 const TYPE_LABELS: Record<string, string> = {

@@ -104,7 +104,7 @@ export async function approveStudentAction(userId: string) {
 
   const { error: e1 } = await admin
     .from("student_profiles")
-    .update({ approved_at: new Date().toISOString(), rejected_at: null, rejection_reason: null })
+    .update({ approved_at: new Date().toISOString(), rejection_reason: null })
     .eq("user_id", userId);
   if (e1) return { error: e1.message };
 

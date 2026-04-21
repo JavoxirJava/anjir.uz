@@ -12,7 +12,7 @@ interface Props { params: Promise<{ id: string }> }
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const a = await getAssignmentById(id);
-  return { title: a ? `${a.title} — Anjir.uz` : "Vazifa" };
+  return { title: a ? `${a.title} — I-Imkon.uz` : "Vazifa" };
 }
 
 function formatDate(iso: string | null) {

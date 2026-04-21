@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { LectureDeleteButton } from "./LectureDeleteButton";
 
 export const metadata: Metadata = {
-  title: `${uz.teacher.myLectures} — Anjir.uz`,
+  title: `${uz.teacher.myLectures} — I-Imkon.uz`,
 };
 
 const TYPE_LABELS: Record<string, string> = {

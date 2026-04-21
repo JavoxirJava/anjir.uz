@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { GradeForm } from "./GradeForm";
 
 export const metadata: Metadata = {
-  title: "Topshiriqlar — Anjir.uz",
+  title: "Topshiriqlar — I-Imkon.uz",
 };
 
 interface Props { params: Promise<{ id: string }> }

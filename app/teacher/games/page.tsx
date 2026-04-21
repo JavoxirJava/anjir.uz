@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { GameDeleteButton } from "./GameDeleteButton";
 
 export const metadata: Metadata = {
-  title: `${uz.teacher.myGames} — Anjir.uz`,
+  title: `${uz.teacher.myGames} — I-Imkon.uz`,
 };
 
 const TYPE_LABELS: Record<string, string> = {

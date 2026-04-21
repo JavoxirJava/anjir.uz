@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AssignmentDeleteButton } from "./AssignmentDeleteButton";
 
 export const metadata: Metadata = {
-  title: `${uz.teacher.myAssignments} — Anjir.uz`,
+  title: `${uz.teacher.myAssignments} — I-Imkon.uz`,
 };
 
 function formatDate(iso: string | null) {

@@ -6,7 +6,7 @@ import { AddSubjectForm } from "./AddSubjectForm";
 import { SubjectActions } from "./SubjectActions";
 
 export const metadata: Metadata = {
-  title: `${uz.admin.subjects} — Anjir.uz`,
+  title: `${uz.admin.subjects} — I-Imkon.uz`,
 };
 
 export default async function AdminSubjectsPage() {
