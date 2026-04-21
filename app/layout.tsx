@@ -43,10 +43,10 @@ export default function RootLayout({
         </svg>
 
         <NextTopLoader
-          color="oklch(0.55 0.22 270)"
+          color="#0d9488"
           height={3}
           showSpinner={false}
-          shadow="0 0 10px oklch(0.55 0.22 270 / 0.5)"
+          shadow="0 0 10px #0d9488"
           easing="ease"
           speed={200}
         />

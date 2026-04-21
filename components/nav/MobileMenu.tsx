@@ -62,7 +62,7 @@ export function MobileMenu({ items, userName, userInitial, profileHref, badge }:
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{
               width: 40, height: 40, borderRadius: "50%",
-              background: "linear-gradient(135deg,#7C3AED,#4F46E5)",
+              background: "linear-gradient(135deg,#0f766e,#0d9488)",
               display: "flex", alignItems: "center", justifyContent: "center",
               color: "#fff", fontSize: 16, fontWeight: 700, flexShrink: 0,
             }}>
@@ -70,7 +70,7 @@ export function MobileMenu({ items, userName, userInitial, profileHref, badge }:
             </div>
             <div>
               <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{userName}</div>
-              {badge && <div style={{ fontSize: 11, color: "#7C3AED", fontWeight: 700 }}>{badge}</div>}
+              {badge && <div style={{ fontSize: 11, color: "#0f766e", fontWeight: 700 }}>{badge}</div>}
             </div>
           </div>
           <button onClick={() => setOpen(false)} style={{
@@ -94,7 +94,7 @@ export function MobileMenu({ items, userName, userInitial, profileHref, badge }:
                 textDecoration: "none", fontSize: 15, fontWeight: 500,
                 color: active ? "#fff" : "#111827",
                 background: active
-                  ? "linear-gradient(135deg,#7C3AED,#4F46E5)"
+                  ? "linear-gradient(135deg,#0f766e,#0d9488)"
                   : "#f3f4f6",
               }}>
                 {item.icon && (

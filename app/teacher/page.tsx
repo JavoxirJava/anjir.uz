@@ -36,10 +36,10 @@ export default async function TeacherDashboard() {
   const firstName = (userData as { first_name: string } | null)?.first_name ?? "O'qituvchi";
 
   const stats = [
-    { label: "Ma'ruzalar", value: lectureCount ?? 0, href: "/teacher/lectures", icon: "📄", color: "oklch(0.55 0.22 270)" },
-    { label: "Testlar", value: testCount ?? 0, href: "/teacher/tests", icon: "📝", color: "oklch(0.58 0.22 300)" },
-    { label: "O'yinlar", value: gameCount ?? 0, href: "/teacher/games", icon: "🎮", color: "oklch(0.55 0.18 200)" },
-    { label: "Kutayotgan o'quvchilar", value: pendingCount ?? 0, href: "/teacher/students", icon: "👥", color: "oklch(0.6 0.18 40)", highlight: (pendingCount ?? 0) > 0 },
+    { label: "Ma'ruzalar", value: lectureCount ?? 0, href: "/teacher/lectures", icon: "📄", color: "#0f766e" },
+    { label: "Testlar", value: testCount ?? 0, href: "/teacher/tests", icon: "📝", color: "#0d9488" },
+    { label: "O'yinlar", value: gameCount ?? 0, href: "/teacher/games", icon: "🎮", color: "#0891b2" },
+    { label: "Kutayotgan o'quvchilar", value: pendingCount ?? 0, href: "/teacher/students", icon: "👥", color: "#f59e0b", highlight: (pendingCount ?? 0) > 0 },
   ];
 
   const quickActions = [

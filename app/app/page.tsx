@@ -109,11 +109,11 @@ export default async function StudentDashboard() {
       {/* Quick nav cards */}
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
         {[
-          { href: "/app/subjects", icon: "📖", label: "Fanlar", color: "oklch(0.55 0.22 270)" },
-          { href: "/app/lectures", icon: "📄", label: "Darslar", color: "oklch(0.58 0.22 300)" },
-          { href: "/app/tests", icon: "📝", label: "Testlar", color: "oklch(0.55 0.18 200)" },
+          { href: "/app/subjects", icon: "📖", label: "Fanlar", color: "#0f766e" },
+          { href: "/app/lectures", icon: "📄", label: "Darslar", color: "#0d9488" },
+          { href: "/app/tests", icon: "📝", label: "Testlar", color: "#0891b2" },
           { href: "/app/games", icon: "🎮", label: "O'yinlar", color: "oklch(0.6 0.18 150)" },
-          { href: "/app/books", icon: "📚", label: "Kitoblar", color: "oklch(0.6 0.18 40)" },
+          { href: "/app/books", icon: "📚", label: "Kitoblar", color: "#f59e0b" },
           { href: "/app/leaderboard", icon: "🏆", label: "Reyting", color: "oklch(0.65 0.18 60)" },
         ].map((item) => (
           <Link

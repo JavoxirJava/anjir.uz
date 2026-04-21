@@ -13,7 +13,7 @@ export default function LoginPage() {
     <div className="min-h-screen grid lg:grid-cols-[1fr_1.1fr]">
 
       {/* ===== CHAP: Gradient info panel ===== */}
-      <div className="hidden lg:flex flex-col justify-between p-12 gradient-primary text-white relative overflow-hidden">
+      <div className="hidden lg:flex flex-col justify-between p-12 text-white relative overflow-hidden" style={{ background: "#0f766e" }}>
         <div aria-hidden="true"
           className="absolute -top-24 -right-24 w-96 h-96 rounded-full"
           style={{ background: "radial-gradient(circle, rgba(255,255,255,0.18), transparent 70%)" }} />
@@ -82,9 +82,9 @@ export default function LoginPage() {
         <div className="flex items-center justify-between px-6 py-4 lg:hidden border-b border-border/50">
           <Link href="/" className="flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-primary">
             <IImkonLogo size={32} />
-            <span className="font-black text-gradient">I-Imkon.uz</span>
+            <span className="font-black" style={{ color: "#0f766e" }}>I-Imkon.uz</span>
           </Link>
-          <Link href="/register" className="text-sm text-primary font-semibold hover:underline">
+          <Link href="/register" className="text-sm font-semibold hover:underline" style={{ color: "#0f766e" }}>
             Ro&apos;yxatdan o&apos;ting →
           </Link>
         </div>

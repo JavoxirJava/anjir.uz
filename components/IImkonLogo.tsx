@@ -20,8 +20,8 @@ export function IImkonLogo({ size = 28, className = "" }: Props) {
     >
       <defs>
         <linearGradient id={id} x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#7C3AED" />
-          <stop offset="100%" stopColor="#4F46E5" />
+          <stop offset="0%" stopColor="#0f766e" />
+          <stop offset="100%" stopColor="#0d9488" />
         </linearGradient>
       </defs>
       <rect width="40" height="40" rx="12" fill={`url(#${id})`} />
