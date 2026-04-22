@@ -14,8 +14,9 @@ interface UploadProgress {
 }
 
 /**
- * R2 presigned URL orqali fayl yuklash hook'i.
- * /api/upload dan URL oladi, keyin to'g'ridan-to'g'ri R2 ga PUT qiladi.
+ * Server-proxy orqali fayl yuklash hook'i.
+ * Fayl /api/upload ga FormData sifatida yuboriladi,
+ * server uni R2 ga yuklaydi (CORS muammosi yo'q).
  */
 export function useFileUpload() {
   const [progress, setProgress] = useState<UploadProgress>({
@@ -27,58 +28,34 @@ export function useFileUpload() {
     file: File,
     folder = "lectures"
   ): Promise<UploadResult | null> {
-    setProgress({ percent: 0, status: "uploading" });
+    setProgress({ percent: 10, status: "uploading" });
 
     try {
-      // 1. Presigned URL olish
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", folder);
+
+      setProgress({ percent: 30, status: "uploading" });
+
       const res = await fetch("/api/upload", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contentType: file.type,
-          fileName: file.name,
-          fileSize: file.size,
-          folder,
-        }),
+        body: formData,
       });
 
+      setProgress({ percent: 80, status: "uploading" });
+
       if (!res.ok) {
-        const { error } = await res.json();
-        setProgress({ percent: 0, status: "error", error });
+        const body = await res.json().catch(() => ({ error: "Yuklashda xatolik" }));
+        setProgress({ percent: 0, status: "error", error: body.error ?? "Yuklashda xatolik" });
         return null;
       }
 
-      const { uploadUrl, fileUrl, key } = await res.json();
-
-      // 2. XHR bilan progress kuzatib yuklash
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("PUT", uploadUrl);
-        xhr.setRequestHeader("Content-Type", file.type);
-
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            const percent = Math.round((e.loaded / e.total) * 100);
-            setProgress({ percent, status: "uploading" });
-          }
-        };
-
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
-          } else {
-            reject(new Error(`Upload xatoligi: ${xhr.status}`));
-          }
-        };
-
-        xhr.onerror = () => reject(new Error("Tarmoq xatoligi"));
-        xhr.send(file);
-      });
+      const { fileUrl, key } = await res.json();
 
       setProgress({ percent: 100, status: "done" });
       return { fileUrl, key };
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Yuklashda xatolik";
+      const msg = err instanceof Error ? err.message : "Tarmoq xatoligi";
       setProgress({ percent: 0, status: "error", error: msg });
       return null;
     }

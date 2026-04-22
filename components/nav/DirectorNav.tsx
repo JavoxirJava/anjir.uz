@@ -7,6 +7,7 @@ import { uz } from "@/lib/strings/uz";
 import { logoutAction } from "@/app/actions/auth";
 import { MobileMenu } from "./MobileMenu";
 import { IImkonLogo } from "@/components/IImkonLogo";
+import { AccessibilityBar } from "@/components/AccessibilityBar";
 
 const NAV_ITEMS = [
   { href: "/director",           label: "Asosiy",        exact: true, icon: "🏠" },
@@ -23,13 +24,7 @@ export function DirectorNav({ userName }: { userName: string }) {
 
   return (
     <>
-      {/* Accessibility bar */}
-      <div style={{ background: "#134e4a" }} className="sticky top-0 z-40">
-        <div className="container mx-auto max-w-6xl px-4 h-8 flex items-center justify-between text-xs text-white/70">
-          <span>I-Imkon.uz — Ta&apos;lim platformasi</span>
-          <span className="hidden sm:block">♿ Hamma uchun moslashtirilgan</span>
-        </div>
-      </div>
+      <AccessibilityBar />
 
       {/* Main header */}
       <header style={{ background: "#0f766e" }} className="sticky top-8 z-40" role="banner">

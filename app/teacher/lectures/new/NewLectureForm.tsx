@@ -38,6 +38,8 @@ interface Props {
 export function NewLectureForm({ subjects, classes }: Props) {
   const [isPending, startTransition] = useTransition();
   const [isGeneratingSubtitle, setIsGeneratingSubtitle] = useState(false);
+  // SSR-safe: form.watch() hydration mismatch dan saqlanish uchun useState
+  const [hasFile, setHasFile] = useState(false);
 
   const form = useForm<LectureInput>({
     resolver: zodResolver(lectureSchema),
@@ -206,6 +208,7 @@ export function NewLectureForm({ subjects, classes }: Props) {
                           onChange={() => {
                             field.onChange(t.value);
                             form.setValue("fileUrl", "");
+                            setHasFile(false);
                           }}
                           className="sr-only"
                         />
@@ -246,7 +249,10 @@ export function NewLectureForm({ subjects, classes }: Props) {
                           accept={selectedType.accept}
                           maxSizeMb={selectedType.maxMb}
                           label={`${selectedType.label} yuklash`}
-                          onUploaded={(url) => form.setValue("fileUrl", url, { shouldValidate: true })}
+                          onUploaded={(url) => {
+                            form.setValue("fileUrl", url, { shouldValidate: true });
+                            setHasFile(true);
+                          }}
                           folder="lectures"
                           required
                         />
@@ -324,7 +330,7 @@ export function NewLectureForm({ subjects, classes }: Props) {
           <div className="flex items-center gap-3 px-6 pb-6">
             <Button
               type="submit"
-              disabled={isPending || !form.watch("fileUrl")}
+              disabled={isPending || !hasFile}
               aria-busy={isPending}
             >
               {isPending ? uz.common.loading : uz.common.save}

@@ -7,6 +7,7 @@ import { uz } from "@/lib/strings/uz";
 import { logoutAction } from "@/app/actions/auth";
 import { MobileMenu } from "./MobileMenu";
 import { IImkonLogo } from "@/components/IImkonLogo";
+import { AccessibilityBar } from "@/components/AccessibilityBar";
 
 const NAV_ITEMS = [
   { href: "/app",              label: "Asosiy",       exact: true, icon: "🏠" },

@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { generateKey, getUploadUrl, validateFile, type AllowedContentType } from "@/lib/storage/r2";
+import { generateKey, uploadToR2, validateFile, type AllowedContentType } from "@/lib/storage/r2";
+
+// App Router route handler — body size Node.js darajasida chegaralanadi
+export const dynamic = "force-dynamic";
 
 /**
  * POST /api/upload
- * Body: { contentType, fileName, fileSize }
- * Returns: { uploadUrl, fileUrl, key }
+ * Body: multipart/form-data { file: File, folder?: string }
+ * Returns: { fileUrl, key }
  *
- * Brauzer presigned URL orqali to'g'ridan-to'g'ri R2 ga yuklaydi.
+ * Fayl server orqali to'g'ridan-to'g'ri R2 ga yuklanadi (CORS muammosi yo'q).
  */
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -17,21 +20,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
   }
 
-  const { contentType, fileName, fileSize, folder = "lectures" } = await req.json() as {
-    contentType: AllowedContentType;
-    fileName: string;
-    fileSize: number;
-    folder?: string;
-  };
+  const formData = await req.formData();
+  const file = formData.get("file") as File | null;
+  const folder = (formData.get("folder") as string | null) ?? "lectures";
 
-  const validation = validateFile(contentType, fileSize);
+  if (!file) {
+    return NextResponse.json({ error: "Fayl topilmadi" }, { status: 400 });
+  }
+
+  const contentType = file.type as AllowedContentType;
+  const validation = validateFile(contentType, file.size);
   if (!validation.ok) {
     return NextResponse.json({ error: validation.error }, { status: 400 });
   }
 
-  const key = generateKey(folder, fileName);
-  const uploadUrl = await getUploadUrl(key, contentType);
-  const fileUrl = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`;
+  const key = generateKey(folder, file.name);
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const fileUrl = await uploadToR2(key, buffer, contentType);
 
-  return NextResponse.json({ uploadUrl, fileUrl, key });
+  return NextResponse.json({ fileUrl, key });
 }

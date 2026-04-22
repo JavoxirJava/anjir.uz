@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { IImkonLogo } from "@/components/IImkonLogo";
+import { AccessibilityBar } from "@/components/AccessibilityBar";
 
 const FEATURES = [
   {
@@ -70,17 +71,7 @@ export default function HomePage() {
     <div className="min-h-screen flex flex-col" style={{ background: "#f8fafc" }}>
 
       {/* ── Accessibility bar ───────────────────────── */}
-      <div style={{ background: "#134e4a", color: "white" }}>
-        <div className="container mx-auto max-w-6xl px-4 h-9 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-3">
-            <span className="text-white/70">Maxsus imkoniyatlar:</span>
-            <button className="px-2 py-0.5 rounded bg-white/15 hover:bg-white/25 font-bold transition-colors focus-visible:outline-2 focus-visible:outline-white">A+</button>
-            <button className="px-2 py-0.5 rounded bg-white/15 hover:bg-white/25 font-bold transition-colors focus-visible:outline-2 focus-visible:outline-white">A−</button>
-            <button className="px-2 py-0.5 rounded bg-white/15 hover:bg-white/25 font-medium transition-colors focus-visible:outline-2 focus-visible:outline-white">Yuqori kontrast</button>
-          </div>
-          <span className="hidden sm:block text-white/60">♿ Hamma uchun moslashtirilgan</span>
-        </div>
-      </div>
+      <AccessibilityBar />
 
       {/* ── Header ──────────────────────────────────── */}
       <header style={{ background: "#0f766e" }}>
