@@ -1,4 +1,3 @@
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { TestInput } from "@/lib/validations/test";
 
@@ -216,8 +215,8 @@ export async function createAttempt(
   studentId: string,
   testId: string
 ): Promise<string> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("test_attempts")
     .insert({ student_id: studentId, test_id: testId, started_at: new Date().toISOString() })
     .select("id")
@@ -232,15 +231,15 @@ export async function finishAttempt(
   answers: { questionId: string; selectedOptionIds?: string[]; answerText?: string; isCorrect: boolean }[],
   score: number
 ): Promise<void> {
-  const supabase = await createClient();
+  const admin = createAdminClient();
 
-  await supabase
+  await admin
     .from("test_attempts")
     .update({ finished_at: new Date().toISOString(), score })
     .eq("id", attemptId);
 
   if (answers.length > 0) {
-    await supabase.from("test_answers").insert(
+    await admin.from("test_answers").insert(
       answers.map((a) => ({
         attempt_id: attemptId,
         question_id: a.questionId,
@@ -257,8 +256,8 @@ export async function getStudentAttempts(
   studentId: string,
   testId: string
 ) {
-  const supabase = await createClient();
-  const { data } = await supabase
+  const admin = createAdminClient();
+  const { data } = await admin
     .from("test_attempts")
     .select("id, started_at, finished_at, score")
     .eq("student_id", studentId)
