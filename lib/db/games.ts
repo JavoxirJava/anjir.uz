@@ -1,4 +1,3 @@
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export interface GameRow {
@@ -24,8 +23,8 @@ export interface GameAttemptRow {
 
 /** O'qituvchi o'yinlari */
 export async function getGamesByTeacher(teacherId: string): Promise<GameRow[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("games")
     .select("*, subjects(name)")
     .eq("teacher_id", teacherId)
@@ -37,8 +36,8 @@ export async function getGamesByTeacher(teacherId: string): Promise<GameRow[]> {
 
 /** O'yin ma'lumotlari */
 export async function getGameById(gameId: string): Promise<GameRow | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("games")
     .select("*, subjects(name)")
     .eq("id", gameId)
@@ -50,8 +49,8 @@ export async function getGameById(gameId: string): Promise<GameRow | null> {
 
 /** O'quvchi uchun o'yinlar (sinfi bo'yicha) */
 export async function getGamesForStudent(classId: string): Promise<GameRow[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("games")
     .select("*, subjects(name), game_classes!inner(class_id)")
     .eq("game_classes.class_id", classId)
@@ -70,7 +69,6 @@ export async function createGame(input: {
   data: Record<string, unknown>;
   classIds: string[];
 }): Promise<string> {
-  // Admin client: game_classes_manage_teacher ↔ games_select_teacher sirkular loop oldini olish
   const admin = createAdminClient();
 
   const { data: game, error: gameErr } = await admin
@@ -106,8 +104,8 @@ export async function deleteGame(gameId: string): Promise<void> {
 
 /** Attempt yaratish */
 export async function createGameAttempt(studentId: string, gameId: string): Promise<string> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("game_attempts")
     .insert({ student_id: studentId, game_id: gameId })
     .select("id")
@@ -123,8 +121,8 @@ export async function finishGameAttempt(
   score: number,
   durationSec: number
 ): Promise<void> {
-  const supabase = await createClient();
-  const { error } = await supabase
+  const admin = createAdminClient();
+  const { error } = await admin
     .from("game_attempts")
     .update({ score, duration_sec: durationSec, finished_at: new Date().toISOString() })
     .eq("id", attemptId);
@@ -136,8 +134,8 @@ export async function getStudentGameAttempts(
   studentId: string,
   gameId: string
 ): Promise<GameAttemptRow[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("game_attempts")
     .select("*")
     .eq("student_id", studentId)

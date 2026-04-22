@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { GameDeleteButton } from "./GameDeleteButton";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: `${uz.teacher.myGames} — I-Imkon.uz`,
 };
