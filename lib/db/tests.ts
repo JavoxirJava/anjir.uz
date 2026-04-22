@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { TestInput } from "@/lib/validations/test";
 
 export interface TestRow {
@@ -39,8 +40,8 @@ export interface TestWithQuestions extends TestRow {
 }
 
 export async function getTestsByTeacher(teacherId: string): Promise<TestRow[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
+  const admin = createAdminClient();
+  const { data } = await admin
     .from("tests")
     .select("*, subjects(name)")
     .eq("teacher_id", teacherId)
@@ -49,8 +50,8 @@ export async function getTestsByTeacher(teacherId: string): Promise<TestRow[]> {
 }
 
 export async function getTestById(id: string): Promise<TestWithQuestions | null> {
-  const supabase = await createClient();
-  const { data } = await supabase
+  const admin = createAdminClient();
+  const { data } = await admin
     .from("tests")
     .select(`
       *,
@@ -71,10 +72,12 @@ export async function createTest(
   teacherId: string,
   input: TestInput
 ): Promise<string> {
-  const supabase = await createClient();
+  // Admin client: RLS policy sirkular rekursiyasini oldini olish uchun
+  // (test_classes_manage_teacher ↔ tests_select_teacher loop)
+  const admin = createAdminClient();
 
   // 1. Test yaratish
-  const { data: test, error } = await supabase
+  const { data: test, error } = await admin
     .from("tests")
     .insert({
       teacher_id: teacherId,
@@ -94,14 +97,14 @@ export async function createTest(
 
   // 2. Sinflar biriktirishsin
   if (input.classIds.length > 0) {
-    await supabase.from("test_classes").insert(
+    await admin.from("test_classes").insert(
       input.classIds.map((cid) => ({ test_id: testId, class_id: cid }))
     );
   }
 
   // 3. Savollar va variantlar
   for (const [i, q] of input.questions.entries()) {
-    const { data: question } = await supabase
+    const { data: question } = await admin
       .from("questions")
       .insert({
         test_id: testId,
@@ -120,7 +123,7 @@ export async function createTest(
     // Variantlar (true_false va fill_blank uchun ham)
     const options = getOptionsForType(q);
     if (options.length > 0) {
-      await supabase.from("question_options").insert(
+      await admin.from("question_options").insert(
         options.map((o) => ({
           question_id: question.id,
           option_text: o.option_text,
@@ -147,10 +150,10 @@ export async function updateTest(
   testId: string,
   input: TestInput
 ): Promise<void> {
-  const supabase = await createClient();
+  const admin = createAdminClient();
 
   // 1. Test ma'lumotlarini yangilash
-  await supabase
+  await admin
     .from("tests")
     .update({
       subject_id: input.subjectId,
@@ -163,18 +166,18 @@ export async function updateTest(
     .eq("id", testId);
 
   // 2. Eski sinflarni o'chirib, yangilarini qo'shish
-  await supabase.from("test_classes").delete().eq("test_id", testId);
+  await admin.from("test_classes").delete().eq("test_id", testId);
   if (input.classIds.length > 0) {
-    await supabase.from("test_classes").insert(
+    await admin.from("test_classes").insert(
       input.classIds.map((cid) => ({ test_id: testId, class_id: cid }))
     );
   }
 
   // 3. Eski savollarni o'chirib, yangilarini qo'shish (cascade deletes options)
-  await supabase.from("questions").delete().eq("test_id", testId);
+  await admin.from("questions").delete().eq("test_id", testId);
 
   for (const [i, q] of input.questions.entries()) {
-    const { data: question } = await supabase
+    const { data: question } = await admin
       .from("questions")
       .insert({
         test_id: testId,
@@ -192,7 +195,7 @@ export async function updateTest(
 
     const options = getOptionsForType(q);
     if (options.length > 0) {
-      await supabase.from("question_options").insert(
+      await admin.from("question_options").insert(
         options.map((o) => ({
           question_id: question.id,
           option_text: o.option_text,
@@ -204,8 +207,8 @@ export async function updateTest(
 }
 
 export async function deleteTest(id: string): Promise<void> {
-  const supabase = await createClient();
-  await supabase.from("tests").delete().eq("id", id);
+  const admin = createAdminClient();
+  await admin.from("tests").delete().eq("id", id);
 }
 
 // O'quvchi uchun attempt yaratish

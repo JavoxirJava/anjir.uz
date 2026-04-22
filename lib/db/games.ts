@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export interface GameRow {
   id: string;
@@ -69,9 +70,10 @@ export async function createGame(input: {
   data: Record<string, unknown>;
   classIds: string[];
 }): Promise<string> {
-  const supabase = await createClient();
+  // Admin client: game_classes_manage_teacher ↔ games_select_teacher sirkular loop oldini olish
+  const admin = createAdminClient();
 
-  const { data: game, error: gameErr } = await supabase
+  const { data: game, error: gameErr } = await admin
     .from("games")
     .insert({
       title: input.title,
@@ -86,7 +88,7 @@ export async function createGame(input: {
   if (gameErr || !game) throw gameErr ?? new Error("Game yaratilmadi");
 
   if (input.classIds.length > 0) {
-    const { error: classErr } = await supabase
+    const { error: classErr } = await admin
       .from("game_classes")
       .insert(input.classIds.map((class_id) => ({ game_id: game.id, class_id })));
     if (classErr) throw classErr;
@@ -97,8 +99,8 @@ export async function createGame(input: {
 
 /** O'yin o'chirish */
 export async function deleteGame(gameId: string): Promise<void> {
-  const supabase = await createClient();
-  const { error } = await supabase.from("games").delete().eq("id", gameId);
+  const admin = createAdminClient();
+  const { error } = await admin.from("games").delete().eq("id", gameId);
   if (error) throw error;
 }
 
