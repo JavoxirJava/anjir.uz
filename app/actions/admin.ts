@@ -70,6 +70,36 @@ export async function createDirectorAction(formData: FormData) {
   return { success: true };
 }
 
+// =============================================================
+// SUBJECTS (fanlar)
+// =============================================================
+
+export async function addSubjectAction(name: string) {
+  if (!name.trim()) return { error: "Fan nomi kiritilishi shart" };
+  const admin = createAdminClient();
+  const { error } = await admin.from("subjects").insert({ name: name.trim() });
+  if (error) return { error: error.message };
+  revalidatePath("/admin/subjects");
+  return { success: true };
+}
+
+export async function updateSubjectAction(id: string, name: string) {
+  if (!name.trim()) return { error: "Fan nomi bo'sh bo'lishi mumkin emas" };
+  const admin = createAdminClient();
+  const { error } = await admin.from("subjects").update({ name: name.trim() }).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/subjects");
+  return { success: true };
+}
+
+export async function deleteSubjectAction(id: string) {
+  const admin = createAdminClient();
+  const { error } = await admin.from("subjects").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/subjects");
+  return { success: true };
+}
+
 export async function approveUserAction(userId: string) {
   const admin = createAdminClient();
   await admin.from("users").update({ status: "active" }).eq("id", userId);

@@ -1,13 +1,14 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export interface AssignmentRow {
   id: string;
   title: string;
   description: string | null;
-  due_date: string | null;
-  max_score: number;
+  deadline: string | null;
   teacher_id: string;
-  subject_id: string | null;
+  subject_id: string;
+  class_id: string;
+  file_url: string | null;
   created_at: string;
   subjects?: { name: string } | null;
 }
@@ -16,23 +17,18 @@ export interface SubmissionRow {
   id: string;
   assignment_id: string;
   student_id: string;
-  content: string | null;
+  text: string | null;
   file_url: string | null;
-  score: number | null;
-  teacher_comment: string | null;
+  grade: number | null;
+  comment: string | null;
   submitted_at: string | null;
-  graded_at: string | null;
-  created_at: string;
-  users?: {
-    first_name: string;
-    last_name: string;
-  } | null;
+  users?: { first_name: string; last_name: string } | null;
 }
 
 /** O'qituvchi vazifalar ro'yxati */
 export async function getAssignmentsByTeacher(teacherId: string): Promise<AssignmentRow[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("assignments")
     .select("*, subjects(name)")
     .eq("teacher_id", teacherId)
@@ -44,8 +40,8 @@ export async function getAssignmentsByTeacher(teacherId: string): Promise<Assign
 
 /** Bitta vazifa */
 export async function getAssignmentById(id: string): Promise<AssignmentRow | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("assignments")
     .select("*, subjects(name)")
     .eq("id", id)
@@ -57,9 +53,8 @@ export async function getAssignmentById(id: string): Promise<AssignmentRow | nul
 
 /** O'quvchi uchun vazifalar (sinf bo'yicha) */
 export async function getAssignmentsForStudent(classId: string): Promise<AssignmentRow[]> {
-  const supabase = await createClient();
-  // Try junction table first, fallback to direct class_id
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("assignments")
     .select("*, subjects(name)")
     .eq("class_id", classId)
@@ -69,51 +64,40 @@ export async function getAssignmentsForStudent(classId: string): Promise<Assignm
   return (data ?? []) as unknown as AssignmentRow[];
 }
 
-/** Vazifa topshirig'ini yaratish */
+/** Vazifa yaratish — har bir sinf uchun alohida qator */
 export async function createAssignment(input: {
   title: string;
   description: string | null;
-  due_date: string | null;
-  max_score: number;
+  deadline: string | null;
   teacher_id: string;
-  subject_id: string | null;
+  subject_id: string;
   classIds: string[];
 }): Promise<string> {
-  const supabase = await createClient();
+  const admin = createAdminClient();
 
-  // Birinchi sinfga yaratish (asosiy), qolganlariga klon
-  const primaryClassId = input.classIds[0];
+  const base = {
+    title: input.title,
+    description: input.description,
+    deadline: input.deadline,
+    teacher_id: input.teacher_id,
+    subject_id: input.subject_id,
+  };
 
-  const { data, error } = await supabase
+  // Insert first row separately to get ID
+  const { data, error } = await admin
     .from("assignments")
-    .insert({
-      title: input.title,
-      description: input.description,
-      due_date: input.due_date,
-      max_score: input.max_score,
-      teacher_id: input.teacher_id,
-      subject_id: input.subject_id,
-      class_id: primaryClassId,
-    })
+    .insert({ ...base, class_id: input.classIds[0] })
     .select("id")
     .single();
 
-  if (error || !data) throw error ?? new Error("Vazifa yaratilmadi");
+  if (error || !data) throw new Error(error?.message ?? "Vazifa yaratilmadi");
 
-  // Qolgan sinflar uchun ham yaratish
+  // Insert remaining rows (if multiple classes selected)
   if (input.classIds.length > 1) {
-    const rest = input.classIds.slice(1);
-    for (const class_id of rest) {
-      await supabase.from("assignments").insert({
-        title: input.title,
-        description: input.description,
-        due_date: input.due_date,
-        max_score: input.max_score,
-        teacher_id: input.teacher_id,
-        subject_id: input.subject_id,
-        class_id,
-      });
-    }
+    const { error: restErr } = await admin
+      .from("assignments")
+      .insert(input.classIds.slice(1).map((class_id) => ({ ...base, class_id })));
+    if (restErr) throw restErr;
   }
 
   return data.id;
@@ -121,8 +105,8 @@ export async function createAssignment(input: {
 
 /** Vazifani o'chirish */
 export async function deleteAssignment(id: string): Promise<void> {
-  const supabase = await createClient();
-  const { error } = await supabase.from("assignments").delete().eq("id", id);
+  const admin = createAdminClient();
+  const { error } = await admin.from("assignments").delete().eq("id", id);
   if (error) throw error;
 }
 
@@ -130,13 +114,12 @@ export async function deleteAssignment(id: string): Promise<void> {
 export async function submitAssignment(input: {
   assignment_id: string;
   student_id: string;
-  content: string | null;
+  text: string | null;
   file_url: string | null;
 }): Promise<string> {
-  const supabase = await createClient();
+  const admin = createAdminClient();
 
-  // Avval mavjud submission-ni tekshirish
-  const { data: existing } = await supabase
+  const { data: existing } = await admin
     .from("assignment_submissions")
     .select("id")
     .eq("assignment_id", input.assignment_id)
@@ -144,29 +127,25 @@ export async function submitAssignment(input: {
     .single();
 
   if (existing) {
-    // Yangilash
-    const { error } = await supabase
+    await admin
       .from("assignment_submissions")
-      .update({
-        content: input.content,
-        file_url: input.file_url,
-        submitted_at: new Date().toISOString(),
-      })
+      .update({ text: input.text, file_url: input.file_url })
       .eq("id", existing.id);
-    if (error) throw error;
     return existing.id;
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from("assignment_submissions")
     .insert({
-      ...input,
-      submitted_at: new Date().toISOString(),
+      assignment_id: input.assignment_id,
+      student_id: input.student_id,
+      text: input.text,
+      file_url: input.file_url,
     })
     .select("id")
     .single();
 
-  if (error || !data) throw error ?? new Error("Topshiriq yuborilmadi");
+  if (error || !data) throw new Error(error?.message ?? "Topshiriq yuborilmadi");
   return data.id;
 }
 
@@ -175,8 +154,8 @@ export async function getStudentSubmission(
   assignmentId: string,
   studentId: string
 ): Promise<SubmissionRow | null> {
-  const supabase = await createClient();
-  const { data } = await supabase
+  const admin = createAdminClient();
+  const { data } = await admin
     .from("assignment_submissions")
     .select("*")
     .eq("assignment_id", assignmentId)
@@ -189,8 +168,8 @@ export async function getStudentSubmission(
 export async function getSubmissionsForAssignment(
   assignmentId: string
 ): Promise<SubmissionRow[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("assignment_submissions")
     .select("*, users(first_name, last_name)")
     .eq("assignment_id", assignmentId)
@@ -203,13 +182,13 @@ export async function getSubmissionsForAssignment(
 /** Baholash (o'qituvchi) */
 export async function gradeSubmission(
   submissionId: string,
-  score: number,
+  grade: number,
   comment: string | null
 ): Promise<void> {
-  const supabase = await createClient();
-  const { error } = await supabase
+  const admin = createAdminClient();
+  const { error } = await admin
     .from("assignment_submissions")
-    .update({ score, teacher_comment: comment, graded_at: new Date().toISOString() })
+    .update({ grade, comment })
     .eq("id", submissionId);
   if (error) throw error;
 }

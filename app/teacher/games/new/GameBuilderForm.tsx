@@ -112,6 +112,7 @@ export function GameBuilderForm({
 
   function validate(): string | null {
     if (!title.trim()) return "Sarlavha kiritilishi shart";
+    if (!subjectId) return "Fan tanlanishi shart";
     if (selectedClasses.length === 0) return "Kamida 1 ta sinf tanlang";
 
     if (gameType === "word_match") {
@@ -137,10 +138,10 @@ export function GameBuilderForm({
 
     const fd = new FormData();
     fd.append("title", title.trim());
-    fd.append("game_type", gameType);
-    if (subjectId) fd.append("subject_id", subjectId);
+    fd.append("template_type", gameType);
+    fd.append("subject_id", subjectId);
     selectedClasses.forEach((c) => fd.append("classIds", c));
-    fd.append("data", JSON.stringify(buildGameData()));
+    fd.append("content_json", JSON.stringify(buildGameData()));
 
     startTransition(async () => {
       const result = await createGameAction(fd);

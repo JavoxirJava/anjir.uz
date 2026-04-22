@@ -42,7 +42,7 @@ export default async function StudentGamePage({ params }: Props) {
     <div className="max-w-3xl mx-auto space-y-6">
       <header className="space-y-2">
         <Badge variant="secondary">
-          {TYPE_EMOJI[game.game_type]} {TYPE_LABELS[game.game_type]}
+          {TYPE_EMOJI[game.template_type]} {TYPE_LABELS[game.template_type]}
         </Badge>
         <h1 className="text-2xl font-bold">{game.title}</h1>
         {game.subjects && (
@@ -58,8 +58,8 @@ export default async function StudentGamePage({ params }: Props) {
         game={{
           id: game.id,
           title: game.title,
-          game_type: game.game_type,
-          data: game.data,
+          game_type: game.template_type,
+          data: game.content_json,
         }}
         attemptId={attemptId}
       />

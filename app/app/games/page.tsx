@@ -65,15 +65,15 @@ export default async function StudentGamesPage() {
                   <CardContent className="pt-5 pb-5 space-y-3">
                     <div className="flex items-center gap-2">
                       <span className="text-2xl" aria-hidden="true">
-                        {TYPE_EMOJI[game.game_type]}
+                        {TYPE_EMOJI[game.template_type]}
                       </span>
                       <Badge variant="secondary">
-                        {TYPE_LABELS[game.game_type]}
+                        {TYPE_LABELS[game.template_type]}
                       </Badge>
                     </div>
                     <h2 className="font-semibold">{game.title}</h2>
                     <p className="text-sm text-muted-foreground">
-                      {TYPE_DESC[game.game_type]}
+                      {TYPE_DESC[game.template_type]}
                     </p>
                     {game.subjects && (
                       <p className="text-xs text-muted-foreground">

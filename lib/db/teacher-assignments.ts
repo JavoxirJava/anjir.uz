@@ -4,9 +4,9 @@ export interface SubjectOption { id: string; name: string }
 export interface ClassOption  { id: string; grade: number; letter: string }
 
 /**
- * O'qituvchiga tegishli fanlar va sinflar ro'yxatini qaytaradi.
- * Admin client (RLS bypass) ishlatiladi — PostgREST FK join ishlamaydi
- * chunki FK konfigurasiya qilinmagan, shuning uchun alohida so'rovlar.
+ * O'qituvchi content yaratishi uchun:
+ * - Fanlar: BARCHA fanlar (subject faqat tag/kategoriya, cheklash shart emas)
+ * - Sinflar: faqat teacher_assignments orqali biriktirilgan sinflar
  */
 export async function getTeacherSubjectsAndClasses(teacherId: string): Promise<{
   subjects: SubjectOption[];
@@ -14,24 +14,24 @@ export async function getTeacherSubjectsAndClasses(teacherId: string): Promise<{
 }> {
   const admin = createAdminClient();
 
-  const { data: assignments } = await admin
-    .from("teacher_assignments")
-    .select("subject_id, class_id")
-    .eq("teacher_id", teacherId);
-
-  if (!assignments || assignments.length === 0) {
-    return { subjects: [], classes: [] };
-  }
-
-  const subjectIds = [...new Set(assignments.map((a) => a.subject_id as string))];
-  const classIds   = [...new Set(assignments.map((a) => a.class_id   as string))];
-
-  const [{ data: subjectsRaw }, { data: classesRaw }] = await Promise.all([
-    admin.from("subjects").select("id, name").in("id", subjectIds),
-    admin.from("classes").select("id, grade, letter").in("id", classIds),
+  const [{ data: assignments }, { data: allSubjects }] = await Promise.all([
+    admin
+      .from("teacher_assignments")
+      .select("class_id")
+      .eq("teacher_id", teacherId),
+    admin
+      .from("subjects")
+      .select("id, name")
+      .order("name"),
   ]);
 
-  const subjects: SubjectOption[] = (subjectsRaw ?? []).map((s) => ({
+  const classIds = [...new Set((assignments ?? []).map((a) => a.class_id as string))];
+
+  const { data: classesRaw } = classIds.length
+    ? await admin.from("classes").select("id, grade, letter").in("id", classIds)
+    : { data: [] };
+
+  const subjects: SubjectOption[] = (allSubjects ?? []).map((s) => ({
     id:   s.id   as string,
     name: s.name as string,
   }));

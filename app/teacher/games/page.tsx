@@ -58,7 +58,7 @@ export default async function TeacherGamesPage() {
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="secondary">
-                        {TYPE_EMOJI[game.game_type]} {TYPE_LABELS[game.game_type]}
+                        {TYPE_EMOJI[game.template_type]} {TYPE_LABELS[game.template_type]}
                       </Badge>
                       {game.subjects && (
                         <span className="text-xs text-muted-foreground">

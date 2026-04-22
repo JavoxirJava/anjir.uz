@@ -142,7 +142,9 @@ export function NewLectureForm({ subjects, classes }: Props) {
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger aria-required="true">
-                          <SelectValue placeholder="Fan tanlang" />
+                          <SelectValue placeholder="Fan tanlang">
+                            {field.value ? (subjects.find(s => s.id === field.value)?.name ?? "Fan tanlang") : undefined}
+                          </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>

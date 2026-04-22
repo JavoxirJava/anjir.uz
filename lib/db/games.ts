@@ -3,10 +3,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export interface GameRow {
   id: string;
   title: string;
-  game_type: "word_match" | "ordering" | "memory";
-  subject_id: string | null;
+  template_type: "word_match" | "ordering" | "memory";
+  subject_id: string;
   teacher_id: string;
-  data: Record<string, unknown>;
+  content_json: Record<string, unknown>;
   created_at: string;
   subjects?: { name: string } | null;
 }
@@ -63,10 +63,10 @@ export async function getGamesForStudent(classId: string): Promise<GameRow[]> {
 /** O'yin yaratish */
 export async function createGame(input: {
   title: string;
-  game_type: string;
-  subject_id: string | null;
+  template_type: string;
+  subject_id: string;
   teacher_id: string;
-  data: Record<string, unknown>;
+  content_json: Record<string, unknown>;
   classIds: string[];
 }): Promise<string> {
   const admin = createAdminClient();
@@ -75,15 +75,15 @@ export async function createGame(input: {
     .from("games")
     .insert({
       title: input.title,
-      game_type: input.game_type,
-      subject_id: input.subject_id || null,
+      template_type: input.template_type,
+      subject_id: input.subject_id,
       teacher_id: input.teacher_id,
-      data: input.data,
+      content_json: input.content_json,
     })
     .select("id")
     .single();
 
-  if (gameErr || !game) throw gameErr ?? new Error("Game yaratilmadi");
+  if (gameErr || !game) throw new Error("Game yaratilmadi: " + (gameErr?.message ?? "noma'lum xato"));
 
   if (input.classIds.length > 0) {
     const { error: classErr } = await admin

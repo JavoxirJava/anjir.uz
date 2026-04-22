@@ -7,11 +7,10 @@ import { z } from "zod";
 
 const gameSchema = z.object({
   title: z.string().min(3, "Sarlavha kamida 3 ta belgi"),
-  game_type: z.enum(["word_match", "ordering", "memory"]),
-  subject_id: z.string().optional(),
+  template_type: z.enum(["word_match", "ordering", "memory"]),
+  subject_id: z.string().min(1, "Fan tanlanishi shart"),
   classIds: z.array(z.string()).min(1, "Kamida 1 ta sinf tanlang"),
-  // JSON serialized game data
-  data: z.string().min(2, "O'yin ma'lumotlari kiritilishi shart"),
+  content_json: z.string().min(2, "O'yin ma'lumotlari kiritilishi shart"),
 });
 
 export async function createGameAction(formData: FormData) {
@@ -21,10 +20,10 @@ export async function createGameAction(formData: FormData) {
 
   const raw = {
     title: formData.get("title"),
-    game_type: formData.get("game_type"),
-    subject_id: formData.get("subject_id") || undefined,
+    template_type: formData.get("template_type"),
+    subject_id: formData.get("subject_id") || "",
     classIds: formData.getAll("classIds"),
-    data: formData.get("data"),
+    content_json: formData.get("content_json"),
   };
 
   const parsed = gameSchema.safeParse(raw);
@@ -34,7 +33,7 @@ export async function createGameAction(formData: FormData) {
 
   let parsedData: Record<string, unknown>;
   try {
-    parsedData = JSON.parse(parsed.data.data);
+    parsedData = JSON.parse(parsed.data.content_json);
   } catch {
     return { error: "O'yin ma'lumotlari noto'g'ri formatda" };
   }
@@ -42,10 +41,10 @@ export async function createGameAction(formData: FormData) {
   try {
     const id = await createGame({
       title: parsed.data.title,
-      game_type: parsed.data.game_type,
-      subject_id: parsed.data.subject_id ?? null,
+      template_type: parsed.data.template_type,
+      subject_id: parsed.data.subject_id,
       teacher_id: user.id,
-      data: parsedData,
+      content_json: parsedData,
       classIds: parsed.data.classIds,
     });
     revalidatePath("/teacher/games");

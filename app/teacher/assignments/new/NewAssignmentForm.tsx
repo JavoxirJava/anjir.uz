@@ -33,12 +33,16 @@ export function NewAssignmentForm({
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+
+    if (!fd.get("subject_id")) {
+      toast.error("Fan tanlanishi shart");
+      return;
+    }
     if (selectedClasses.length === 0) {
       toast.error("Kamida 1 ta sinf tanlang");
       return;
     }
-
-    const fd = new FormData(e.currentTarget);
     selectedClasses.forEach((c) => fd.append("classIds", c));
 
     startTransition(async () => {
@@ -84,10 +88,12 @@ export function NewAssignmentForm({
 
           {/* Fan */}
           <div className="space-y-1.5">
-            <Label htmlFor="subject_id">Fan (ixtiyoriy)</Label>
+            <Label htmlFor="subject_id">Fan *</Label>
             <select
               id="subject_id"
               name="subject_id"
+              required
+              aria-required="true"
               className="w-full rounded-lg border px-3 py-2.5 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring bg-background"
             >
               <option value="">— Fan tanlang —</option>
@@ -99,26 +105,12 @@ export function NewAssignmentForm({
 
           {/* Muddati */}
           <div className="space-y-1.5">
-            <Label htmlFor="due_date">Topshirish muddati (ixtiyoriy)</Label>
+            <Label htmlFor="deadline">Topshirish muddati (ixtiyoriy)</Label>
             <Input
-              id="due_date"
-              name="due_date"
+              id="deadline"
+              name="deadline"
               type="datetime-local"
               className="w-full"
-            />
-          </div>
-
-          {/* Maks ball */}
-          <div className="space-y-1.5">
-            <Label htmlFor="max_score">Maksimal ball</Label>
-            <Input
-              id="max_score"
-              name="max_score"
-              type="number"
-              defaultValue={10}
-              min={1}
-              max={100}
-              className="w-32"
             />
           </div>
 
