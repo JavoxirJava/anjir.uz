@@ -30,19 +30,29 @@ export default async function TeacherAnalyticsPage() {
     .select("*", { count: "exact", head: true })
     .eq("teacher_id", user!.id);
 
-  // Test urinishlari (tugallangan)
-  const { data: attempts } = await supabase
-    .from("test_attempts")
-    .select("score, finished_at")
-    .eq("teacher_id", user!.id)
-    .not("finished_at", "is", null)
-    .limit(1000);
+  // Test urinishlari (tugallangan) — teacher_id yo'q, tests orqali join
+  const teacherTestIds = testCount && testCount > 0
+    ? (await supabase
+        .from("tests")
+        .select("id")
+        .eq("teacher_id", user!.id)
+        .then(({ data }) => (data ?? []).map((t: { id: string }) => t.id)))
+    : [];
+
+  const { data: attempts } = teacherTestIds.length > 0
+    ? await supabase
+        .from("test_attempts")
+        .select("score, finished_at")
+        .in("test_id", teacherTestIds)
+        .not("finished_at", "is", null)
+        .limit(1000)
+    : { data: [] };
 
   // Lectures soni
   const { count: lectureCount } = await supabase
     .from("lectures")
     .select("*", { count: "exact", head: true })
-    .eq("teacher_id", user!.id);
+    .eq("creator_id", user!.id);
 
   // O'rtacha ball
   const validAttempts = (attempts ?? []).filter((a: { score: number | null }) => a.score !== null);

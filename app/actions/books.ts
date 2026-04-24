@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { createBook, deleteBook, updateBookAudio, addBookmark, removeBookmark } from "@/lib/db/books";
+import { createBook, deleteBook, updateBook, updateBookAudio, addBookmark, removeBookmark } from "@/lib/db/books";
 import { uploadToR2 } from "@/lib/storage/r2";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -103,6 +103,44 @@ export async function createBookAction(formData: FormData) {
   } catch (err) {
     console.error(err);
     const msg = err instanceof Error ? err.message : "Kitob yaratishda xatolik";
+    return { error: msg };
+  }
+}
+
+export async function updateBookAction(id: string, formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Tizimga kiring" };
+
+  const raw = {
+    title:        formData.get("title"),
+    author:       formData.get("author")       || undefined,
+    description:  formData.get("description")  || undefined,
+    pdf_url:      formData.get("pdf_url")      || "",
+    audio_url:    formData.get("audio_url")    || undefined,
+    audio_source: formData.get("audio_source") || undefined,
+    subject_id:   formData.get("subject_id")   || undefined,
+    classIds:     formData.getAll("classIds"),
+  };
+
+  const parsed = bookSchema.safeParse(raw);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  try {
+    await updateBook(id, {
+      title:        parsed.data.title,
+      author:       parsed.data.author      ?? null,
+      description:  parsed.data.description ?? null,
+      pdf_url:      parsed.data.pdf_url,
+      audio_url:    parsed.data.audio_url   ?? null,
+      audio_source: parsed.data.audio_source ?? null,
+      subject_id:   parsed.data.subject_id  ?? null,
+      classIds:     parsed.data.classIds,
+    });
+    revalidatePath("/teacher/books");
+    return { success: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Kitobni yangilashda xatolik";
     return { error: msg };
   }
 }

@@ -36,15 +36,55 @@ export async function getBooksByTeacher(teacherId: string): Promise<BookRow[]> {
   return (data ?? []) as unknown as BookRow[];
 }
 
-/** Bitta kitob */
-export async function getBookById(id: string): Promise<BookRow | null> {
+/** Bitta kitob (book_classes bilan) */
+export async function getBookById(id: string): Promise<(BookRow & { book_classes?: { class_id: string }[] }) | null> {
   const admin = createAdminClient();
   const { data } = await admin
     .from("books")
-    .select("*")
+    .select("*, book_classes(class_id)")
     .eq("id", id)
     .single();
-  return data as unknown as BookRow | null;
+  return data as unknown as (BookRow & { book_classes?: { class_id: string }[] }) | null;
+}
+
+/** Kitob yangilash */
+export async function updateBook(
+  id: string,
+  input: {
+    title: string;
+    author: string | null;
+    description: string | null;
+    pdf_url: string | null;
+    audio_url: string | null;
+    audio_source: string | null;
+    subject_id: string | null;
+    classIds: string[];
+  }
+): Promise<void> {
+  const admin = createAdminClient();
+
+  const { error } = await admin
+    .from("books")
+    .update({
+      title:        input.title,
+      author:       input.author,
+      description:  input.description,
+      pdf_url:      input.pdf_url,
+      audio_url:    input.audio_url,
+      audio_source: input.audio_source,
+      subject_id:   input.subject_id,
+    })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  // Sinflarni yangilash
+  await admin.from("book_classes").delete().eq("book_id", id);
+  if (input.classIds.length > 0) {
+    await admin
+      .from("book_classes")
+      .insert(input.classIds.map((class_id) => ({ book_id: id, class_id })));
+  }
 }
 
 /** O'quvchi uchun kitoblar */

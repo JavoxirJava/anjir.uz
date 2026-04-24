@@ -28,7 +28,7 @@ export function SubmissionForm({ assignmentId, existingContent = "" }: Props) {
 
     const fd = new FormData();
     fd.append("assignment_id", assignmentId);
-    fd.append("content", content.trim());
+    fd.append("text", content.trim());
 
     startTransition(async () => {
       const result = await submitAssignmentAction(fd);

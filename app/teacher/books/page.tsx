@@ -53,6 +53,12 @@ export default async function TeacherBooksPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
+                    <Link
+                      href={`/teacher/books/${book.id}/edit`}
+                      className="inline-flex items-center justify-center rounded-lg border px-3 py-1.5 text-sm hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    >
+                      Tahrirlash
+                    </Link>
                     <BookDeleteButton id={book.id} />
                   </div>
                 </CardContent>
