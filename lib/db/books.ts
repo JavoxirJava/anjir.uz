@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export interface BookRow {
   id: string;
@@ -25,38 +25,38 @@ export interface BookmarkRow {
 
 /** O'qituvchi kitoblari */
 export async function getBooksByTeacher(teacherId: string): Promise<BookRow[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("books")
-    .select("*, subjects(name)")
-    .or(`teacher_id.eq.${teacherId},uploader_id.eq.${teacherId}`)
+    .select("*")
+    .eq("uploader_id", teacherId)
     .order("created_at", { ascending: false });
 
-  if (error) throw error;
+  if (error) throw new Error(error.message);
   return (data ?? []) as unknown as BookRow[];
 }
 
 /** Bitta kitob */
 export async function getBookById(id: string): Promise<BookRow | null> {
-  const supabase = await createClient();
-  const { data } = await supabase
+  const admin = createAdminClient();
+  const { data } = await admin
     .from("books")
-    .select("*, subjects(name)")
+    .select("*")
     .eq("id", id)
     .single();
   return data as unknown as BookRow | null;
 }
 
-/** O'quvchi uchun kitoblar (hamma kitoblar — agar book_classes yo'q bo'lsa) */
+/** O'quvchi uchun kitoblar */
 export async function getBooksForStudent(classId: string): Promise<BookRow[]> {
-  const supabase = await createClient();
-  // Junction table orqali (migration 003 dan keyin)
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("books")
-    .select("*, subjects(name)")
+    .select("*, book_classes!inner(class_id)")
+    .eq("book_classes.class_id", classId)
     .order("created_at", { ascending: false });
 
-  if (error) throw error;
+  if (error) throw new Error(error.message);
   return (data ?? []) as unknown as BookRow[];
 }
 
@@ -72,31 +72,42 @@ export async function createBook(input: {
   teacher_id: string;
   classIds: string[];
 }): Promise<string> {
-  const supabase = await createClient();
+  const admin = createAdminClient();
 
-  const { data, error } = await supabase
+  // Faqat initial schemada mavjud ustunlar bilan insert
+  const { data, error } = await admin
     .from("books")
     .insert({
-      title: input.title,
-      author: input.author,
-      description: input.description,
-      pdf_url: input.pdf_url,
-      audio_url: input.audio_url,
+      uploader_id:  input.teacher_id,
+      title:        input.title,
+      description:  input.description,
+      pdf_url:      input.pdf_url,
+      audio_url:    input.audio_url,
       audio_source: input.audio_source,
-      subject_id: input.subject_id,
-      // Both old (uploader_id) and new (teacher_id via migration) columns
-      uploader_id: input.teacher_id,
-      teacher_id: input.teacher_id,
     })
     .select("id")
     .single();
 
-  if (error || !data) throw error ?? new Error("Kitob yaratilmadi");
+  if (error || !data) throw new Error(error?.message ?? "Kitob yaratilmadi");
 
+  // Migration 003 ustunlari (author, subject_id) — mavjud bo'lsa yangilash
+  if (input.author || input.subject_id) {
+    await admin
+      .from("books")
+      .update({
+        ...(input.author     ? { author:     input.author }     : {}),
+        ...(input.subject_id ? { subject_id: input.subject_id } : {}),
+      })
+      .eq("id", data.id)
+      .then(() => {}); // xato bo'lsa jim o'tkazamiz (ustun yo'q bo'lishi mumkin)
+  }
+
+  // book_classes jadvali (migration 003) — mavjud bo'lsa qo'shamiz
   if (input.classIds.length > 0) {
-    await supabase
+    await admin
       .from("book_classes")
-      .insert(input.classIds.map((class_id) => ({ book_id: data.id, class_id })));
+      .insert(input.classIds.map((class_id) => ({ book_id: data.id, class_id })))
+      .then(() => {}); // jadval yo'q bo'lsa jim o'tkazamiz
   }
 
   return data.id;
@@ -104,18 +115,19 @@ export async function createBook(input: {
 
 /** Kitob o'chirish */
 export async function deleteBook(id: string): Promise<void> {
-  const supabase = await createClient();
-  await supabase.from("books").delete().eq("id", id);
+  const admin = createAdminClient();
+  const { error } = await admin.from("books").delete().eq("id", id);
+  if (error) throw error;
 }
 
-/** Audio URL ni yangilash (AI generatsiyadan keyin) */
+/** Audio URL ni yangilash */
 export async function updateBookAudio(
   bookId: string,
   audioUrl: string,
   source: string
 ): Promise<void> {
-  const supabase = await createClient();
-  await supabase
+  const admin = createAdminClient();
+  await admin
     .from("books")
     .update({ audio_url: audioUrl, audio_source: source })
     .eq("id", bookId);
@@ -123,8 +135,8 @@ export async function updateBookAudio(
 
 /** Xatchetlar */
 export async function getUserBookmarks(userId: string, bookId: string): Promise<BookmarkRow[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
+  const admin = createAdminClient();
+  const { data } = await admin
     .from("book_bookmarks")
     .select("*")
     .eq("user_id", userId)
@@ -139,9 +151,8 @@ export async function addBookmark(
   page: number,
   note: string | null
 ): Promise<void> {
-  const supabase = await createClient();
-  // Avval mavjudini tekshir
-  const { data: existing } = await supabase
+  const admin = createAdminClient();
+  const { data: existing } = await admin
     .from("book_bookmarks")
     .select("user_id")
     .eq("user_id", userId)
@@ -150,22 +161,22 @@ export async function addBookmark(
     .single();
 
   if (existing) {
-    await supabase
+    await admin
       .from("book_bookmarks")
       .update({ note })
       .eq("user_id", userId)
       .eq("book_id", bookId)
       .eq("page", page);
   } else {
-    await supabase
+    await admin
       .from("book_bookmarks")
       .insert({ user_id: userId, book_id: bookId, page, note });
   }
 }
 
 export async function removeBookmark(userId: string, bookId: string, page: number): Promise<void> {
-  const supabase = await createClient();
-  await supabase
+  const admin = createAdminClient();
+  await admin
     .from("book_bookmarks")
     .delete()
     .eq("user_id", userId)

@@ -6,6 +6,8 @@ import { uz } from "@/lib/strings/uz";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookDeleteButton } from "./BookDeleteButton";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: `${uz.books.title} — I-Imkon.uz`,
 };
@@ -44,12 +46,6 @@ export default async function TeacherBooksPage() {
                     <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                       {book.pdf_url && <span>📄 PDF</span>}
                       {book.audio_url && <span>🔊 Audio</span>}
-                      {book.subjects && (
-                        <span>📚 {Array.isArray(book.subjects)
-                          ? (book.subjects[0] as { name: string })?.name
-                          : (book.subjects as { name: string }).name}
-                        </span>
-                      )}
                     </div>
                     <h2 className="font-medium">{book.title}</h2>
                     {book.author && (

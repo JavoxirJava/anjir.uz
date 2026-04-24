@@ -15,6 +15,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface Subject { id: string; name: string }
 interface ClassItem { id: string; grade: number; letter: string }
 
+type AudioMode = "none" | "upload" | "ai";
+
 export function NewBookForm({
   subjects,
   classes,
@@ -27,6 +29,7 @@ export function NewBookForm({
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [pdfUrl, setPdfUrl] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
+  const [audioMode, setAudioMode] = useState<AudioMode>("none");
 
   function toggleClass(id: string) {
     setSelectedClasses((prev) =>
@@ -38,13 +41,18 @@ export function NewBookForm({
     e.preventDefault();
     if (!pdfUrl) { toast.error("PDF fayl yuklang"); return; }
     if (selectedClasses.length === 0) { toast.error("Kamida 1 ta sinf tanlang"); return; }
+    if (audioMode === "upload" && !audioUrl) { toast.error("Audio fayl yuklang yoki 'AI yaratsin' tanlang"); return; }
 
     const fd = new FormData(e.currentTarget);
     fd.append("pdf_url", pdfUrl);
-    if (audioUrl) {
+
+    if (audioMode === "upload" && audioUrl) {
       fd.append("audio_url", audioUrl);
       fd.append("audio_source", "uploaded");
+    } else if (audioMode === "ai") {
+      fd.append("audio_source", "google_tts");
     }
+
     selectedClasses.forEach((c) => fd.append("classIds", c));
 
     startTransition(async () => {
@@ -52,7 +60,7 @@ export function NewBookForm({
       if (result?.error) {
         toast.error(result.error);
       } else {
-        toast.success("Kitob qo'shildi!");
+        toast.success("Kitob qo'shildi! 🎉");
         router.push("/teacher/books");
       }
     });
@@ -60,6 +68,7 @@ export function NewBookForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+      {/* Asosiy ma'lumotlar */}
       <Card>
         <CardHeader>
           <CardTitle>Kitob ma&apos;lumotlari</CardTitle>
@@ -116,6 +125,7 @@ export function NewBookForm({
         </CardContent>
       </Card>
 
+      {/* PDF */}
       <Card>
         <CardHeader>
           <CardTitle>PDF fayl *</CardTitle>
@@ -134,23 +144,97 @@ export function NewBookForm({
         </CardContent>
       </Card>
 
+      {/* Audio */}
       <Card>
         <CardHeader>
-          <CardTitle>Audio fayl (ixtiyoriy)</CardTitle>
+          <CardTitle>Audio</CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-3">
-            Audio bo&apos;lmasa, o&apos;quvchilar brauzerning ovozli o&apos;qish xususiyatidan foydalanadi.
-          </p>
-          <FileUploadField
-            label="Audio fayl yuklang (MP3, WAV, OGG)"
-            accept=".mp3,.wav,.ogg"
-            maxSizeMb={200}
-            onUploaded={(url) => setAudioUrl(url)}
-            folder="books-audio"
-          />
-          {audioUrl && (
-            <p className="text-xs text-green-600 mt-2">✓ Audio yuklandi</p>
+        <CardContent className="space-y-4">
+          {/* Rejim tanlash */}
+          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Audio rejimi">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={audioMode === "none"}
+              onClick={() => setAudioMode("none")}
+              className={`rounded-lg border-2 p-3 text-center text-sm transition-colors focus-visible:outline-2 ${
+                audioMode === "none"
+                  ? "border-primary bg-primary/5 font-medium"
+                  : "border-border hover:border-primary/40"
+              }`}
+            >
+              <div className="text-xl mb-1" aria-hidden="true">🔇</div>
+              <div className="font-medium text-xs">Audiosiz</div>
+              <div className="text-xs text-muted-foreground mt-0.5">Brauzer ovozi</div>
+            </button>
+
+            <button
+              type="button"
+              role="radio"
+              aria-checked={audioMode === "upload"}
+              onClick={() => setAudioMode("upload")}
+              className={`rounded-lg border-2 p-3 text-center text-sm transition-colors focus-visible:outline-2 ${
+                audioMode === "upload"
+                  ? "border-primary bg-primary/5 font-medium"
+                  : "border-border hover:border-primary/40"
+              }`}
+            >
+              <div className="text-xl mb-1" aria-hidden="true">📁</div>
+              <div className="font-medium text-xs">O&apos;zim yuklayman</div>
+              <div className="text-xs text-muted-foreground mt-0.5">MP3, WAV, OGG</div>
+            </button>
+
+            <button
+              type="button"
+              role="radio"
+              aria-checked={audioMode === "ai"}
+              onClick={() => setAudioMode("ai")}
+              className={`rounded-lg border-2 p-3 text-center text-sm transition-colors focus-visible:outline-2 ${
+                audioMode === "ai"
+                  ? "border-primary bg-primary/5 font-medium"
+                  : "border-border hover:border-primary/40"
+              }`}
+            >
+              <div className="text-xl mb-1" aria-hidden="true">🤖</div>
+              <div className="font-medium text-xs">AI yaratsin</div>
+              <div className="text-xs text-muted-foreground mt-0.5">Avtomatik</div>
+            </button>
+          </div>
+
+          {/* Audiosiz */}
+          {audioMode === "none" && (
+            <div className="rounded-lg bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
+              O&apos;quvchilar kitobni o&apos;qiyotganda brauzerning o&apos;rnatilgan ovoz xususiyatidan foydalanadi.
+            </div>
+          )}
+
+          {/* O'zim yuklayman */}
+          {audioMode === "upload" && (
+            <div className="space-y-2">
+              <FileUploadField
+                label="Audio fayl yuklang (MP3, WAV, OGG)"
+                accept=".mp3,.wav,.ogg"
+                maxSizeMb={200}
+                onUploaded={(url) => setAudioUrl(url)}
+                folder="books-audio"
+              />
+              {audioUrl && (
+                <p className="text-xs text-green-600">✓ Audio yuklandi</p>
+              )}
+            </div>
+          )}
+
+          {/* AI yaratsin */}
+          {audioMode === "ai" && (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 space-y-1.5">
+              <div className="flex items-center gap-2 font-medium text-sm">
+                <span>🤖</span> AI audio yaratish
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Kitob saqlanganidan so&apos;ng kitoblar ro&apos;yxatida <strong>&quot;AI Audio yaratish&quot;</strong> tugmasi paydo bo&apos;ladi.
+                Tugmani bosish bilan AI kitob matnini o&apos;qib, audio fayl yaratadi.
+              </p>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -160,7 +244,9 @@ export function NewBookForm({
           {uz.common.cancel}
         </Button>
         <Button type="submit" disabled={isPending || !pdfUrl} aria-busy={isPending}>
-          {isPending ? uz.common.loading : "Kitob qo'shish"}
+          {isPending
+            ? (audioMode === "ai" ? "🤖 Audio yaratilmoqda..." : uz.common.loading)
+            : "Kitob qo'shish"}
         </Button>
       </div>
     </form>

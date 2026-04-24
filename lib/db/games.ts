@@ -15,10 +15,9 @@ export interface GameAttemptRow {
   id: string;
   game_id: string;
   student_id: string;
-  score: number | null;
-  duration_sec: number | null;
-  finished_at: string | null;
-  created_at: string;
+  score: number;
+  duration: number;
+  completed_at: string;
 }
 
 /** O'qituvchi o'yinlari */
@@ -124,9 +123,14 @@ export async function finishGameAttempt(
   const admin = createAdminClient();
   const { error } = await admin
     .from("game_attempts")
-    .update({ score, duration_sec: durationSec, finished_at: new Date().toISOString() })
+    .update({
+      score,
+      duration:     durationSec,
+      completed_at: new Date().toISOString(),
+    })
     .eq("id", attemptId);
-  if (error) throw error;
+
+  if (error) throw new Error(error.message);
 }
 
 /** O'quvchining o'yin urinishlari */
@@ -140,8 +144,8 @@ export async function getStudentGameAttempts(
     .select("*")
     .eq("student_id", studentId)
     .eq("game_id", gameId)
-    .order("created_at", { ascending: false });
+    .order("completed_at", { ascending: false });
 
-  if (error) throw error;
+  if (error) throw new Error(error.message);
   return (data ?? []) as GameAttemptRow[];
 }
