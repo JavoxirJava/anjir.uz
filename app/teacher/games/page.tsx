@@ -1,6 +1,6 @@
+import { getCurrentUser } from "@/lib/api/auth";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { getGamesByTeacher } from "@/lib/db/games";
 import { uz } from "@/lib/strings/uz";
 import { Badge } from "@/components/ui/badge";
@@ -26,8 +26,7 @@ const TYPE_EMOJI: Record<string, string> = {
 };
 
 export default async function TeacherGamesPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   const games = await getGamesByTeacher(user!.id);
 
   return (

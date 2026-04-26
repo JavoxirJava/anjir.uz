@@ -1,6 +1,6 @@
+import { getCurrentUser } from "@/lib/api/auth";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { getBooksByTeacher } from "@/lib/db/books";
 import { uz } from "@/lib/strings/uz";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,8 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TeacherBooksPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   const books = await getBooksByTeacher(user!.id);
 
   return (

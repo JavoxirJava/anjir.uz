@@ -1,7 +1,8 @@
+import { getCurrentUser } from "@/lib/api/auth";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { apiGet } from "@/lib/api/server";
 import { getBooksForStudent } from "@/lib/db/books";
 import { uz } from "@/lib/strings/uz";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,16 +13,10 @@ export const metadata: Metadata = {
 };
 
 export default async function StudentBooksPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("student_profiles")
-    .select("class_id")
-    .eq("user_id", user.id)
-    .single();
-
+  const profile = await apiGet<{ class_id: string | null } | null>("/students/me").catch(() => null);
   const books = profile?.class_id ? await getBooksForStudent(profile.class_id) : [];
 
   return (

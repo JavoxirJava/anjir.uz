@@ -1,7 +1,7 @@
 "use server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { apiPost, apiPut, apiDelete } from "@/lib/api/server";
 
 const phoneRegex = /^\+998[0-9]{9}$/;
 
@@ -25,94 +25,67 @@ export async function createDirectorAction(formData: FormData) {
   const parsed = directorSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-  const admin = createAdminClient();
-
-  // 1. auth.users da yaratish
-  const { data: authData, error: authError } = await admin.auth.admin.createUser({
-    email: `${parsed.data.phone}@anjir.internal`,
-    password: parsed.data.password,
-    email_confirm: true,
-  });
-
-  if (authError || !authData.user) {
-    if (authError?.message.includes("already registered")) {
-      return { error: "Bu telefon raqam allaqachon ro'yxatdan o'tgan" };
-    }
-    return { error: authError?.message ?? "Xatolik yuz berdi" };
-  }
-
-  const userId = authData.user.id;
-
-  // 2. public.users ga yozish — status: active (admin yaratadi)
-  const { error: userError } = await admin.from("users").insert({
-    id: userId,
-    phone: parsed.data.phone,
-    first_name: parsed.data.firstName,
-    last_name: parsed.data.lastName,
-    role: "director",
-    status: "active",
-  });
-
-  if (userError) {
-    if (userError.code === "23505") return { error: "Bu telefon raqam allaqachon ro'yxatdan o'tgan" };
-    return { error: userError.message };
-  }
-
-  // 3. Maktabga direktor sifatida biriktirish
-  if (parsed.data.schoolId) {
-    await admin
-      .from("schools")
-      .update({ director_id: userId })
-      .eq("id", parsed.data.schoolId);
+  try {
+    await apiPost("/users", {
+      first_name: parsed.data.firstName,
+      last_name:  parsed.data.lastName,
+      phone:      parsed.data.phone,
+      password:   parsed.data.password,
+      role:       "director",
+      school_id:  parsed.data.schoolId || undefined,
+    });
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Xatolik yuz berdi" };
   }
 
   revalidatePath("/admin/directors");
   return { success: true };
 }
 
-// =============================================================
-// SUBJECTS (fanlar)
-// =============================================================
-
 export async function addSubjectAction(name: string) {
   if (!name.trim()) return { error: "Fan nomi kiritilishi shart" };
-  const admin = createAdminClient();
-  const { error } = await admin.from("subjects").insert({ name: name.trim() });
-  if (error) return { error: error.message };
+  try {
+    await apiPost("/subjects", { name: name.trim() });
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Xatolik" };
+  }
   revalidatePath("/admin/subjects");
   return { success: true };
 }
 
 export async function updateSubjectAction(id: string, name: string) {
   if (!name.trim()) return { error: "Fan nomi bo'sh bo'lishi mumkin emas" };
-  const admin = createAdminClient();
-  const { error } = await admin.from("subjects").update({ name: name.trim() }).eq("id", id);
-  if (error) return { error: error.message };
+  try {
+    await apiPut(`/subjects/${id}`, { name: name.trim() });
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Xatolik" };
+  }
   revalidatePath("/admin/subjects");
   return { success: true };
 }
 
 export async function deleteSubjectAction(id: string) {
-  const admin = createAdminClient();
-  const { error } = await admin.from("subjects").delete().eq("id", id);
-  if (error) return { error: error.message };
+  try {
+    await apiDelete(`/subjects/${id}`);
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Xatolik" };
+  }
   revalidatePath("/admin/subjects");
   return { success: true };
 }
 
 export async function approveUserAction(userId: string) {
-  const admin = createAdminClient();
-  await admin.from("users").update({ status: "active" }).eq("id", userId);
+  try {
+    await apiPut(`/users/${userId}/status`, { status: "active" });
+  } catch { /* ignore */ }
   revalidatePath("/admin/users");
   return { success: true };
 }
 
 export async function rejectUserAction(userId: string, reason?: string) {
-  const admin = createAdminClient();
-  await admin.from("users").update({ status: "rejected" }).eq("id", userId);
-  if (reason) {
-    await admin.from("student_profiles").update({ rejection_reason: reason }).eq("user_id", userId);
-  }
+  try {
+    await apiPut(`/users/${userId}/status`, { status: "rejected", rejection_reason: reason });
+  } catch { /* ignore */ }
   revalidatePath("/admin/users");
   return { success: true };
 }

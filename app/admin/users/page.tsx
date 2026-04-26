@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/api/auth";
+import { apiGet } from "@/lib/api/server";
 import { uz } from "@/lib/strings/uz";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,20 +18,19 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export default async function AdminUsersPage() {
-  const supabase = await createClient();
+  const user = await getCurrentUser();
+  if (!user) return null;
 
-  const { data: users } = await supabase
-    .from("users")
-    .select("id, first_name, last_name, role, status, created_at")
-    .order("created_at", { ascending: false })
-    .limit(200);
+  const users = await apiGet<{
+    id: string; first_name: string; last_name: string; role: string; status: string; created_at: string;
+  }[]>("/users").catch(() => []);
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{uz.admin.users}</h1>
 
       <ul className="space-y-2" role="list" aria-label={uz.admin.users}>
-        {(users ?? []).map((u: {
+        {users.map((u: {
           id: string;
           first_name: string;
           last_name: string;

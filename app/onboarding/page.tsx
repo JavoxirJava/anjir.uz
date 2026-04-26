@@ -1,23 +1,18 @@
 export const dynamic = "force-dynamic";
 
-import { createAdminClient } from "@/lib/supabase/admin";
+import { apiGet } from "@/lib/api/server";
 import { OnboardingFlow } from "./OnboardingFlow";
 
+const ONBOARDING_TEST_ID = "10000000-0000-0000-0000-000000000001";
+
 export default async function OnboardingPage() {
-  const admin = createAdminClient();
+  const rawTest = await apiGet<{ id: string; title: string; description: string | null; time_limit: number | null } | null>(
+    `/tests/${ONBOARDING_TEST_ID}`
+  ).catch(() => null);
 
-  // Kirish testini va savollarni ol
-  const { data: test } = await admin
-    .from("tests")
-    .select("id, title, description, time_limit")
-    .eq("id", "10000000-0000-0000-0000-000000000001")
-    .single();
+  const test = rawTest
+    ? { ...rawTest, description: rawTest.description ?? "", time_limit: rawTest.time_limit ?? 0 }
+    : null;
 
-  const { data: questions } = await admin
-    .from("questions")
-    .select("id, question_text, question_type, points, order, question_options(id, option_text, is_correct)")
-    .eq("test_id", "10000000-0000-0000-0000-000000000001")
-    .order("order");
-
-  return <OnboardingFlow test={test} questions={questions ?? []} />;
+  return <OnboardingFlow test={test} questions={[]} />;
 }

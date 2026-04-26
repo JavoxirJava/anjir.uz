@@ -5,7 +5,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { registerAction } from "@/app/actions/auth";
 import { uz } from "@/lib/strings/uz";
-import { createClient } from "@/lib/supabase/client";
+import { apiGet } from "@/lib/api/browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,17 +63,9 @@ export function RegisterForm({ schools }: Props) {
       return;
     }
     setLoadingClasses(true);
-    const supabase = createClient();
-    supabase
-      .from("classes")
-      .select("id, grade, letter")
-      .eq("school_id", activeSchoolId)
-      .order("grade")
-      .order("letter")
-      .then(({ data }) => {
-        setClasses(data ?? []);
-        setLoadingClasses(false);
-      });
+    apiGet<ClassItem[]>(`/classes?school_id=${activeSchoolId}`)
+      .then((data) => { setClasses(data); setLoadingClasses(false); })
+      .catch(() => { setClasses([]); setLoadingClasses(false); });
   }, [activeSchoolId]);
 
   function handleRoleChange(newRole: Role) {

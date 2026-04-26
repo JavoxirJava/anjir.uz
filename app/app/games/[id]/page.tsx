@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/api/auth";
 import { getGameById, createGameAttempt, getStudentGameAttempts } from "@/lib/db/games";
 import { uz } from "@/lib/strings/uz";
 import { Badge } from "@/components/ui/badge";
@@ -28,8 +28,7 @@ const TYPE_EMOJI: Record<string, string> = {
 
 export default async function StudentGamePage({ params }: Props) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const game = await getGameById(id);
@@ -58,7 +57,7 @@ export default async function StudentGamePage({ params }: Props) {
         game={{
           id: game.id,
           title: game.title,
-          game_type: game.template_type,
+          game_type: game.template_type as "word_match" | "ordering" | "memory",
           data: game.content_json,
         }}
         attemptId={attemptId}

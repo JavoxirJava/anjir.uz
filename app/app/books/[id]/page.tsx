@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/api/auth";
 import { getBookById, getUserBookmarks } from "@/lib/db/books";
 import { uz } from "@/lib/strings/uz";
 import { Badge } from "@/components/ui/badge";
@@ -16,8 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function StudentBookPage({ params }: Props) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const book = await getBookById(id);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/api/auth";
 import { uploadToR2, generateKey } from "@/lib/storage/r2";
 
 /**
@@ -10,8 +10,7 @@ import { uploadToR2, generateKey } from "@/lib/storage/r2";
  * va R2 ga saqlaydi.
  */
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
 
   const { audioUrl, lectureId } = await req.json() as {
@@ -63,11 +62,10 @@ export async function POST(req: NextRequest) {
   );
 
   // DB ga yozamiz
-  await supabase.from("lecture_subtitles").upsert({
-    lecture_id: lectureId,
-    vtt_url: vttUrl,
-    language: "uz",
-    source: "ai",
+  await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/lectures/${lectureId}/subtitles`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ vtt_url: vttUrl, language: "uz", source: "ai" }),
   });
 
   return NextResponse.json({ vttUrl });

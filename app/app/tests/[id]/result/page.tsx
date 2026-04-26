@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/api/auth";
+import { apiGet } from "@/lib/api/server";
+import { redirect } from "next/navigation";
 import { uz } from "@/lib/strings/uz";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -11,58 +13,47 @@ interface Props {
   searchParams: Promise<{ attemptId?: string; score?: string }>;
 }
 
+interface AttemptData {
+  score: number | null;
+  finished_at: string | null;
+}
+
+interface TestData {
+  title: string;
+  max_attempts: number | null;
+  attempts: AttemptData[];
+}
+
+function getGrade(s: number) {
+  if (s >= 86) return { label: "A'lo", color: "text-green-600", emoji: "🏆" };
+  if (s >= 71) return { label: "Yaxshi", color: "text-blue-600", emoji: "⭐" };
+  if (s >= 56) return { label: "Qoniqarli", color: "text-yellow-600", emoji: "👍" };
+  return { label: "Qoniqarsiz", color: "text-destructive", emoji: "📚" };
+}
+
 export default async function TestResultPage({ params, searchParams }: Props) {
   const { id } = await params;
-  const { attemptId, score: scoreParam } = await searchParams;
-  const supabase = await createClient();
+  const { score: scoreParam } = await searchParams;
 
-  // So'nggi attempt natijasi
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  const testData = await apiGet<TestData>(`/tests/${id}/result?student_id=${user.id}`).catch(() => null);
+
   let score = scoreParam ? parseInt(scoreParam) : null;
-  let attemptData: { score: number | null; finished_at: string | null } | null = null;
-
-  if (attemptId) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any)
-      .from("test_attempts")
-      .select("score, finished_at")
-      .eq("id", attemptId)
-      .single() as { data: { score: number | null; finished_at: string | null } | null };
-    attemptData = data;
-    if (attemptData?.score !== undefined && attemptData.score !== null) {
-      score = Math.round(attemptData.score);
-    }
+  if (score === null && testData?.attempts?.length) {
+    const last = testData.attempts[0];
+    if (last.score !== null) score = Math.round(last.score);
   }
 
-  const { data: testData } = await supabase
-    .from("tests")
-    .select("title, max_attempts")
-    .eq("id", id)
-    .single();
-
-  const { data: allAttempts } = await supabase
-    .from("test_attempts")
-    .select("score, finished_at")
-    .eq("test_id", id)
-    .not("finished_at", "is", null)
-    .order("finished_at", { ascending: false });
-
-  const completedAttempts = (allAttempts ?? []) as { score: number | null; finished_at: string | null }[];
-
-  const getGrade = (s: number) => {
-    if (s >= 86) return { label: "A'lo", color: "text-green-600", emoji: "🏆" };
-    if (s >= 71) return { label: "Yaxshi", color: "text-blue-600", emoji: "⭐" };
-    if (s >= 56) return { label: "Qoniqarli", color: "text-yellow-600", emoji: "👍" };
-    return { label: "Qoniqarsiz", color: "text-destructive", emoji: "📚" };
-  };
-
   const grade = score !== null ? getGrade(score) : null;
-  const maxAttempts = (testData as { max_attempts?: number | null } | null)?.max_attempts;
+  const completedAttempts = testData?.attempts ?? [];
+  const maxAttempts = testData?.max_attempts ?? null;
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
       <h1 className="text-2xl font-bold">{uz.student.result}</h1>
 
-      {/* Asosiy natija */}
       <Card>
         <CardHeader className="text-center pb-2">
           <div className="text-5xl mb-2" aria-hidden="true">{grade?.emoji ?? "📊"}</div>
@@ -76,7 +67,7 @@ export default async function TestResultPage({ params, searchParams }: Props) {
           )}
         </CardHeader>
         <CardContent className="text-center space-y-2">
-          <p className="font-medium text-lg">{(testData as { title?: string } | null)?.title}</p>
+          <p className="font-medium text-lg">{testData?.title}</p>
           <p className="text-sm text-muted-foreground">
             {completedAttempts.length} ta urinish
             {maxAttempts ? ` (${maxAttempts} ta ruxsat)` : ""}
@@ -84,7 +75,6 @@ export default async function TestResultPage({ params, searchParams }: Props) {
         </CardContent>
       </Card>
 
-      {/* Urinishlar tarixi */}
       {completedAttempts.length > 1 && (
         <Card>
           <CardHeader>
@@ -94,9 +84,7 @@ export default async function TestResultPage({ params, searchParams }: Props) {
             <ul className="space-y-2" role="list" aria-label="Urinishlar tarixi">
               {completedAttempts.slice(0, 5).map((a, i) => (
                 <li key={i} className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    {i + 1}-urinish
-                  </span>
+                  <span className="text-muted-foreground">{i + 1}-urinish</span>
                   <span className="font-medium">
                     {a.score !== null ? `${Math.round(a.score)}%` : "—"}
                   </span>
@@ -107,7 +95,6 @@ export default async function TestResultPage({ params, searchParams }: Props) {
         </Card>
       )}
 
-      {/* Harakatlar */}
       <div className="flex flex-col gap-3">
         {(!maxAttempts || completedAttempts.length < maxAttempts) && (
           <Link

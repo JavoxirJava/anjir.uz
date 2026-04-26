@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/api/auth";
 import { getLectureById } from "@/lib/db/lectures";
 import { PdfViewer } from "@/components/lectures/PdfViewer";
 import { VideoPlayer } from "@/components/lectures/VideoPlayer";
@@ -22,8 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function LecturePage({ params }: Props) {
   const { id } = await params;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const lecture = await getLectureById(id);
@@ -57,15 +56,15 @@ export default async function LecturePage({ params }: Props) {
       {/* Kontent */}
       <section aria-label="Ma'ruza kontenti">
         {lecture.content_type === "pdf" || lecture.content_type === "ppt" ? (
-          <PdfViewer src={lecture.file_url} title={lecture.title} />
+          <PdfViewer src={lecture.file_url ?? ""} title={lecture.title} />
         ) : lecture.content_type === "video" ? (
           <VideoPlayer
-            src={lecture.file_url}
+            src={lecture.file_url ?? ""}
             title={lecture.title}
             subtitleUrl={subtitle?.vtt_url}
           />
         ) : (
-          <AudioPlayer src={lecture.file_url} title={lecture.title} />
+          <AudioPlayer src={lecture.file_url ?? ""} title={lecture.title} />
         )}
       </section>
 

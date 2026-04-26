@@ -1,5 +1,5 @@
+import { apiGet } from "@/lib/api/server";
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
 import { uz } from "@/lib/strings/uz";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -7,16 +7,10 @@ export const metadata: Metadata = {
   title: `${uz.director.subjects} — I-Imkon.uz`,
 };
 
+type Subject = { id: string; name: string; description: string | null };
+
 export default async function DirectorSubjectsPage() {
-  const supabase = await createClient();
-
-  // Global fanlar ro'yxati (admin tomonidan kiritilgan)
-  const { data: subjects } = await supabase
-    .from("subjects")
-    .select("id, name, description")
-    .order("name");
-
-  type Subject = { id: string; name: string; description: string | null };
+  const subjects = await apiGet<Subject[]>("/subjects").catch(() => []);
 
   return (
     <div className="space-y-6">
@@ -27,11 +21,11 @@ export default async function DirectorSubjectsPage() {
         </p>
       </div>
 
-      {(subjects ?? []).length === 0 ? (
+      {subjects.length === 0 ? (
         <p className="text-muted-foreground">{uz.common.noData}</p>
       ) : (
         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3" role="list">
-          {(subjects as Subject[]).map((s) => (
+          {subjects.map((s) => (
             <li key={s.id}>
               <Card>
                 <CardContent className="pt-4 pb-4">

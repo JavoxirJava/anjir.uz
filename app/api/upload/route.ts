@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/api/auth";
 import { generateKey, uploadToR2, validateFile, type AllowedContentType } from "@/lib/storage/r2";
 
 // App Router route handler — body size Node.js darajasida chegaralanadi
@@ -13,9 +13,7 @@ export const dynamic = "force-dynamic";
  * Fayl server orqali to'g'ridan-to'g'ri R2 ga yuklanadi (CORS muammosi yo'q).
  */
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
+  const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
   }

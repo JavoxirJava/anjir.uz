@@ -1,6 +1,6 @@
+import { getCurrentUser } from "@/lib/api/auth";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { getTestsByTeacher } from "@/lib/db/tests";
 import { uz } from "@/lib/strings/uz";
 import { Badge } from "@/components/ui/badge";
@@ -20,8 +20,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export default async function TeacherTestsPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   const tests = await getTestsByTeacher(user!.id);
 
   return (

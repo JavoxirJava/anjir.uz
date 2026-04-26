@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/api/auth";
 import { getAssignmentById, getStudentSubmission } from "@/lib/db/assignments";
 import { uz } from "@/lib/strings/uz";
 import { Badge } from "@/components/ui/badge";
@@ -24,8 +24,7 @@ function formatDate(iso: string | null) {
 
 export default async function StudentAssignmentPage({ params }: Props) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const assignment = await getAssignmentById(id);
@@ -51,7 +50,7 @@ export default async function StudentAssignmentPage({ params }: Props) {
           <span>⭐ Maksimal ball: {assignment.max_score}</span>
           {dueDate && (
             <span className={isOverdue && !submission ? "text-destructive font-medium" : ""}>
-              📅 Muddat: {formatDate(assignment.due_date)}
+              📅 Muddat: {formatDate(assignment.due_date ?? null)}
               {isOverdue && !submission ? " (o'tib ketdi!)" : ""}
             </span>
           )}

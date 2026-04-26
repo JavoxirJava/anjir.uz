@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/api/auth";
+import { apiGet } from "@/lib/api/server";
 import { redirect } from "next/navigation";
 import { uz } from "@/lib/strings/uz";
 import { Button } from "@/components/ui/button";
@@ -12,35 +13,18 @@ export const metadata: Metadata = {
 };
 
 export default async function PendingPage() {
-  const supabase = await createClient();
+  const userData = await getCurrentUser();
+  if (!userData) redirect("/login");
+  if (userData.status === "active") redirect("/app");
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const isRejected = userData.status === "rejected";
 
-  if (!user) redirect("/login");
-
-  const { data: userData } = await supabase
-    .from("users")
-    .select("status, first_name")
-    .eq("id", user.id)
-    .single();
-
-  if (userData?.status === "active") {
-    redirect("/app");
-  }
-
-  const isRejected = userData?.status === "rejected";
-
-  // Rad etilish sababini olish
   let rejectionReason: string | null = null;
   if (isRejected) {
-    const { data: profile } = await supabase
-      .from("student_profiles")
-      .select("rejection_reason")
-      .eq("user_id", user.id)
-      .single();
-    rejectionReason = profile?.rejection_reason ?? null;
+    try {
+      const profile = await apiGet<{ rejection_reason: string | null }>("/students/me");
+      rejectionReason = profile?.rejection_reason ?? null;
+    } catch { /* ignore */ }
   }
 
   return (

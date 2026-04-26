@@ -1,6 +1,7 @@
+import { getCurrentUser } from "@/lib/api/auth";
+import { apiGet } from "@/lib/api/server";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { getTestById } from "@/lib/db/tests";
 import type { TestInput } from "@/lib/validations/test";
 import { TestEditForm } from "./TestEditForm";
@@ -13,19 +14,17 @@ interface Props {
 
 export default async function EditTestPage({ params }: Props) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const [test, { data: subjects }, { data: classes }] = await Promise.all([
+  const [test, sac] = await Promise.all([
     getTestById(id),
-    supabase.from("subjects").select("id, name").order("name"),
-    supabase
-      .from("classes")
-      .select("id, grade, letter")
-      .order("grade")
-      .order("letter"),
+    apiGet<{ subjects: { id: string; name: string }[]; classes: { id: string; grade: number; letter: string }[] }>(
+      `/teachers/${user.id}/subjects-and-classes`
+    ).catch(() => ({ subjects: [], classes: [] })),
   ]);
+  const subjectsList = sac.subjects;
+  const classesList = sac.classes;
 
   if (!test || test.teacher_id !== user.id) notFound();
 
@@ -48,8 +47,8 @@ export default async function EditTestPage({ params }: Props) {
     title: test.title,
     description: test.description ?? "",
     subjectId: test.subject_id ?? "",
-    classIds: (test.test_classes ?? []).map((tc) => tc.class_id),
-    testType: test.test_type,
+    classIds: (test.test_classes as { class_id: string }[] ?? []).map((tc) => tc.class_id),
+    testType: test.test_type as "entry" | "post_topic" | "home_study",
     timeLimit: test.time_limit ?? null,
     maxAttempts: test.max_attempts ?? null,
     questions: (test.questions as QuestionRow[]).map((q) => ({
@@ -78,8 +77,8 @@ export default async function EditTestPage({ params }: Props) {
       <TestEditForm
         testId={id}
         initialValues={initialValues}
-        subjects={(subjects ?? []) as SubjectRow[]}
-        classes={(classes ?? []) as ClassRow[]}
+        subjects={subjectsList as SubjectRow[]}
+        classes={classesList as ClassRow[]}
       />
     </div>
   );

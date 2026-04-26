@@ -1,5 +1,5 @@
+import { getCurrentUser } from "@/lib/api/auth";
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
 import { getTeacherSubjectsAndClasses } from "@/lib/db/teacher-assignments";
 import { uz } from "@/lib/strings/uz";
 import { NewAssignmentForm } from "./NewAssignmentForm";
@@ -11,8 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function NewAssignmentPage() {
-  const authClient = await createClient();
-  const { data: { user } } = await authClient.auth.getUser();
+  const user = await getCurrentUser();
 
   const { subjects, classes } = await getTeacherSubjectsAndClasses(user!.id);
 

@@ -1,6 +1,6 @@
+import { getCurrentUser } from "@/lib/api/auth";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { getBookById } from "@/lib/db/books";
 import { getTeacherSubjectsAndClasses } from "@/lib/db/teacher-assignments";
 import { EditBookForm } from "./EditBookForm";
@@ -13,8 +13,7 @@ export const metadata: Metadata = {
 
 export default async function EditBookPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const authClient = await createClient();
-  const { data: { user } } = await authClient.auth.getUser();
+  const user = await getCurrentUser();
 
   const [book, { subjects, classes }] = await Promise.all([
     getBookById(id),

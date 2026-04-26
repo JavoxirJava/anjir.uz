@@ -1,5 +1,6 @@
+import { getCurrentUser } from "@/lib/api/auth";
+import { apiGet } from "@/lib/api/server";
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
 import { uz } from "@/lib/strings/uz";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -7,86 +8,49 @@ export const metadata: Metadata = {
   title: `${uz.teacher.analytics} — I-Imkon.uz`,
 };
 
+type AnalyticsData = {
+  students: number;
+  tests: number;
+  lectures: number;
+  avg_score: number | null;
+  attempts_by_day: { day: string; count: number }[];
+  score_distribution: { label: string; count: number; pct: number }[];
+  total_attempts: number;
+};
+
 export default async function TeacherAnalyticsPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
+  if (!user) return null;
 
-  // O'quvchilar soni (teacher assignments orqali)
-  const { data: assignments } = await supabase
-    .from("teacher_assignments")
-    .select("class_id")
-    .eq("teacher_id", user!.id);
-
-  const classIds = [...new Set((assignments ?? []).map((a: { class_id: string }) => a.class_id))];
-
-  const { count: studentCount } = await supabase
-    .from("student_profiles")
-    .select("*", { count: "exact", head: true })
-    .in("class_id", classIds.length > 0 ? classIds : ["__none__"]);
-
-  // Testlar soni
-  const { count: testCount } = await supabase
-    .from("tests")
-    .select("*", { count: "exact", head: true })
-    .eq("teacher_id", user!.id);
-
-  // Test urinishlari (tugallangan) — teacher_id yo'q, tests orqali join
-  const teacherTestIds = testCount && testCount > 0
-    ? (await supabase
-        .from("tests")
-        .select("id")
-        .eq("teacher_id", user!.id)
-        .then(({ data }) => (data ?? []).map((t: { id: string }) => t.id)))
-    : [];
-
-  const { data: attempts } = teacherTestIds.length > 0
-    ? await supabase
-        .from("test_attempts")
-        .select("score, finished_at")
-        .in("test_id", teacherTestIds)
-        .not("finished_at", "is", null)
-        .limit(1000)
-    : { data: [] };
-
-  // Lectures soni
-  const { count: lectureCount } = await supabase
-    .from("lectures")
-    .select("*", { count: "exact", head: true })
-    .eq("creator_id", user!.id);
-
-  // O'rtacha ball
-  const validAttempts = (attempts ?? []).filter((a: { score: number | null }) => a.score !== null);
-  const avgScore = validAttempts.length > 0
-    ? Math.round(validAttempts.reduce((sum: number, a: { score: number | null }) => sum + (a.score ?? 0), 0) / validAttempts.length)
-    : null;
-
-  // So'nggi 7 kun testlar
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    return d.toISOString().split("T")[0];
-  });
-
-  const attemptsByDay = last7Days.map((day) => ({
-    day: day.slice(5), // MM-DD
-    count: (attempts ?? []).filter((a: { finished_at: string | null }) =>
-      a.finished_at?.startsWith(day)
-    ).length,
+  const data = await apiGet<AnalyticsData>(`/teachers/${user.id}/analytics`).catch(() => ({
+    students: 0,
+    tests: 0,
+    lectures: 0,
+    avg_score: null,
+    attempts_by_day: [],
+    score_distribution: [],
+    total_attempts: 0,
   }));
 
-  const maxCount = Math.max(...attemptsByDay.map((d) => d.count), 1);
+  const maxCount = Math.max(...data.attempts_by_day.map((d) => d.count), 1);
+
+  const colorMap: Record<string, string> = {
+    "A'lo (86–100%)": "bg-green-500",
+    "Yaxshi (71–85%)": "bg-blue-500",
+    "Qoniqarli (56–70%)": "bg-yellow-500",
+    "Qoniqarsiz (0–55%)": "bg-red-500",
+  };
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{uz.teacher.analytics}</h1>
 
-      {/* Umumiy statistikalar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: "O'quvchilar", value: studentCount ?? 0, icon: "👥" },
-          { label: "Testlar",     value: testCount ?? 0,    icon: "📝" },
-          { label: "Ma'ruzalar",  value: lectureCount ?? 0, icon: "📚" },
-          { label: "O'rtacha ball", value: avgScore !== null ? `${avgScore}%` : "—", icon: "📊" },
+          { label: "O'quvchilar",   value: data.students,  icon: "👥" },
+          { label: "Testlar",       value: data.tests,     icon: "📝" },
+          { label: "Ma'ruzalar",    value: data.lectures,  icon: "📚" },
+          { label: "O'rtacha ball", value: data.avg_score !== null ? `${data.avg_score}%` : "—", icon: "📊" },
         ].map((stat) => (
           <Card key={stat.label}>
             <CardContent className="pt-4 pb-4 text-center">
@@ -98,7 +62,6 @@ export default async function TeacherAnalyticsPage() {
         ))}
       </div>
 
-      {/* So'nggi 7 kun faoliyati */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">So&apos;nggi 7 kun — test urinishlari</CardTitle>
@@ -109,7 +72,7 @@ export default async function TeacherAnalyticsPage() {
             role="img"
             aria-label="So'nggi 7 kun test urinishlari grafigi"
           >
-            {attemptsByDay.map((d) => (
+            {data.attempts_by_day.map((d) => (
               <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
                 <div className="text-xs font-mono text-muted-foreground">{d.count || ""}</div>
                 <div
@@ -124,44 +87,32 @@ export default async function TeacherAnalyticsPage() {
         </CardContent>
       </Card>
 
-      {/* Ball taqsimoti */}
-      {validAttempts.length > 0 && (
+      {data.score_distribution.some((g) => g.count > 0) && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Ball taqsimoti</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2" role="list" aria-label="Ball taqsimoti">
-              {[
-                { label: "A'lo (86–100%)", min: 86, max: 100, color: "bg-green-500" },
-                { label: "Yaxshi (71–85%)", min: 71, max: 85, color: "bg-blue-500" },
-                { label: "Qoniqarli (56–70%)", min: 56, max: 70, color: "bg-yellow-500" },
-                { label: "Qoniqarsiz (0–55%)", min: 0,  max: 55, color: "bg-red-500" },
-              ].map((grade) => {
-                const count = validAttempts.filter(
-                  (a: { score: number | null }) => (a.score ?? 0) >= grade.min && (a.score ?? 0) <= grade.max
-                ).length;
-                const pct = Math.round((count / validAttempts.length) * 100);
-                return (
-                  <div key={grade.label} className="flex items-center gap-3" role="listitem">
-                    <div className="text-sm w-40 shrink-0">{grade.label}</div>
-                    <div className="flex-1 h-3 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${grade.color}`}
-                        style={{ width: `${pct}%` }}
-                        role="progressbar"
-                        aria-valuenow={pct}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-label={`${grade.label}: ${pct}%`}
-                      />
-                    </div>
-                    <div className="text-sm text-muted-foreground w-16 text-right">
-                      {count} ({pct}%)
-                    </div>
+              {data.score_distribution.map((grade) => (
+                <div key={grade.label} className="flex items-center gap-3" role="listitem">
+                  <div className="text-sm w-40 shrink-0">{grade.label}</div>
+                  <div className="flex-1 h-3 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${colorMap[grade.label] ?? "bg-primary"}`}
+                      style={{ width: `${grade.pct}%` }}
+                      role="progressbar"
+                      aria-valuenow={grade.pct}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={`${grade.label}: ${grade.pct}%`}
+                    />
                   </div>
-                );
-              })}
+                  <div className="text-sm text-muted-foreground w-16 text-right">
+                    {grade.count} ({grade.pct}%)
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

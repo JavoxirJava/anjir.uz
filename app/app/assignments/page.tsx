@@ -1,7 +1,8 @@
+import { getCurrentUser } from "@/lib/api/auth";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { apiGet } from "@/lib/api/server";
 import { getAssignmentsForStudent } from "@/lib/db/assignments";
 import { uz } from "@/lib/strings/uz";
 import { Badge } from "@/components/ui/badge";
@@ -20,19 +21,11 @@ function formatDate(iso: string | null) {
 }
 
 export default async function StudentAssignmentsPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("student_profiles")
-    .select("class_id")
-    .eq("user_id", user.id)
-    .single();
-
-  const assignments = profile?.class_id
-    ? await getAssignmentsForStudent(profile.class_id)
-    : [];
+  const profile = await apiGet<{ class_id: string | null } | null>("/students/me").catch(() => null);
+  const assignments = profile?.class_id ? await getAssignmentsForStudent(profile.class_id) : [];
 
   return (
     <div className="space-y-6">
@@ -48,7 +41,7 @@ export default async function StudentAssignmentsPage() {
       ) : (
         <ul className="space-y-3" role="list" aria-label={uz.student.assignments}>
           {assignments.map((a) => {
-            const due = formatDate(a.due_date);
+            const due = formatDate(a.due_date ?? null);
             return (
               <li key={a.id}>
                 <Link

@@ -1,45 +1,35 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/api/auth";
+import { apiGet } from "@/lib/api/server";
 import { uz } from "@/lib/strings/uz";
 
 export const metadata: Metadata = {
   title: `${uz.teacher.dashboard} — I-Imkon.uz`,
 };
 
+interface TeacherStats {
+  lectures: number;
+  tests: number;
+  games: number;
+  pending: number;
+}
+
 export default async function TeacherDashboard() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
+  if (!user) return null;
 
-  const { data: userData } = await supabase
-    .from("users")
-    .select("first_name, last_name")
-    .eq("id", user!.id)
-    .single();
+  const stats = await apiGet<TeacherStats>(`/teachers/${user.id}/stats`).catch(
+    () => ({ lectures: 0, tests: 0, games: 0, pending: 0 })
+  );
 
-  const [{ count: lectureCount }, { count: testCount }, { count: gameCount }, { count: pendingCount }] =
-    await Promise.all([
-      supabase.from("lectures").select("id", { count: "exact", head: true }).eq("creator_id", user!.id),
-      supabase.from("tests").select("id", { count: "exact", head: true }).eq("teacher_id", user!.id),
-      supabase.from("games").select("id", { count: "exact", head: true }).eq("teacher_id", user!.id),
-      supabase
-        .from("student_profiles")
-        .select("user_id", { count: "exact", head: true })
-        .in(
-          "class_id",
-          (await supabase.from("teacher_assignments").select("class_id").eq("teacher_id", user!.id))
-            .data?.map((r: { class_id: string }) => r.class_id) ?? []
-        )
-        .is("approved_at", null),
-    ]);
+  const firstName = user.first_name ?? "O'qituvchi";
 
-  const firstName = (userData as { first_name: string } | null)?.first_name ?? "O'qituvchi";
-
-  const stats = [
-    { label: "Ma'ruzalar", value: lectureCount ?? 0, href: "/teacher/lectures", icon: "📄", color: "#0f766e" },
-    { label: "Testlar", value: testCount ?? 0, href: "/teacher/tests", icon: "📝", color: "#0d9488" },
-    { label: "O'yinlar", value: gameCount ?? 0, href: "/teacher/games", icon: "🎮", color: "#0891b2" },
-    { label: "Kutayotgan o'quvchilar", value: pendingCount ?? 0, href: "/teacher/students", icon: "👥", color: "#f59e0b", highlight: (pendingCount ?? 0) > 0 },
+  const statCards = [
+    { label: "Ma'ruzalar", value: stats.lectures, href: "/teacher/lectures", icon: "📄", color: "#0f766e" },
+    { label: "Testlar", value: stats.tests, href: "/teacher/tests", icon: "📝", color: "#0d9488" },
+    { label: "O'yinlar", value: stats.games, href: "/teacher/games", icon: "🎮", color: "#0891b2" },
+    { label: "Kutayotgan o'quvchilar", value: stats.pending, href: "/teacher/students", icon: "👥", color: "#f59e0b", highlight: stats.pending > 0 },
   ];
 
   const quickActions = [
@@ -51,7 +41,6 @@ export default async function TeacherDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Greeting */}
       <div className="rounded-2xl sm:rounded-3xl p-5 sm:p-8 gradient-primary text-white relative overflow-hidden">
         <div aria-hidden="true" className="absolute top-[-40px] right-[-40px] w-[160px] h-[160px] sm:w-[200px] sm:h-[200px] rounded-full opacity-20 pointer-events-none"
           style={{ background: "radial-gradient(circle, white, transparent)" }} />
@@ -61,9 +50,8 @@ export default async function TeacherDashboard() {
         <p className="text-white/80 mt-1 text-sm relative z-10">Bugun o&apos;quvchilaringiz uchun nima tayyorlaysiz?</p>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {stats.map((s) => (
+        {statCards.map((s) => (
           <Link key={s.href} href={s.href} className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-2xl">
             <div className={`rounded-2xl p-4 border bg-card hover:shadow-glow transition-all hover:border-primary/30 cursor-pointer ${s.highlight ? "border-orange-300 bg-orange-50" : ""}`}>
               <div className="flex items-center justify-between mb-2">
@@ -79,7 +67,6 @@ export default async function TeacherDashboard() {
         ))}
       </div>
 
-      {/* Quick actions */}
       <div>
         <h2 className="text-lg font-bold mb-4">Tezkor harakatlar</h2>
         <div className="grid grid-cols-2 gap-3">
@@ -101,7 +88,6 @@ export default async function TeacherDashboard() {
         </div>
       </div>
 
-      {/* Links */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Link href="/teacher/students"
           className="flex items-center justify-between rounded-2xl border p-5 bg-card hover:shadow-glow hover:border-primary/30 transition-all focus-visible:outline-2">

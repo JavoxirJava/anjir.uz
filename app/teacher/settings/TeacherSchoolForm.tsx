@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
+import { apiGet } from "@/lib/api/browser";
 import { addTeacherAssignmentAction, removeTeacherSchoolAction } from "@/app/actions/teacher";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -42,16 +42,9 @@ export function TeacherSchoolForm({ schools, subjects, assigned }: Props) {
   useEffect(() => {
     if (!schoolId) { setClasses([]); setSelectedClassIds([]); return; }
     setLoadingClasses(true);
-    const supabase = createClient();
-    supabase
-      .from("classes")
-      .select("id, grade, letter")
-      .eq("school_id", schoolId)
-      .order("grade").order("letter")
-      .then(({ data }) => {
-        setClasses(data ?? []);
-        setLoadingClasses(false);
-      });
+    apiGet<ClassItem[]>(`/classes?school_id=${schoolId}`)
+      .then((data) => { setClasses(data); setLoadingClasses(false); })
+      .catch(() => { setClasses([]); setLoadingClasses(false); });
   }, [schoolId]);
 
   function toggleClass(id: string) {

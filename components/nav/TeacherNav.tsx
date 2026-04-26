@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { href: "/teacher/games",       label: "O'yinlar",                   icon: "🎮" },
   { href: "/teacher/assignments", label: "Topshiriqlar",               icon: "✏️" },
   { href: "/teacher/books",       label: "Kitoblar",                   icon: "📚" },
+  { href: "/teacher/ratings",      label: "Reyting",                    icon: "🏆" },
   { href: "/teacher/analytics",   label: "Analitika",                  icon: "📊" },
   { href: "/teacher/settings",    label: "Sozlamalar",                 icon: "⚙️" },
 ];

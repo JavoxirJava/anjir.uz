@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/api/auth";
+import { apiGet } from "@/lib/api/server";
 import { uz } from "@/lib/strings/uz";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,25 +17,16 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "
 };
 
 export default async function AdminDirectorsPage() {
-  const supabase = await createClient();
+  const user = await getCurrentUser();
+  if (!user) return null;
 
-  const { data: directors } = await supabase
-    .from("users")
-    .select("id, first_name, last_name, status, created_at")
-    .eq("role", "director")
-    .order("first_name");
-
-  // Maktablar bilan bog'lash
-  const { data: schools } = await supabase
-    .from("schools")
-    .select("id, name, director_id")
-    .order("name");
+  const [directors, schools] = await Promise.all([
+    apiGet<{ id: string; first_name: string; last_name: string; status: string; created_at: string }[]>("/users?role=director").catch(() => []),
+    apiGet<{ id: string; name: string; director_id: string | null }[]>("/schools").catch(() => []),
+  ]);
 
   const schoolByDirector = Object.fromEntries(
-    (schools ?? []).map((s: { id: string; name: string; director_id: string | null }) => [
-      s.director_id ?? "",
-      s,
-    ])
+    schools.map((s) => [s.director_id ?? "", s])
   );
 
   type Director = { id: string; first_name: string; last_name: string; status: string; created_at: string };
@@ -46,13 +38,13 @@ export default async function AdminDirectorsPage() {
         <div>
           <h1 className="text-2xl font-bold">{uz.admin.directors}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {(directors ?? []).length} ta direktor
+            {directors.length} ta direktor
           </p>
         </div>
-        <AddDirectorForm schools={(schools ?? []).map((s: { id: string; name: string }) => ({ id: s.id, name: s.name }))} />
+        <AddDirectorForm schools={schools.map((s: { id: string; name: string }) => ({ id: s.id, name: s.name }))} />
       </div>
 
-      {(directors ?? []).length === 0 ? (
+      {directors.length === 0 ? (
         <p className="text-muted-foreground">{uz.common.noData}</p>
       ) : (
         <ul className="space-y-2" role="list" aria-label={uz.admin.directors}>

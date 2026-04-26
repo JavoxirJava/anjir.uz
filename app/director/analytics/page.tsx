@@ -1,5 +1,6 @@
+import { getCurrentUser } from "@/lib/api/auth";
+import { apiGet } from "@/lib/api/server";
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
 import { uz } from "@/lib/strings/uz";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -7,19 +8,23 @@ export const metadata: Metadata = {
   title: `${uz.director.analytics} — I-Imkon.uz`,
 };
 
+type AnalyticsData = {
+  school: { id: string; name: string };
+  total_students: number;
+  active_students: number;
+  pending_students: number;
+  avg_score: number | null;
+  classes: { id: string; grade: number; letter: string }[];
+  score_distribution: { label: string; min: number; max: number; count: number; pct: number }[];
+};
+
 export default async function DirectorAnalyticsPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
+  if (!user) return null;
 
-  const { data: school } = await supabase
-    .from("schools")
-    .select("id, name")
-    .eq("director_id", user!.id)
-    .single();
+  const data = await apiGet<AnalyticsData | null>("/schools/my-analytics").catch(() => null);
 
-  const schoolId = (school as { id: string } | null)?.id;
-
-  if (!schoolId) {
+  if (!data) {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">{uz.director.analytics}</h1>
@@ -28,42 +33,12 @@ export default async function DirectorAnalyticsPage() {
     );
   }
 
-  // Barcha test urinishlari (maktab o'quvchilari)
-  const { data: allAttempts } = await supabase
-    .from("test_attempts")
-    .select("score, student_id, finished_at")
-    .not("finished_at", "is", null)
-    .limit(2000);
-
-  const validAttempts = (allAttempts ?? []).filter((a: { score: number | null }) => a.score !== null);
-  const avgScore = validAttempts.length > 0
-    ? Math.round(validAttempts.reduce((s: number, a: { score: number | null }) => s + (a.score ?? 0), 0) / validAttempts.length)
-    : null;
-
-  // Sinflar bo'yicha statistika
-  const { data: classes } = await supabase
-    .from("classes")
-    .select("id, grade, letter")
-    .eq("school_id", schoolId)
-    .order("grade");
-
-  // O'quvchilar soni
-  const { count: totalStudents } = await supabase
-    .from("student_profiles")
-    .select("*", { count: "exact", head: true });
-
-  // Aktiv o'quvchilar
-  const { count: activeStudents } = await supabase
-    .from("users")
-    .select("*", { count: "exact", head: true })
-    .eq("role", "student")
-    .eq("status", "active");
-
-  const { count: pendingStudents } = await supabase
-    .from("users")
-    .select("*", { count: "exact", head: true })
-    .eq("role", "student")
-    .eq("status", "pending");
+  const colorMap: Record<string, string> = {
+    "A'lo (86–100%)": "bg-green-500",
+    "Yaxshi (71–85%)": "bg-blue-500",
+    "Qoniqarli (56–70%)": "bg-yellow-500",
+    "Qoniqarsiz (0–55%)": "bg-red-500",
+  };
 
   return (
     <div className="space-y-6">
@@ -71,10 +46,10 @@ export default async function DirectorAnalyticsPage() {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: "Jami o'quvchilar", value: totalStudents ?? 0, icon: "👥" },
-          { label: "Aktiv", value: activeStudents ?? 0, icon: "✅" },
-          { label: "Kutilmoqda", value: pendingStudents ?? 0, icon: "⏳" },
-          { label: "O'rtacha ball", value: avgScore !== null ? `${avgScore}%` : "—", icon: "📊" },
+          { label: "Jami o'quvchilar", value: data.total_students, icon: "👥" },
+          { label: "Aktiv",            value: data.active_students, icon: "✅" },
+          { label: "Kutilmoqda",       value: data.pending_students, icon: "⏳" },
+          { label: "O'rtacha ball",    value: data.avg_score !== null ? `${data.avg_score}%` : "—", icon: "📊" },
         ].map((s) => (
           <Card key={s.label}>
             <CardContent className="pt-4 pb-4 text-center">
@@ -86,19 +61,15 @@ export default async function DirectorAnalyticsPage() {
         ))}
       </div>
 
-      {/* Sinflar ro'yxati */}
-      {(classes ?? []).length > 0 && (
+      {data.classes.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Sinflar</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {(classes ?? []).map((cls: { id: string; grade: number; letter: string }) => (
-                <div
-                  key={cls.id}
-                  className="rounded-lg border px-4 py-2 text-sm text-center"
-                >
+              {data.classes.map((cls) => (
+                <div key={cls.id} className="rounded-lg border px-4 py-2 text-sm text-center">
                   {cls.grade}{cls.letter}
                 </div>
               ))}
@@ -107,43 +78,31 @@ export default async function DirectorAnalyticsPage() {
         </Card>
       )}
 
-      {/* Ball taqsimoti */}
-      {validAttempts.length > 0 && (
+      {data.score_distribution.some((g) => g.count > 0) && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Maktab bo&apos;yicha ball taqsimoti</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {[
-                { label: "A'lo (86–100%)", min: 86, max: 100, color: "bg-green-500" },
-                { label: "Yaxshi (71–85%)", min: 71, max: 85, color: "bg-blue-500" },
-                { label: "Qoniqarli (56–70%)", min: 56, max: 70, color: "bg-yellow-500" },
-                { label: "Qoniqarsiz (0–55%)", min: 0, max: 55, color: "bg-red-500" },
-              ].map((grade) => {
-                const count = validAttempts.filter(
-                  (a: { score: number | null }) => (a.score ?? 0) >= grade.min && (a.score ?? 0) <= grade.max
-                ).length;
-                const pct = Math.round((count / validAttempts.length) * 100);
-                return (
-                  <div key={grade.label} className="flex items-center gap-3">
-                    <div className="text-sm w-40 shrink-0">{grade.label}</div>
-                    <div className="flex-1 h-3 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${grade.color}`}
-                        style={{ width: `${pct}%` }}
-                        role="progressbar"
-                        aria-valuenow={pct}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                      />
-                    </div>
-                    <div className="text-sm text-muted-foreground w-16 text-right">
-                      {count} ({pct}%)
-                    </div>
+              {data.score_distribution.map((grade) => (
+                <div key={grade.label} className="flex items-center gap-3">
+                  <div className="text-sm w-40 shrink-0">{grade.label}</div>
+                  <div className="flex-1 h-3 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${colorMap[grade.label] ?? "bg-primary"}`}
+                      style={{ width: `${grade.pct}%` }}
+                      role="progressbar"
+                      aria-valuenow={grade.pct}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                    />
                   </div>
-                );
-              })}
+                  <div className="text-sm text-muted-foreground w-16 text-right">
+                    {grade.count} ({grade.pct}%)
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

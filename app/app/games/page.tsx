@@ -1,7 +1,8 @@
+import { getCurrentUser } from "@/lib/api/auth";
+import { apiGet } from "@/lib/api/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { getGamesForStudent } from "@/lib/db/games";
 import { uz } from "@/lib/strings/uz";
 import { Badge } from "@/components/ui/badge";
@@ -30,20 +31,11 @@ const TYPE_DESC: Record<string, string> = {
 };
 
 export default async function StudentGamesPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  // Student class_id
-  const { data: profile } = await supabase
-    .from("student_profiles")
-    .select("class_id")
-    .eq("user_id", user.id)
-    .single();
-
-  const games = profile?.class_id
-    ? await getGamesForStudent(profile.class_id)
-    : [];
+  const profile = await apiGet<{ class_id: string | null } | null>("/students/me").catch(() => null);
+  const games = profile?.class_id ? await getGamesForStudent(profile.class_id) : [];
 
   return (
     <div className="space-y-6">

@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
+import { apiGet } from "@/lib/api/browser";
 import { updateStudentClassAction } from "@/app/actions/student";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -43,16 +43,9 @@ export function EditSchoolClassForm({ schools, currentClassId, currentSchoolId }
   useEffect(() => {
     if (!schoolId) { setClasses([]); setClassId(""); return; }
     setLoadingClasses(true);
-    const supabase = createClient();
-    supabase
-      .from("classes")
-      .select("id, grade, letter")
-      .eq("school_id", schoolId)
-      .order("grade").order("letter")
-      .then(({ data }) => {
-        setClasses(data ?? []);
-        setLoadingClasses(false);
-      });
+    apiGet<ClassItem[]>(`/classes?school_id=${schoolId}`)
+      .then((data) => { setClasses(data); setLoadingClasses(false); })
+      .catch(() => { setClasses([]); setLoadingClasses(false); });
   }, [schoolId]);
 
   function handleSchoolChange(v: string | null) {

@@ -1,6 +1,6 @@
+import { getCurrentUser } from "@/lib/api/auth";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { getAssignmentById, getSubmissionsForAssignment } from "@/lib/db/assignments";
 import { uz } from "@/lib/strings/uz";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,8 +22,7 @@ function formatDate(iso: string | null) {
 
 export default async function SubmissionsPage({ params }: Props) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const assignment = await getAssignmentById(id);
@@ -104,7 +103,7 @@ export default async function SubmissionsPage({ params }: Props) {
                       <GradeForm
                         submissionId={sub.id}
                         assignmentId={id}
-                        maxScore={assignment.max_score}
+                        maxScore={assignment.max_score ?? 100}
                         currentScore={sub.score}
                         currentComment={sub.teacher_comment}
                       />

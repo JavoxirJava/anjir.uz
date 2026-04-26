@@ -1,19 +1,11 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/api/auth";
 import { AdminNav } from "@/components/nav/AdminNav";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role, first_name, last_name")
-    .eq("id", user.id)
-    .single();
-
-  if (!userData || userData.role !== "super_admin") redirect("/app");
+  const userData = await getCurrentUser();
+  if (!userData) redirect("/login");
+  if (userData.role !== "super_admin") redirect("/app");
 
   return (
     <div className="min-h-screen flex flex-col">

@@ -1,7 +1,7 @@
+import { getCurrentUser } from "@/lib/api/auth";
+import { apiGet } from "@/lib/api/server";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { uz } from "@/lib/strings/uz";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,60 +13,38 @@ export const metadata: Metadata = {
   title: `${uz.profile.title} — I-Imkon.uz`,
 };
 
+interface StudentProfile {
+  class_id: string | null;
+  school_id: string | null;
+  grade: number | null;
+  letter: string | null;
+  school_name: string | null;
+}
+
+interface Attempt {
+  score: number | null;
+  finished_at: string | null;
+}
+
 export default async function ProfilePage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const { data: userData } = await supabase
-    .from("users")
-    .select("first_name, last_name, role, status, created_at")
-    .eq("id", user.id)
-    .single();
+  const [profile, resultsData, schools] = await Promise.all([
+    apiGet<StudentProfile>("/students/me").catch(() => null),
+    apiGet<{ tests: Attempt[] }>("/students/me/results").catch(() => ({ tests: [] })),
+    apiGet<{ id: string; name: string }[]>("/schools").catch(() => []),
+  ]);
 
-  const { data: profile } = await supabase
-    .from("student_profiles")
-    .select("class_id, classes(grade, letter, school_id, schools(id, name))")
-    .eq("user_id", user.id)
-    .single();
-
-  // Barcha maktablar — admin client (RLS bypass)
-  const admin = createAdminClient();
-  const { data: schools } = await admin
-    .from("schools")
-    .select("id, name")
-    .order("name");
-
-  // Test natijalari
-  const { data: attempts } = await supabase
-    .from("test_attempts")
-    .select("score, finished_at")
-    .eq("student_id", user.id)
-    .not("finished_at", "is", null)
-    .order("finished_at", { ascending: false })
-    .limit(10);
-
-  const validAttempts = (attempts ?? []).filter((a: { score: number | null }) => a.score !== null);
+  const validAttempts = (resultsData.tests ?? []).filter((a) => a.score !== null).slice(0, 10);
   const avgScore = validAttempts.length > 0
-    ? Math.round(validAttempts.reduce((s: number, a: { score: number | null }) => s + (a.score ?? 0), 0) / validAttempts.length)
+    ? Math.round(validAttempts.reduce((s, a) => s + (a.score ?? 0), 0) / validAttempts.length)
     : null;
-
-  const classInfo = profile
-    ? (Array.isArray((profile as any).classes) ? (profile as any).classes[0] : (profile as any).classes)
-    : null;
-
-  const schoolInfo = classInfo
-    ? (Array.isArray(classInfo.schools) ? classInfo.schools[0] : classInfo.schools)
-    : null;
-
-  const currentClassId = (profile as any)?.class_id ?? null;
-  const currentSchoolId = schoolInfo?.id ?? null;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold">{uz.profile.title}</h1>
 
-      {/* Shaxsiy ma'lumotlar */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">{uz.profile.personalInfo}</CardTitle>
@@ -74,15 +52,10 @@ export default async function ProfilePage() {
         <CardContent className="space-y-3">
           <div className="flex items-center gap-3">
             <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary" aria-hidden="true">
-              {userData?.first_name?.[0]?.toUpperCase() ?? "?"}
+              {user.first_name?.[0]?.toUpperCase() ?? "?"}
             </div>
             <div>
-              <p className="text-lg font-semibold">
-                {userData?.first_name} {userData?.last_name}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {new Date((userData as any)?.created_at ?? "").toLocaleDateString("uz-UZ", { month: "long", year: "numeric" })} dan beri a&apos;zo
-              </p>
+              <p className="text-lg font-semibold">{user.first_name} {user.last_name}</p>
             </div>
           </div>
 
@@ -90,30 +63,29 @@ export default async function ProfilePage() {
             <div>
               <p className="text-muted-foreground">Sinf</p>
               <p className="font-medium">
-                {classInfo ? `${classInfo.grade}-sinf ${classInfo.letter}` : "—"}
+                {profile?.grade && profile?.letter ? `${profile.grade}-sinf ${profile.letter}` : "—"}
               </p>
             </div>
             <div>
               <p className="text-muted-foreground">Maktab</p>
-              <p className="font-medium">{schoolInfo?.name ?? "—"}</p>
+              <p className="font-medium">{profile?.school_name ?? "—"}</p>
             </div>
           </div>
 
-          {!currentClassId && (
+          {!profile?.class_id && (
             <p className="text-sm text-orange-600 font-medium mt-2">
               ⚠️ Sinf tanlanmagan — quyida tanlang
             </p>
           )}
 
           <EditSchoolClassForm
-            schools={(schools ?? []).map((s: { id: string; name: string }) => ({ id: s.id, name: s.name }))}
-            currentClassId={currentClassId}
-            currentSchoolId={currentSchoolId}
+            schools={schools}
+            currentClassId={profile?.class_id ?? null}
+            currentSchoolId={profile?.school_id ?? null}
           />
         </CardContent>
       </Card>
 
-      {/* Statistika */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Mening natijalarim</CardTitle>
@@ -134,7 +106,6 @@ export default async function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* So'nggi natijalar */}
       {validAttempts.length > 0 && (
         <Card>
           <CardHeader>
@@ -142,7 +113,7 @@ export default async function ProfilePage() {
           </CardHeader>
           <CardContent>
             <ul className="space-y-2" role="list">
-              {validAttempts.slice(0, 5).map((a: { score: number | null; finished_at: string | null }, i: number) => (
+              {validAttempts.slice(0, 5).map((a, i) => (
                 <li key={i} className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
                     {a.finished_at

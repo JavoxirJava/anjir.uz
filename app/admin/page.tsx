@@ -1,6 +1,7 @@
+import { getCurrentUser } from "@/lib/api/auth";
+import { apiGet } from "@/lib/api/server";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { uz } from "@/lib/strings/uz";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -8,29 +9,28 @@ export const metadata: Metadata = {
   title: `${uz.admin.dashboard} — I-Imkon.uz`,
 };
 
+interface AdminStats {
+  schools: number;
+  directors: number;
+  teachers: number;
+  students: number;
+  subjects: number;
+}
+
 export default async function AdminDashboard() {
-  const supabase = await createClient();
+  const user = await getCurrentUser();
+  if (!user) return null;
 
-  const [
-    { count: schoolCount },
-    { count: directorCount },
-    { count: teacherCount },
-    { count: studentCount },
-    { count: subjectCount },
-  ] = await Promise.all([
-    supabase.from("schools").select("*", { count: "exact", head: true }),
-    supabase.from("users").select("*", { count: "exact", head: true }).eq("role", "director"),
-    supabase.from("users").select("*", { count: "exact", head: true }).eq("role", "teacher"),
-    supabase.from("users").select("*", { count: "exact", head: true }).eq("role", "student"),
-    supabase.from("subjects").select("*", { count: "exact", head: true }),
-  ]);
+  const stats = await apiGet<AdminStats>("/schools/admin-stats").catch(
+    () => ({ schools: 0, directors: 0, teachers: 0, students: 0, subjects: 0 })
+  );
 
-  const stats = [
-    { label: uz.admin.schools,    value: schoolCount ?? 0,    href: "/admin/schools",   icon: "🏫" },
-    { label: uz.admin.directors,  value: directorCount ?? 0,  href: "/admin/directors", icon: "👔" },
-    { label: "O'qituvchilar",    value: teacherCount ?? 0,   href: "/admin/users",     icon: "👨‍🏫" },
-    { label: "O'quvchilar",      value: studentCount ?? 0,   href: "/admin/users",     icon: "👨‍🎓" },
-    { label: uz.admin.subjects,   value: subjectCount ?? 0,   href: "/admin/subjects",  icon: "📚" },
+  const statCards = [
+    { label: uz.admin.schools,   value: stats.schools,   href: "/admin/schools",   icon: "🏫" },
+    { label: uz.admin.directors, value: stats.directors, href: "/admin/directors", icon: "👔" },
+    { label: "O'qituvchilar",   value: stats.teachers,  href: "/admin/users",     icon: "👨‍🏫" },
+    { label: "O'quvchilar",     value: stats.students,  href: "/admin/users",     icon: "👨‍🎓" },
+    { label: uz.admin.subjects,  value: stats.subjects,  href: "/admin/subjects",  icon: "📚" },
   ];
 
   return (
@@ -38,7 +38,7 @@ export default async function AdminDashboard() {
       <h1 className="text-2xl font-bold">{uz.admin.dashboard}</h1>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        {stats.map((s) => (
+        {statCards.map((s) => (
           <Link key={`${s.href}-${s.label}`} href={s.href} className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-xl">
             <Card className="hover:bg-muted/50 transition-colors">
               <CardHeader className="pb-1 pt-3 px-3">

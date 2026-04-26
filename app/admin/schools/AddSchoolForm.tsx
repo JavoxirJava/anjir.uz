@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
+import { apiPost } from "@/lib/api/browser";
 import { uz } from "@/lib/strings/uz";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,15 +20,14 @@ export function AddSchoolForm() {
     if (!name.trim()) { toast.error("Maktab nomi kiritilishi shart"); return; }
 
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("schools")
-        .insert({ name: name.trim(), address: address.trim() || null });
-
-      if (error) { toast.error("Xatolik: " + error.message); return; }
-      toast.success("Maktab qo'shildi");
-      setName(""); setAddress(""); setOpen(false);
-      window.location.reload();
+      try {
+        await apiPost("/schools", { name: name.trim(), address: address.trim() || null });
+        toast.success("Maktab qo'shildi");
+        setName(""); setAddress(""); setOpen(false);
+        window.location.reload();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Xatolik");
+      }
     });
   }
 

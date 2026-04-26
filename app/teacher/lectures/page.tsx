@@ -1,6 +1,6 @@
+import { getCurrentUser } from "@/lib/api/auth";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { uz } from "@/lib/strings/uz";
 import { getLecturesByTeacher } from "@/lib/db/lectures";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,8 +26,7 @@ const TYPE_COLORS: Record<string, "default" | "secondary" | "destructive" | "out
 };
 
 export default async function TeacherLecturesPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   const lectures = await getLecturesByTeacher(user!.id);
 
   return (
@@ -93,7 +92,7 @@ export default async function TeacherLecturesPage() {
                       </p>
                     )}
                   </div>
-                  <LectureDeleteButton id={lecture.id} fileUrl={lecture.file_url} />
+                  <LectureDeleteButton id={lecture.id} fileUrl={lecture.file_url ?? ""} />
                 </CardContent>
               </Card>
             </li>

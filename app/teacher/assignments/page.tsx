@@ -1,6 +1,6 @@
+import { getCurrentUser } from "@/lib/api/auth";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { getAssignmentsByTeacher } from "@/lib/db/assignments";
 import { uz } from "@/lib/strings/uz";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,8 +16,7 @@ function formatDate(iso: string | null) {
 }
 
 export default async function TeacherAssignmentsPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   const assignments = await getAssignmentsByTeacher(user!.id);
 
   return (

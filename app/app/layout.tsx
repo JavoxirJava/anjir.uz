@@ -1,18 +1,9 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/api/auth";
 import { StudentNav } from "@/components/nav/StudentNav";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role, status, first_name, last_name")
-    .eq("id", user.id)
-    .single();
-
+  const userData = await getCurrentUser();
   if (!userData) redirect("/login");
   if (userData.status !== "active") redirect("/pending");
   if (userData.role !== "student") {
@@ -25,7 +16,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen flex flex-col">
       <StudentNav
         userName={`${userData.first_name} ${userData.last_name}`}
-        userId={user.id}
+        userId={userData.id}
       />
       <div className="flex-1 container mx-auto max-w-5xl px-4 py-6">
         {children}

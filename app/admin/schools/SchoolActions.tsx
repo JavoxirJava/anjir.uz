@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
+import { apiPut, apiDelete } from "@/lib/api/browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -29,18 +29,15 @@ export function SchoolActions({ school }: Props) {
       return;
     }
     setSaving(true);
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("schools")
-      .update({ name: name.trim(), address: address.trim() || null })
-      .eq("id", school.id);
-    setSaving(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
+    try {
+      await apiPut(`/schools/${school.id}`, { name: name.trim(), address: address.trim() || null });
       toast.success("Maktab muvaffaqiyatli yangilandi");
       setEditing(false);
       window.location.reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Xatolik");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -48,14 +45,14 @@ export function SchoolActions({ school }: Props) {
     const confirmed = window.confirm("Maktabni o'chirishni tasdiqlaysizmi?");
     if (!confirmed) return;
     setDeleting(true);
-    const supabase = createClient();
-    const { error } = await supabase.from("schools").delete().eq("id", school.id);
-    setDeleting(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
+    try {
+      await apiDelete(`/schools/${school.id}`);
       toast.success("Maktab o'chirildi");
       window.location.reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Xatolik");
+    } finally {
+      setDeleting(false);
     }
   }
 

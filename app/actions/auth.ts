@@ -1,9 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { loginSchema, registerSchema } from "@/lib/validations/auth";
+import { setAuthCookies, clearAuthCookies } from "@/lib/api/auth";
+import { API_URL } from "@/lib/api/config";
 import { uz } from "@/lib/strings/uz";
 
 export async function loginAction(formData: FormData) {
@@ -18,46 +18,35 @@ export async function loginAction(formData: FormData) {
     return { error: parsed.error.issues[0].message };
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
-    email: `${parsed.data.phone}@anjir.internal`,
-    password: parsed.data.password,
+  const res = await fetch(`${API_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone: parsed.data.phone, password: parsed.data.password }),
   });
 
-  if (error) {
-    return { error: uz.auth.loginError };
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { error?: string };
+    return { error: body.error ?? uz.auth.loginError };
   }
 
-  // Foydalanuvchi rolini aniqlash
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const data = await res.json() as {
+    access_token: string;
+    refresh_token: string;
+    user: { role: string; status: string };
+  };
 
-  if (!user) return { error: uz.auth.loginError };
+  await setAuthCookies(data.access_token, data.refresh_token);
 
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role, status")
-    .eq("id", user.id)
-    .single();
-
-  if (!userData) return { error: uz.common.error };
-
-  if (userData.status === "pending" || userData.status === "rejected") {
+  if (data.user.status === "pending" || data.user.status === "rejected") {
     redirect("/pending");
   }
 
-  switch (userData.role) {
-    case "super_admin":
-      redirect("/admin");
-    case "director":
-      redirect("/director");
-    case "teacher":
-      redirect("/teacher");
-    case "student":
-      redirect("/app");
-    default:
-      redirect("/app");
+  switch (data.user.role) {
+    case "super_admin": redirect("/admin");
+    case "director":    redirect("/director");
+    case "teacher":     redirect("/teacher");
+    case "parent":      redirect("/parent");
+    default:            redirect("/app");
   }
 }
 
@@ -65,13 +54,13 @@ export async function registerAction(formData: FormData) {
   const teacherClassIds = formData.getAll("teacherClassIds") as string[];
 
   const raw = {
-    firstName: (formData.get("firstName") as string) || "",
-    lastName: (formData.get("lastName") as string) || "",
-    phone: (formData.get("phone") as string) || "",
-    password: (formData.get("password") as string) || "",
-    role: (formData.get("role") as string) || "student",
-    schoolId: (formData.get("schoolId") as string) || "",
-    classId: (formData.get("classId") as string) || "",
+    firstName:       (formData.get("firstName") as string) || "",
+    lastName:        (formData.get("lastName") as string) || "",
+    phone:           (formData.get("phone") as string) || "",
+    password:        (formData.get("password") as string) || "",
+    role:            (formData.get("role") as string) || "student",
+    schoolId:        (formData.get("schoolId") as string) || "",
+    classId:         (formData.get("classId") as string) || "",
     teacherSchoolId: (formData.get("teacherSchoolId") as string) || "",
     teacherClassIds,
   };
@@ -81,79 +70,61 @@ export async function registerAction(formData: FormData) {
     return { error: parsed.error.issues[0].message };
   }
 
-  // Admin client — RLS bypass, signUp + insert uchun
-  const admin = createAdminClient();
-
-  // auth.users da foydalanuvchi yaratish
-  const { data: authData, error: authError } = await admin.auth.admin.createUser({
-    email: `${parsed.data.phone}@anjir.internal`,
-    password: parsed.data.password,
-    email_confirm: true, // email tasdiqlash talab qilmasin
+  const res = await fetch(`${API_URL}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      phone:      parsed.data.phone,
+      password:   parsed.data.password,
+      first_name: parsed.data.firstName,
+      last_name:  parsed.data.lastName,
+      role:       parsed.data.role,
+    }),
   });
 
-  if (authError || !authData.user) {
-    if (authError?.message.includes("already registered") || authError?.message.includes("already been registered")) {
-      return { error: "Bu telefon raqam allaqachon ro'yxatdan o'tgan" };
-    }
-    return { error: authError?.message ?? uz.common.error };
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { error?: string };
+    return { error: body.error ?? uz.common.error };
   }
 
-  const userId = authData.user.id;
+  const data = await res.json() as { access_token: string; refresh_token: string; user: { id: string } };
+  await setAuthCookies(data.access_token, data.refresh_token);
 
-  // public.users ga yozish (admin client — RLS o'tkazib)
-  const { error: userError } = await admin.from("users").insert({
-    id: userId,
-    phone: parsed.data.phone,
-    first_name: parsed.data.firstName,
-    last_name: parsed.data.lastName,
-    role: parsed.data.role,
-    status: "pending",
-  });
+  const userId = data.user.id;
+  const token  = data.access_token;
 
-  if (userError) {
-    // Agar users allaqachon mavjud bo'lsa (duplicate)
-    if (userError.code === "23505") {
-      return { error: "Bu telefon raqam allaqachon ro'yxatdan o'tgan" };
-    }
-    return { error: userError.message ?? uz.common.error };
-  }
-
+  // Profile setup after registration
   if (parsed.data.role === "teacher") {
-    // teacher_assignments — har bir classId uchun bir qator
-    if (parsed.data.teacherSchoolId && parsed.data.teacherClassIds && parsed.data.teacherClassIds.length > 0) {
-      const rows = parsed.data.teacherClassIds.map((classId) => ({
-        teacher_id: userId,
-        school_id: parsed.data.teacherSchoolId,
-        class_id: classId,
-      }));
-      await admin.from("teacher_assignments").insert(rows);
+    if (parsed.data.teacherSchoolId && parsed.data.teacherClassIds?.length) {
+      // teacher_assignments via backend — would need a dedicated endpoint,
+      // for now done via admin API
+      await fetch(`${API_URL}/teachers/assignments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          teacher_id: userId,
+          school_id:  parsed.data.teacherSchoolId,
+          class_ids:  parsed.data.teacherClassIds,
+        }),
+      });
     }
-  } else {
-    // student_profiles — faqat maktab tanlangan bo'lsa
+  } else if (parsed.data.role === "student") {
     if (parsed.data.schoolId && parsed.data.classId) {
-      await admin.from("student_profiles").insert({
-        user_id: userId,
-        school_id: parsed.data.schoolId,
-        class_id: parsed.data.classId,
-        approved_by: null,
-        approved_at: null,
-        rejection_reason: null,
+      await fetch(`${API_URL}/students/profile`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          school_id: parsed.data.schoolId,
+          class_id:  parsed.data.classId,
+        }),
       });
     }
   }
-
-  // Sessiyani boshlash uchun oddiy client bilan login
-  const supabase = await createClient();
-  await supabase.auth.signInWithPassword({
-    email: `${parsed.data.phone}@anjir.internal`,
-    password: parsed.data.password,
-  });
 
   redirect("/onboarding");
 }
 
 export async function logoutAction() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
+  await clearAuthCookies();
   redirect("/login");
 }

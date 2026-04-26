@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { RegisterForm } from "./RegisterForm";
 import { uz } from "@/lib/strings/uz";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { apiGetPublic } from "@/lib/api/server";
 import { IImkonLogo } from "@/components/IImkonLogo";
 
 export const dynamic = "force-dynamic";
@@ -12,10 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RegisterPage() {
-  // Admin client ishlatamiz — ro'yxatdan o'tish sahifasida foydalanuvchi
-  // hali login qilmagan, shuning uchun RLS auth.uid() = null qaytaradi
-  const supabase = createAdminClient();
-  const { data: schools } = await supabase.from("schools").select("id, name").order("name");
+  const schools = await apiGetPublic<{ id: string; name: string }[]>("/public/schools").catch(() => []);
 
   return (
     <div className="min-h-screen grid lg:grid-cols-[1fr_1.1fr]">
@@ -126,7 +123,7 @@ export default async function RegisterPage() {
             <div className="bg-card border border-border/60 rounded-3xl shadow-xl shadow-black/5 overflow-hidden">
               <div className="h-1 gradient-primary" aria-hidden="true" />
               <div className="p-6 sm:p-8">
-                <RegisterForm schools={schools ?? []} />
+                <RegisterForm schools={schools} />
               </div>
             </div>
 
