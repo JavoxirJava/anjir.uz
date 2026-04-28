@@ -90,4 +90,8 @@ router.put("/:id/bookmark", async (req, res) => {
      ON CONFLICT (user_id, book_id) DO UPDATE SET page=EXCLUDED.page, audio_timestamp=EXCLUDED.audio_timestamp, updated_at=NOW()`, [req.user.sub, req.params.id, page, audio_timestamp ?? null]);
     res.json({ ok: true });
 });
+router.delete("/:id/bookmark", async (req, res) => {
+    await pool_1.pool.query(`DELETE FROM book_bookmarks WHERE user_id=$1 AND book_id=$2`, [req.user.sub, req.params.id]);
+    res.json({ ok: true });
+});
 exports.default = router;

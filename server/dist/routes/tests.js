@@ -166,6 +166,23 @@ router.post("/attempts/:attemptId/finish", (0, role_1.requireRole)("student"), a
     res.json({ ok: true });
 });
 // GET /tests/:id/attempts?student_id=
+// GET /tests/:id/result?student_id= — result page data
+router.get("/:id/result", async (req, res) => {
+    const { student_id } = req.query;
+    if (!student_id) {
+        res.status(400).json({ error: "student_id kerak" });
+        return;
+    }
+    const [testRes, attemptsRes] = await Promise.all([
+        pool_1.pool.query(`SELECT title, max_attempts FROM tests WHERE id = $1`, [req.params.id]),
+        pool_1.pool.query(`SELECT score, finished_at FROM test_attempts WHERE student_id=$1 AND test_id=$2 AND finished_at IS NOT NULL ORDER BY finished_at DESC`, [student_id, req.params.id]),
+    ]);
+    if (!testRes.rows[0]) {
+        res.status(404).json({ error: "Topilmadi" });
+        return;
+    }
+    res.json({ ...testRes.rows[0], attempts: attemptsRes.rows });
+});
 router.get("/:id/attempts", async (req, res) => {
     const { student_id } = req.query;
     if (!student_id) {

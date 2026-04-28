@@ -29,4 +29,17 @@ router.post("/", (0, role_1.requireRole)("super_admin"), async (_req, res) => {
     const { rows } = await pool_1.pool.query("INSERT INTO subjects (name) VALUES ($1) ON CONFLICT (name) DO NOTHING RETURNING id", [parsed.data.name]);
     res.status(201).json(rows[0] ?? { error: "Allaqachon mavjud" });
 });
+router.put("/:id", (0, role_1.requireRole)("super_admin"), async (req, res) => {
+    const { name } = req.body;
+    if (!name?.trim()) {
+        res.status(400).json({ error: "name kerak" });
+        return;
+    }
+    await pool_1.pool.query("UPDATE subjects SET name=$1 WHERE id=$2", [name.trim(), req.params.id]);
+    res.json({ ok: true });
+});
+router.delete("/:id", (0, role_1.requireRole)("super_admin"), async (req, res) => {
+    await pool_1.pool.query("DELETE FROM subjects WHERE id=$1", [req.params.id]);
+    res.json({ ok: true });
+});
 exports.default = router;

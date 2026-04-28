@@ -7,7 +7,9 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 require("dotenv/config");
+const public_1 = __importDefault(require("./routes/public"));
 const auth_1 = __importDefault(require("./routes/auth"));
+const users_1 = __importDefault(require("./routes/users"));
 const students_1 = __importDefault(require("./routes/students"));
 const teachers_1 = __importDefault(require("./routes/teachers"));
 const parents_1 = __importDefault(require("./routes/parents"));
@@ -29,7 +31,10 @@ app.use((0, cors_1.default)({
 }));
 app.use(express_1.default.json({ limit: "2mb" }));
 app.get("/health", (_req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
+app.use("/public", public_1.default);
 app.use("/auth", auth_1.default);
+app.use("/users", users_1.default);
+app.use("/auth", users_1.default); // change-password endpoint
 app.use("/students", students_1.default);
 app.use("/teachers", teachers_1.default);
 app.use("/parents", parents_1.default);

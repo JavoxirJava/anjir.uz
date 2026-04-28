@@ -82,6 +82,18 @@ router.post("/", (0, role_1.requireRole)("teacher", "super_admin"), async (req, 
     }
     res.status(201).json({ id: lectureId });
 });
+// POST /lectures/:id/subtitles — upsert subtitle (used by Whisper API route)
+router.post("/:id/subtitles", async (req, res) => {
+    const { vtt_url, language, source } = req.body;
+    if (!vtt_url) {
+        res.status(400).json({ error: "vtt_url kerak" });
+        return;
+    }
+    await pool_1.pool.query(`INSERT INTO lecture_subtitles (lecture_id, vtt_url, language, source)
+     VALUES ($1,$2,$3,$4)
+     ON CONFLICT (lecture_id, language) DO UPDATE SET vtt_url=EXCLUDED.vtt_url, source=EXCLUDED.source`, [req.params.id, vtt_url, language ?? "uz", source ?? "ai"]);
+    res.json({ ok: true });
+});
 // DELETE /lectures/:id
 router.delete("/:id", (0, role_1.requireRole)("teacher", "super_admin"), async (req, res) => {
     await pool_1.pool.query("DELETE FROM lectures WHERE id = $1 AND (creator_id = $2 OR $3 = 'super_admin')", [req.params.id, req.user.sub, req.user.role]);

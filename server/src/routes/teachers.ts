@@ -236,7 +236,7 @@ router.get("/:id/analytics", async (req, res) => {
 
   const attemptsByDay = last7Days.map((day) => ({
     day: day.slice(5),
-    count: attempts.filter((a) => a.finished_at?.startsWith(day)).length,
+    count: attempts.filter((a) => a.finished_at && new Date(a.finished_at).toISOString().startsWith(day)).length,
   }));
 
   const scoreDistribution = [

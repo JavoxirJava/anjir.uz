@@ -218,7 +218,7 @@ CREATE TABLE assignment_submissions (
 
 CREATE TABLE tests (
   id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  teacher_id   UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  teacher_id   UUID REFERENCES users(id) ON DELETE CASCADE,
   subject_id   UUID NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
   title        TEXT NOT NULL,
   description  TEXT,
