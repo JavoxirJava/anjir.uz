@@ -45,16 +45,14 @@ router.get("/rooms", async (req: AuthRequest, res) => {
   res.json(rows);
 });
 
-// POST /chat/rooms — xona yaratish (parent tomonidan)
+// POST /chat/rooms — xona yaratish (parent yoki teacher tomonidan)
 router.post("/rooms", async (req: AuthRequest, res) => {
-  if (req.user!.role !== "parent") {
-    res.status(403).json({ error: "Faqat ota-ona xona yarata oladi" });
-    return;
-  }
+  const role = req.user!.role;
 
   const parsed = z.object({
     teacher_id: z.string().uuid(),
     student_id: z.string().uuid(),
+    parent_id:  z.string().uuid().optional(),
   }).safeParse(req.body);
 
   if (!parsed.success) {
@@ -62,16 +60,12 @@ router.post("/rooms", async (req: AuthRequest, res) => {
     return;
   }
 
-  const { teacher_id, student_id } = parsed.data;
-  const parent_id = req.user!.sub;
+  const teacher_id = role === "teacher" ? req.user!.sub : parsed.data.teacher_id;
+  const student_id = parsed.data.student_id;
+  const parent_id  = role === "parent"  ? req.user!.sub : (parsed.data.parent_id ?? "");
 
-  // Ota-ona o'sha bolaga biriktirilganmi
-  const { rows: link } = await pool.query(
-    "SELECT 1 FROM parent_students WHERE parent_id = $1 AND student_id = $2",
-    [parent_id, student_id]
-  );
-  if (link.length === 0) {
-    res.status(403).json({ error: "Bu o'quvchiga ruxsat yo'q" });
+  if (!parent_id) {
+    res.status(400).json({ error: "parent_id kerak" });
     return;
   }
 

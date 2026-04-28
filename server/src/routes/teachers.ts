@@ -222,10 +222,11 @@ router.get("/:id/analytics", async (req, res) => {
       : Promise.resolve({ rows: [] }),
   ]);
 
-  const attempts = attemptsRes.rows as { score: number | null; finished_at: string }[];
-  const validAttempts = attempts.filter((a) => a.score !== null);
+  const attempts = (attemptsRes.rows as { score: string | null; finished_at: string }[])
+    .map((a) => ({ ...a, score: a.score !== null ? Number(a.score) : null }));
+  const validAttempts = attempts.filter((a): a is typeof a & { score: number } => a.score !== null);
   const avgScore = validAttempts.length > 0
-    ? Math.round(validAttempts.reduce((s, a) => s + (a.score ?? 0), 0) / validAttempts.length)
+    ? Math.round(validAttempts.reduce((s, a) => s + a.score, 0) / validAttempts.length)
     : null;
 
   const last7Days = Array.from({ length: 7 }, (_, i) => {

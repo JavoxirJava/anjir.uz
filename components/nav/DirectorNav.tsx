@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { href: "/director/students",  label: "O'quvchilar",                icon: "👨‍🎓" },
   { href: "/director/subjects",  label: "Fanlar",                     icon: "📖" },
   { href: "/director/lectures",  label: "Ma'ruzalar",                 icon: "📄" },
+  { href: "/director/parents",   label: "Ota-onalar",                 icon: "👨‍👩‍👧" },
   { href: "/director/analytics", label: "Analitika",                  icon: "📊" },
 ];
 

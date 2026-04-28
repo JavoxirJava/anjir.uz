@@ -60,6 +60,7 @@ export function EditSchoolClassForm({ schools, currentClassId, currentSchoolId }
     startTransition(async () => {
       const fd = new FormData();
       fd.set("classId", classId);
+      fd.set("schoolId", schoolId);
       const result = await updateStudentClassAction(fd);
       if (result?.error) toast.error(result.error);
       // muvaffaqiyatli bo'lsa redirect("/pending") ishlaydi server tomondan

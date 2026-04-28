@@ -331,6 +331,12 @@ CREATE TABLE books (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE book_classes (
+  book_id  UUID NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+  class_id UUID NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+  PRIMARY KEY (book_id, class_id)
+);
+
 CREATE TABLE book_bookmarks (
   user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   book_id         UUID NOT NULL REFERENCES books(id) ON DELETE CASCADE,

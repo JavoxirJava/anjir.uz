@@ -44,7 +44,7 @@ export async function setAuthCookies(accessToken: string, refreshToken: string) 
     path: "/",
     sameSite: "lax",
     secure: isProd,
-    maxAge: 15 * 60, // 15 min
+    maxAge: 8 * 60 * 60, // 8 soat
   });
 
   // refresh token — httpOnly

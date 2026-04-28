@@ -121,6 +121,7 @@ export async function registerAction(formData: FormData) {
     }
   }
 
+  if (parsed.data.role === "parent") redirect("/parent/link");
   redirect("/onboarding");
 }
 

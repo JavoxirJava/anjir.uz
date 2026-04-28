@@ -32,7 +32,7 @@ interface Props {
   schools: School[];
 }
 
-type Role = "student" | "teacher";
+type Role = "student" | "teacher" | "parent";
 
 export function RegisterForm({ schools }: Props) {
   const [isPending, startTransition] = useTransition();
@@ -121,19 +121,23 @@ export function RegisterForm({ schools }: Props) {
 
       {/* Role toggle — pill style */}
       <div className="flex gap-1.5 p-1.5 bg-muted rounded-2xl">
-        {(["student", "teacher"] as Role[]).map((r) => (
+        {([
+          { value: "student", label: "O'quvchi", icon: "👨‍🎓" },
+          { value: "teacher", label: "O'qituvchi", icon: "👨‍🏫" },
+          { value: "parent",  label: "Ota-ona",   icon: "👨‍👩‍👧" },
+        ] as { value: Role; label: string; icon: string }[]).map((r) => (
           <button
-            key={r}
+            key={r.value}
             type="button"
-            onClick={() => handleRoleChange(r)}
+            onClick={() => handleRoleChange(r.value)}
             className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
-              role === r
+              role === r.value
                 ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <span aria-hidden="true">{r === "student" ? "👨‍🎓" : "👨‍🏫"}</span>
-            {r === "student" ? "O'quvchi" : "O'qituvchi"}
+            <span aria-hidden="true">{r.icon}</span>
+            {r.label}
           </button>
         ))}
       </div>

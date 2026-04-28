@@ -42,6 +42,7 @@ export async function middleware(request: NextRequest) {
     const user = await res.json() as { role: string; status: string };
 
     if (user.status === "pending" || user.status === "rejected") {
+      if (pathname.startsWith("/parent/link")) return NextResponse.next();
       if (!pathname.startsWith("/pending")) {
         return NextResponse.redirect(new URL("/pending", request.url));
       }

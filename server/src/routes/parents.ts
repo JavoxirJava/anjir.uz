@@ -6,12 +6,10 @@ import { requireRole } from "../middleware/role";
 import type { AuthRequest } from "../types";
 
 const router = Router();
-
 router.use(requireAuth);
-router.use(requireRole("parent"));
 
 // GET /parents/children — mening bolalarim
-router.get("/children", async (req: AuthRequest, res) => {
+router.get("/children", requireRole("parent"), async (req: AuthRequest, res) => {
   const { rows } = await pool.query(
     `SELECT u.id, u.first_name, u.last_name, u.phone, u.status,
             sp.class_id, sp.school_id, sp.approved_at,
@@ -29,7 +27,7 @@ router.get("/children", async (req: AuthRequest, res) => {
 });
 
 // POST /parents/link — bolani bog'lash (telefon raqami orqali)
-router.post("/link", async (req: AuthRequest, res) => {
+router.post("/link", requireRole("parent"), async (req: AuthRequest, res) => {
   const parsed = z.object({ phone: z.string() }).safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Bolaning telefon raqami kerak" });
@@ -55,7 +53,7 @@ router.post("/link", async (req: AuthRequest, res) => {
 });
 
 // GET /parents/children/:studentId/results — bolaning natijalari
-router.get("/children/:studentId/results", async (req: AuthRequest, res) => {
+router.get("/children/:studentId/results", requireRole("parent"), async (req: AuthRequest, res) => {
   const parentId = req.user!.sub;
   const { studentId } = req.params;
 
@@ -115,7 +113,7 @@ router.get("/children/:studentId/results", async (req: AuthRequest, res) => {
 });
 
 // GET /parents/children/:studentId/teachers — bolaning o'qituvchilari
-router.get("/children/:studentId/teachers", async (req: AuthRequest, res) => {
+router.get("/children/:studentId/teachers", requireRole("parent"), async (req: AuthRequest, res) => {
   const { studentId } = req.params;
   const parentId = req.user!.sub;
 
@@ -140,6 +138,91 @@ router.get("/children/:studentId/teachers", async (req: AuthRequest, res) => {
   );
 
   res.json(rows);
+});
+
+// GET /parents/list — director/teacher uchun barcha parentlar (pending + active)
+router.get("/list", requireRole("director", "teacher", "super_admin"), async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const role = req.user!.role;
+
+  let schoolId: string | null = null;
+  if (role === "director") {
+    const { rows } = await pool.query(`SELECT id FROM schools WHERE director_id = $1`, [userId]);
+    schoolId = rows[0]?.id ?? null;
+  } else if (role === "teacher") {
+    const { rows } = await pool.query(
+      `SELECT DISTINCT school_id FROM teacher_assignments WHERE teacher_id = $1 LIMIT 1`,
+      [userId]
+    );
+    schoolId = rows[0]?.school_id ?? null;
+  }
+
+  const query = `
+    SELECT u.id, u.first_name, u.last_name, u.phone, u.status, u.created_at,
+           (SELECT json_agg(json_build_object('id', s.id, 'first_name', s.first_name, 'last_name', s.last_name))
+            FROM parent_students ps2
+            JOIN users s ON s.id = ps2.student_id
+            WHERE ps2.parent_id = u.id) AS children
+    FROM users u
+    WHERE u.role = 'parent'
+      ${schoolId ? `AND EXISTS (
+          SELECT 1 FROM parent_students ps
+          JOIN student_profiles sp ON sp.user_id = ps.student_id
+          WHERE ps.parent_id = u.id AND sp.school_id = $1
+        )` : ""}
+    ORDER BY u.status = 'pending' DESC, u.created_at DESC`;
+
+  const { rows } = await pool.query(query, schoolId ? [schoolId] : []);
+  res.json(rows);
+});
+
+// GET /parents/pending — faqat pending (orqaga mos kelish uchun)
+router.get("/pending", requireRole("director", "teacher", "super_admin"), async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const role = req.user!.role;
+
+  let schoolId: string | null = null;
+  if (role === "director") {
+    const { rows } = await pool.query(`SELECT id FROM schools WHERE director_id = $1`, [userId]);
+    schoolId = rows[0]?.id ?? null;
+  } else if (role === "teacher") {
+    const { rows } = await pool.query(
+      `SELECT DISTINCT school_id FROM teacher_assignments WHERE teacher_id = $1 LIMIT 1`,
+      [userId]
+    );
+    schoolId = rows[0]?.school_id ?? null;
+  }
+
+  const query = `
+    SELECT u.id, u.first_name, u.last_name, u.phone, u.status, u.created_at,
+           (SELECT json_agg(json_build_object('id', s.id, 'first_name', s.first_name, 'last_name', s.last_name))
+            FROM parent_students ps2
+            JOIN users s ON s.id = ps2.student_id
+            WHERE ps2.parent_id = u.id) AS children
+    FROM users u
+    WHERE u.role = 'parent' AND u.status = 'pending'
+      ${schoolId ? `AND EXISTS (
+          SELECT 1 FROM parent_students ps
+          JOIN student_profiles sp ON sp.user_id = ps.student_id
+          WHERE ps.parent_id = u.id AND sp.school_id = $1
+        )` : ""}
+    ORDER BY u.created_at DESC`;
+
+  const { rows } = await pool.query(query, schoolId ? [schoolId] : []);
+  res.json(rows);
+});
+
+// PUT /parents/approve/:parentId
+router.put("/approve/:parentId", requireRole("director", "teacher", "super_admin"), async (req, res) => {
+  await pool.query(`UPDATE users SET status='active' WHERE id=$1 AND role='parent'`, [req.params.parentId]);
+  res.json({ ok: true });
+});
+
+// PUT /parents/reject/:parentId
+router.put("/reject/:parentId", requireRole("director", "teacher", "super_admin"), async (req, res) => {
+  const { reason } = req.body as { reason?: string };
+  await pool.query(`UPDATE users SET status='rejected' WHERE id=$1 AND role='parent'`, [req.params.parentId]);
+  res.json({ ok: true, reason });
 });
 
 export default router;
