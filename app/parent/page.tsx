@@ -5,8 +5,9 @@ import { getCurrentUser } from "@/lib/api/auth";
 import { apiGet } from "@/lib/api/server";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { logoutAction } from "@/app/actions/auth";
+import { ChildCard } from "./ChildCard";
 
 interface Child {
   id: string;
@@ -27,7 +28,7 @@ export default async function ParentPage() {
 
   return (
     <div className="min-h-screen bg-muted/30 px-4 py-8">
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-4">
 
         <div className="flex items-center justify-between">
           <div>
@@ -52,25 +53,8 @@ export default async function ParentPage() {
         ) : (
           <>
             {children.map((child) => (
-              <Card key={child.id}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">
-                    {child.first_name} {child.last_name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm text-muted-foreground">
-                  {child.school_name && (
-                    <p>🏫 {child.school_name}{child.grade ? ` — ${child.grade}-sinf ${child.letter}` : ""}</p>
-                  )}
-                  <p>
-                    {child.approved_at
-                      ? <span className="text-green-600 font-medium">✓ Tasdiqlangan</span>
-                      : <span className="text-yellow-600 font-medium">⏳ Tasdiqlanmagan</span>}
-                  </p>
-                </CardContent>
-              </Card>
+              <ChildCard key={child.id} child={child} parentId={user.id} />
             ))}
-
             <Link href="/parent/link">
               <Button variant="outline" className="w-full">+ Yana farzand qo'shish</Button>
             </Link>
