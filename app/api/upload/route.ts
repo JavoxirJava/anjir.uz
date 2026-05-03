@@ -33,8 +33,33 @@ export async function POST(req: NextRequest) {
   }
 
   const key = generateKey(folder, file.name);
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const fileUrl = await uploadToR2(key, buffer, contentType);
+
+  let buffer: Buffer;
+  try {
+    buffer = Buffer.from(await file.arrayBuffer());
+  } catch (err) {
+    console.error("[upload] arrayBuffer xatosi:", err);
+    return NextResponse.json({ error: "Faylni o'qishda xatolik" }, { status: 500 });
+  }
+
+  let fileUrl: string;
+  try {
+    fileUrl = await uploadToR2(key, buffer, contentType);
+  } catch (err) {
+    console.error("[upload] R2 upload xatosi:", {
+      message: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+      bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+      accountId: process.env.CLOUDFLARE_R2_ACCOUNT_ID ? "set" : "MISSING",
+      accessKey: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID ? "set" : "MISSING",
+      secretKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY ? "set" : "MISSING",
+      publicUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL ? "set" : "MISSING",
+    });
+    return NextResponse.json(
+      { error: `R2 yuklash xatosi: ${err instanceof Error ? err.message : "noma'lum"}` },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({ fileUrl, key });
 }
