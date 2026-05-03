@@ -168,7 +168,11 @@ export function NewLectureForm({ subjects, classes }: Props) {
                     <Select onValueChange={field.onChange} value={field.value ?? ""}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Barcha sinflar" />
+                          <SelectValue placeholder="Barcha sinflar">
+                            {field.value
+                              ? (() => { const c = classes.find(cl => cl.id === field.value); return c ? `${c.grade}-sinf ${c.letter}` : "Barcha sinflar"; })()
+                              : undefined}
+                          </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
