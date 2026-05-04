@@ -149,6 +149,8 @@ export interface Database {
           description: string | null;
           file_url: string | null;
           deadline: string | null;
+          difficulty_level: "low" | "medium" | "high";
+          is_for_disabled: boolean;
           created_at: string;
         };
         Insert: Omit<Database["public"]["Tables"]["assignments"]["Row"], "id" | "created_at">;

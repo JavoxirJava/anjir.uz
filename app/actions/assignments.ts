@@ -6,11 +6,13 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 const assignmentSchema = z.object({
-  title:       z.string().min(3, "Sarlavha kamida 3 ta belgi"),
-  description: z.string().optional(),
-  deadline:    z.string().optional(),
-  subject_id:  z.string().min(1, "Fan tanlanishi shart"),
-  classIds:    z.array(z.string()).min(1, "Kamida 1 ta sinf tanlang"),
+  title:            z.string().min(3, "Sarlavha kamida 3 ta belgi"),
+  description:      z.string().optional(),
+  deadline:         z.string().optional(),
+  subject_id:       z.string().min(1, "Fan tanlanishi shart"),
+  classIds:         z.array(z.string()).min(1, "Kamida 1 ta sinf tanlang"),
+  difficulty_level: z.enum(["low", "medium", "high"]).default("medium"),
+  is_for_disabled:  z.boolean().default(false),
 });
 
 export async function createAssignmentAction(formData: FormData) {
@@ -18,11 +20,13 @@ export async function createAssignmentAction(formData: FormData) {
   if (!user) return { error: "Tizimga kiring" };
 
   const raw = {
-    title:       formData.get("title"),
-    description: formData.get("description") || undefined,
-    deadline:    formData.get("deadline")    || undefined,
-    subject_id:  formData.get("subject_id")  || "",
-    classIds:    formData.getAll("classIds"),
+    title:            formData.get("title"),
+    description:      formData.get("description") || undefined,
+    deadline:         formData.get("deadline")    || undefined,
+    subject_id:       formData.get("subject_id")  || "",
+    classIds:         formData.getAll("classIds"),
+    difficulty_level: formData.get("difficulty_level") || "medium",
+    is_for_disabled:  formData.get("is_for_disabled") === "true",
   };
 
   const parsed = assignmentSchema.safeParse(raw);
@@ -30,12 +34,14 @@ export async function createAssignmentAction(formData: FormData) {
 
   try {
     const id = await createAssignment({
-      title:       parsed.data.title,
-      description: parsed.data.description ?? null,
-      deadline:    parsed.data.deadline    ?? null,
-      teacher_id:  user.id,
-      subject_id:  parsed.data.subject_id,
-      classIds:    parsed.data.classIds,
+      title:            parsed.data.title,
+      description:      parsed.data.description ?? null,
+      deadline:         parsed.data.deadline    ?? null,
+      teacher_id:       user.id,
+      subject_id:       parsed.data.subject_id,
+      classIds:         parsed.data.classIds,
+      difficulty_level: parsed.data.difficulty_level,
+      is_for_disabled:  parsed.data.is_for_disabled,
     });
     revalidatePath("/teacher/assignments");
     return { id };

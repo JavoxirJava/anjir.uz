@@ -45,14 +45,18 @@ export async function createAssignment(input: {
   teacher_id: string;
   subject_id: string;
   classIds: string[];
+  difficulty_level: "low" | "medium" | "high";
+  is_for_disabled: boolean;
 }): Promise<string> {
   void input.teacher_id;
   const r = await apiPost<{ id: string }>("/assignments", {
-    title:       input.title,
-    description: input.description,
-    deadline:    input.deadline,
-    subject_id:  input.subject_id,
-    class_ids:   input.classIds,
+    title:            input.title,
+    description:      input.description,
+    deadline:         input.deadline,
+    subject_id:       input.subject_id,
+    class_ids:        input.classIds,
+    difficulty_level: input.difficulty_level,
+    is_for_disabled:  input.is_for_disabled,
   });
   return r.id;
 }

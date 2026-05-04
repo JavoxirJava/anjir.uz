@@ -24,6 +24,8 @@ export function NewAssignmentForm({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
+  const [difficulty, setDifficulty] = useState<"low" | "medium" | "high">("medium");
+  const [isForDisabled, setIsForDisabled] = useState(false);
 
   function toggleClass(id: string) {
     setSelectedClasses((prev) =>
@@ -44,6 +46,8 @@ export function NewAssignmentForm({
       return;
     }
     selectedClasses.forEach((c) => fd.append("classIds", c));
+    fd.set("difficulty_level", difficulty);
+    fd.set("is_for_disabled", String(isForDisabled));
 
     startTransition(async () => {
       const result = await createAssignmentAction(fd);
@@ -112,6 +116,56 @@ export function NewAssignmentForm({
               type="datetime-local"
               className="w-full"
             />
+          </div>
+
+          {/* Daraja */}
+          <fieldset>
+            <legend className="text-sm font-medium mb-2">O&apos;quvchi darajasi *</legend>
+            <div className="flex gap-2" role="radiogroup" aria-label="Daraja tanlang">
+              {(["low", "medium", "high"] as const).map((level) => {
+                const labels = { low: "Past", medium: "Oʻrta", high: "Yuqori" };
+                return (
+                  <button
+                    key={level}
+                    type="button"
+                    role="radio"
+                    aria-checked={difficulty === level}
+                    onClick={() => setDifficulty(level)}
+                    className={`rounded-lg border px-4 py-2 text-sm transition-colors focus-visible:outline-2 ${
+                      difficulty === level
+                        ? "border-primary bg-primary/10 font-medium"
+                        : "border-border hover:bg-muted"
+                    }`}
+                  >
+                    {labels[level]}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          {/* Imkoniyati cheklangan */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              role="checkbox"
+              id="is_for_disabled"
+              aria-checked={isForDisabled}
+              onClick={() => setIsForDisabled((v) => !v)}
+              className={`h-5 w-5 rounded border-2 flex items-center justify-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+                isForDisabled ? "border-primary bg-primary" : "border-border"
+              }`}
+              aria-label="Imkoniyati cheklangan o'quvchilar uchun"
+            >
+              {isForDisabled && (
+                <svg viewBox="0 0 12 12" className="h-3 w-3 text-primary-foreground" aria-hidden="true">
+                  <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
+            <Label htmlFor="is_for_disabled" className="cursor-pointer select-none">
+              Imkoniyati cheklangan o&apos;quvchilar uchun
+            </Label>
           </div>
 
           {/* Sinflar */}
