@@ -6,6 +6,8 @@ import { uz } from "@/lib/strings/uz";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TestDeleteButton } from "./TestDeleteButton";
+import { TestExcelButtons } from "./TestExcelButtons";
+import { TestExportButton } from "./TestExportButton";
 
 export const dynamic = "force-dynamic";
 
@@ -27,12 +29,15 @@ export default async function TeacherTestsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <h1 className="text-2xl font-bold">{uz.teacher.myTests}</h1>
-        <Link
-          href="/teacher/tests/new"
-          className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-        >
-          + {uz.teacher.addTest}
-        </Link>
+        <div className="flex items-center gap-2 flex-wrap">
+          <TestExcelButtons />
+          <Link
+            href="/teacher/tests/new"
+            className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            + {uz.teacher.addTest}
+          </Link>
+        </div>
       </div>
 
       {tests.length === 0 ? (
@@ -64,6 +69,7 @@ export default async function TeacherTestsPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
+                    <TestExportButton id={test.id} title={test.title} />
                     <Link
                       href={`/teacher/tests/${test.id}/edit`}
                       className="rounded-md px-3 py-1.5 text-sm border hover:bg-muted focus-visible:outline-2"
