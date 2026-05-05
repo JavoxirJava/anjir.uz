@@ -2,7 +2,6 @@ import { getCurrentUser } from "@/lib/api/auth";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { apiGet } from "@/lib/api/server";
 import { getAssignmentsForStudent } from "@/lib/db/assignments";
 import { uz } from "@/lib/strings/uz";
 import { Badge } from "@/components/ui/badge";
@@ -24,8 +23,7 @@ export default async function StudentAssignmentsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const profile = await apiGet<{ class_id: string | null } | null>("/students/me").catch(() => null);
-  const assignments = profile?.class_id ? await getAssignmentsForStudent(profile.class_id) : [];
+  const assignments = await getAssignmentsForStudent("").catch(() => []);
 
   return (
     <div className="space-y-6">

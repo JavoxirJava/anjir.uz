@@ -10,6 +10,8 @@ export type AssignmentRow = {
   subject_id: string | null;
   teacher_id: string;
   created_at: string;
+  difficulty_level?: "low" | "medium" | "high";
+  is_for_disabled?: boolean;
   subjects?: { id: string; name: string } | null;
 };
 
@@ -34,8 +36,8 @@ export async function getAssignmentById(id: string): Promise<AssignmentRow | nul
   try { return await apiGet(`/assignments/${id}`); } catch { return null; }
 }
 
-export async function getAssignmentsForStudent(classId: string): Promise<AssignmentRow[]> {
-  return apiGet(`/assignments?class_id=${classId}`);
+export async function getAssignmentsForStudent(_classId: string): Promise<AssignmentRow[]> {
+  return apiGet(`/students/me/assignments`);
 }
 
 export async function createAssignment(input: {
