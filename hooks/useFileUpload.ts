@@ -14,7 +14,6 @@ interface UploadProgress {
 }
 
 const PROXY_SIZE_LIMIT = 5 * 1024 * 1024;
-const VIDEO_TYPES = ["video/mp4", "video/webm"];
 
 export function useFileUpload() {
   const [progress, setProgress] = useState<UploadProgress>({ percent: 0, status: "idle" });
@@ -22,9 +21,6 @@ export function useFileUpload() {
   async function upload(file: File, folder = "lectures"): Promise<UploadResult | null> {
     setProgress({ percent: 5, status: "uploading" });
     try {
-      if (VIDEO_TYPES.includes(file.type)) {
-        return await uploadViaStream(file);
-      }
       if (file.size > PROXY_SIZE_LIMIT) {
         return await uploadViaPresign(file, folder);
       }
