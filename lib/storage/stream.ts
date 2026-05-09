@@ -18,6 +18,30 @@ interface StreamUploadResponse {
 }
 
 /**
+ * Brauzerdan to'g'ridan-to'g'ri yuklash uchun Stream direct upload URL
+ * (Netlify proxy limitini chetlab o'tadi)
+ */
+export async function createDirectUploadUrl(): Promise<{ uploadURL: string; uid: string }> {
+  const res = await fetch(`${BASE_URL}/direct_upload`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${CF_STREAM_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ maxDurationSeconds: 3600 }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Stream direct upload URL yaratishda xatolik: ${res.status} ${text}`);
+  }
+
+  const data = await res.json() as { result: { uploadURL: string; uid: string }; success: boolean };
+  if (!data.success) throw new Error("Stream direct upload URL yaratishda xatolik");
+  return data.result;
+}
+
+/**
  * Cloudflare Stream ga video yuklash uchun TUS upload URL
  */
 export async function createStreamUploadUrl(
@@ -39,7 +63,6 @@ export async function createStreamUploadUrl(
   }
 
   const location = res.headers.get("location") ?? "";
-  // UID URL da oxirgi qismda bo'ladi
   const uid = location.split("/").pop() ?? "";
   return { uploadUrl: location, uid };
 }
