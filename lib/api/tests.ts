@@ -34,6 +34,7 @@ export type TestRow = {
 export type TestWithQuestions = TestRow & {
   questions: QuestionRow[];
   test_classes?: { class_id: string }[];
+  test_games?: { game_id: string; title: string }[];
 };
 
 export async function getTestsByTeacher(teacherId: string): Promise<TestRow[]> {
@@ -63,6 +64,7 @@ export async function createTest(teacherId: string, input: TestInput): Promise<s
     test_type:    input.testType,
     max_attempts: input.maxAttempts,
     class_ids:    input.classIds,
+    game_ids:     input.gameIds ?? [],
     questions:    input.questions,
   });
   return result.id;
@@ -77,6 +79,7 @@ export async function updateTest(testId: string, input: TestInput): Promise<void
     test_type:    input.testType,
     max_attempts: input.maxAttempts,
     class_ids:    input.classIds,
+    game_ids:     input.gameIds ?? [],
     questions:    input.questions,
   });
 }

@@ -3,6 +3,7 @@ import { apiGet } from "@/lib/api/server";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getTestById } from "@/lib/db/tests";
+import { getGamesByTeacher } from "@/lib/api/games";
 import type { TestInput } from "@/lib/validations/test";
 import { TestEditForm } from "./TestEditForm";
 
@@ -17,11 +18,12 @@ export default async function EditTestPage({ params }: Props) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const [test, sac] = await Promise.all([
+  const [test, sac, games] = await Promise.all([
     getTestById(id),
     apiGet<{ subjects: { id: string; name: string }[]; classes: { id: string; grade: number; letter: string }[] }>(
       `/teachers/${user.id}/subjects-and-classes`
     ).catch(() => ({ subjects: [], classes: [] })),
+    getGamesByTeacher(user.id).catch(() => []),
   ]);
   const subjectsList = sac.subjects;
   const classesList = sac.classes;
@@ -51,6 +53,7 @@ export default async function EditTestPage({ params }: Props) {
     testType: test.test_type as "entry" | "post_topic" | "home_study",
     timeLimit: test.time_limit ?? null,
     maxAttempts: test.max_attempts ?? null,
+    gameIds: (test.test_games as { game_id: string }[] ?? []).map((tg) => tg.game_id),
     questions: (test.questions as QuestionRow[]).map((q) => ({
       id: q.id,
       question_text: q.question_text,
@@ -79,6 +82,7 @@ export default async function EditTestPage({ params }: Props) {
         initialValues={initialValues}
         subjects={subjectsList as SubjectRow[]}
         classes={classesList as ClassRow[]}
+        games={games}
       />
     </div>
   );

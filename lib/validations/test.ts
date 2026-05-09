@@ -25,6 +25,7 @@ export const testSchema = z.object({
   testType: z.enum(["entry", "post_topic", "home_study"]),
   timeLimit: z.number().int().min(1).nullable().optional(),
   maxAttempts: z.number().int().min(1).nullable().optional(),
+  gameIds: z.array(z.string()).optional().default([]),
   questions: z.array(questionSchema).min(1, "Kamida bitta savol qo'shilishi shart"),
 });
 

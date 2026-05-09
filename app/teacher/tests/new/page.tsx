@@ -2,6 +2,7 @@ import { getCurrentUser } from "@/lib/api/auth";
 import type { Metadata } from "next";
 import { getTeacherSubjectsAndClasses } from "@/lib/db/teacher-assignments";
 import { uz } from "@/lib/strings/uz";
+import { getGamesByTeacher } from "@/lib/api/games";
 import { TestBuilderForm } from "./TestBuilderForm";
 
 export const dynamic = "force-dynamic";
@@ -13,12 +14,15 @@ export const metadata: Metadata = {
 export default async function NewTestPage() {
   const user = await getCurrentUser();
 
-  const { subjects, classes } = await getTeacherSubjectsAndClasses(user!.id);
+  const [{ subjects, classes }, games] = await Promise.all([
+    getTeacherSubjectsAndClasses(user!.id),
+    getGamesByTeacher(user!.id).catch(() => []),
+  ]);
 
   return (
     <div className="max-w-3xl space-y-6">
       <h1 className="text-2xl font-bold">{uz.teacher.addTest}</h1>
-      <TestBuilderForm subjects={subjects} classes={classes} />
+      <TestBuilderForm subjects={subjects} classes={classes} games={games} />
     </div>
   );
 }

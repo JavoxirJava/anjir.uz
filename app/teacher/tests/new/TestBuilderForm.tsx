@@ -22,6 +22,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { QuestionEditor } from "./QuestionEditor";
+import type { GameRow } from "@/lib/api/games";
 
 interface Subject { id: string; name: string }
 interface ClassItem { id: string; grade: number; letter: string }
@@ -35,9 +36,11 @@ const TEST_TYPES = [
 export function TestBuilderForm({
   subjects,
   classes,
+  games,
 }: {
   subjects: Subject[];
   classes: ClassItem[];
+  games: GameRow[];
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -53,6 +56,7 @@ export function TestBuilderForm({
       testType: "home_study",
       timeLimit: null,
       maxAttempts: null,
+      gameIds: [],
       questions: [defaultQuestion()],
     },
   });
@@ -272,6 +276,43 @@ export function TestBuilderForm({
                 </div>
               </div>
             </div>
+
+            {/* O'yinlar */}
+            {games.length > 0 && (
+              <FormField
+                control={form.control}
+                name="gameIds"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bog&apos;liq o&apos;yinlar</FormLabel>
+                    <div
+                      role="group"
+                      aria-label="O'yinlarni tanlang"
+                      className="flex flex-wrap gap-3"
+                    >
+                      {games.map((g) => {
+                        const checked = (field.value ?? []).includes(g.id);
+                        return (
+                          <label key={g.id} className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={(v) => {
+                                const cur = field.value ?? [];
+                                if (v) field.onChange([...cur, g.id]);
+                                else field.onChange(cur.filter((id) => id !== g.id));
+                              }}
+                              aria-label={g.title}
+                            />
+                            <span className="text-sm">{g.title}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </CardContent>
         </Card>
 

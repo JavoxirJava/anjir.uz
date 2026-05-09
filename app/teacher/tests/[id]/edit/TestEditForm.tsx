@@ -22,6 +22,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { QuestionEditor } from "@/app/teacher/tests/new/QuestionEditor";
+import type { GameRow } from "@/lib/api/games";
 
 interface Subject { id: string; name: string }
 interface ClassItem { id: string; grade: number; letter: string }
@@ -37,9 +38,10 @@ interface Props {
   initialValues: TestInput;
   subjects: Subject[];
   classes: ClassItem[];
+  games: GameRow[];
 }
 
-export function TestEditForm({ testId, initialValues, subjects, classes }: Props) {
+export function TestEditForm({ testId, initialValues, subjects, classes, games }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -199,6 +201,39 @@ export function TestEditForm({ testId, initialValues, subjects, classes }: Props
                 </FormItem>
               )}
             />
+
+            {/* O'yinlar */}
+            {games.length > 0 && (
+              <FormField
+                control={form.control}
+                name="gameIds"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bog&apos;liq o&apos;yinlar</FormLabel>
+                    <div role="group" aria-label="O'yinlarni tanlang" className="flex flex-wrap gap-3">
+                      {games.map((g) => {
+                        const checked = (field.value ?? []).includes(g.id);
+                        return (
+                          <label key={g.id} className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={(v) => {
+                                const cur = field.value ?? [];
+                                if (v) field.onChange([...cur, g.id]);
+                                else field.onChange(cur.filter((id) => id !== g.id));
+                              }}
+                              aria-label={g.title}
+                            />
+                            <span className="text-sm">{g.title}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
