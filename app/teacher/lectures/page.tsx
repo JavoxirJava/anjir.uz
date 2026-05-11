@@ -86,10 +86,16 @@ export default async function TeacherLecturesPage() {
                         {lecture.description}
                       </p>
                     )}
-                    {lecture.content_type === "video" && lecture.lecture_subtitles?.length === 0 && (
-                      <p className="text-xs text-amber-600" role="alert">
-                        ⚠ Subtitr qo&apos;shilmagan
-                      </p>
+                    {lecture.content_type === "video" && (
+                      lecture.lecture_subtitles && lecture.lecture_subtitles.length > 0 ? (
+                        <p className="text-xs text-green-600">
+                          ✓ Subtitr qo&apos;shilgan
+                        </p>
+                      ) : (
+                        <p className="text-xs text-amber-600" role="alert">
+                          ⚠ Subtitr qo&apos;shilmagan
+                        </p>
+                      )
                     )}
                   </div>
                   <LectureDeleteButton id={lecture.id} fileUrl={lecture.file_url ?? ""} />
