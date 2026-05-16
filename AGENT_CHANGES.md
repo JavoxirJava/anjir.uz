@@ -68,3 +68,26 @@ Eslatma: keyingi barcha o'zgarishlar ham shu faylga vaqt + sabab + qisqa natija 
       - `/students/me` query'da yangi ustunlar yo'q bo'lsa eski query bilan javob qaytaradi.
       - `/students/me/assignments` ham eski schema holatida default qiymatlar bilan ishlaydi.
   - Nega: backend DB migratsiyasi hali to'liq qo'llanmagan holatda ham frontend sahifalar yiqilmasligi uchun.
+
+## 2026-05-16 15:05:30 +05
+
+- So'rov: "video play paytida `The media resource ... was not suitable` xatosi"
+  - Nima qilindi:
+    - `components/lectures/VideoPlayer.tsx` da `play()` promise xatosi ushlanadigan qilindi.
+    - `onError` handler qo'shilib media error kodi bo'yicha aniq xabarlar chiqarildi.
+    - Player ichida fallback havola qo'shildi: "Videoni ochish".
+  - Nega: decode/codec muammolarida UI yiqilmasligi va foydalanuvchiga aniq yo'naltirish berish uchun.
+
+## 2026-05-16 15:09:19 +05
+
+- So'rov: "video avval ochilgan, hozir ochmay qoldi"
+  - Nima qilindi:
+    - `VideoPlayer`da `play()` xatosi differensial handling qilindi (`NotSupportedError`, `NotAllowedError`, boshqa holatlar).
+    - `onCanPlay` qo'shilib vaqtinchalik xato chiqqanda qayta yuklangach xabar avtomatik tozalanadigan qilindi.
+  - Nega: oldingi qattiq error-message logikasi sabab bo'lishi mumkin bo'lgan regressiyani yumshatish va noto'g'ri "format xato" signalini kamaytirish uchun.
+
+## 2026-05-16 15:11:34 +05
+
+- So'rov: "video link to'g'ridan-to'g'ri ochiladi, lekin sayt playerida ochilmaydi"
+  - Nima qilindi: `VideoPlayer` ichidagi `crossOrigin=\"anonymous\"` atributi olib tashlandi.
+  - Nega: R2 CORS headerlari to'liq bo'lmasa, aynan `crossOrigin` sabab `<video>` yuklanishi bloklanishi mumkin; direct URL esa ochilaveradi.

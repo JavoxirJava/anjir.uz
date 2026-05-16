@@ -20,6 +20,7 @@ interface Props {
 export function VideoPlayer({ src, title, subtitleUrl, streamUid }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [playError, setPlayError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [subtitlesOn, setSubtitlesOn] = useState(!!subtitleUrl);
@@ -49,11 +50,29 @@ export function VideoPlayer({ src, title, subtitleUrl, streamUid }: Props) {
     v.textTracks[0].mode = subtitlesOn ? "showing" : "hidden";
   }, [subtitlesOn]);
 
-  function togglePlay() {
+  async function togglePlay() {
     const v = videoRef.current;
     if (!v) return;
-    if (playing) { v.pause(); setPlaying(false); }
-    else { v.play(); setPlaying(true); }
+    if (playing) {
+      v.pause();
+      setPlaying(false);
+      return;
+    }
+    try {
+      setPlayError(null);
+      await v.play();
+      setPlaying(true);
+    } catch (error) {
+      setPlaying(false);
+      const name = error instanceof DOMException ? error.name : "";
+      if (name === "NotSupportedError") {
+        setPlayError("Video formatini brauzer ocholmadi. Boshqa formatda qayta yuklang yoki faylni alohida ochib ko'ring.");
+      } else if (name === "NotAllowedError") {
+        setPlayError("Videoni ishga tushirish uchun Play tugmasini qayta bosing.");
+      } else {
+        setPlayError("Videoni ishga tushirishda vaqtinchalik xatolik bo'ldi. Qayta urinib ko'ring.");
+      }
+    }
   }
 
   function seek(delta: number) {
@@ -86,6 +105,23 @@ export function VideoPlayer({ src, title, subtitleUrl, streamUid }: Props) {
     const m = Math.floor(sec / 60).toString().padStart(2, "0");
     const s = Math.floor(sec % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
+  }
+
+  function handleVideoError() {
+    const code = videoRef.current?.error?.code;
+    if (code === 4) {
+      setPlayError("Video formatini brauzer qo'llab-quvvatlamayapti.");
+      return;
+    }
+    if (code === 3) {
+      setPlayError("Video fayl buzilgan yoki oxirigacha yuklanmagan bo'lishi mumkin.");
+      return;
+    }
+    setPlayError("Videoni ochishda xatolik yuz berdi.");
+  }
+
+  function handleCanPlay() {
+    setPlayError(null);
   }
 
   // Cloudflare Stream embedi
@@ -125,8 +161,9 @@ export function VideoPlayer({ src, title, subtitleUrl, streamUid }: Props) {
         className="w-full aspect-video"
         preload="metadata"
         onClick={togglePlay}
+        onError={handleVideoError}
+        onCanPlay={handleCanPlay}
         aria-label={title}
-        crossOrigin="anonymous"
       >
         {subtitleUrl && (
           <track
@@ -142,6 +179,14 @@ export function VideoPlayer({ src, title, subtitleUrl, streamUid }: Props) {
 
       {/* Controls */}
       <div className="bg-black/80 px-4 py-2 space-y-2">
+        {playError && (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive flex items-center justify-between gap-3">
+            <span>{playError}</span>
+            <a href={src} target="_blank" rel="noopener noreferrer" className="underline">
+              Videoni ochish
+            </a>
+          </div>
+        )}
         {/* Seekbar */}
         <input
           type="range"
