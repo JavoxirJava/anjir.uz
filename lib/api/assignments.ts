@@ -74,6 +74,7 @@ export async function createAssignment(input: {
   title: string;
   description: string | null;
   deadline: string | null;
+  file_url: string | null;
   teacher_id: string;
   subject_id: string;
   classIds: string[];
@@ -85,6 +86,7 @@ export async function createAssignment(input: {
     title:            input.title,
     description:      input.description,
     deadline:         input.deadline,
+    file_url:         input.file_url,
     subject_id:       input.subject_id,
     class_ids:        input.classIds,
     difficulty_level: input.difficulty_level,

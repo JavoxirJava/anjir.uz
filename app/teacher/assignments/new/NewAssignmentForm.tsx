@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createAssignmentAction } from "@/app/actions/assignments";
+import { useFileUpload } from "@/hooks/useFileUpload";
 import { uz } from "@/lib/strings/uz";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,9 @@ export function NewAssignmentForm({
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [difficulty, setDifficulty] = useState<"low" | "medium" | "high">("medium");
   const [isForDisabled, setIsForDisabled] = useState(false);
+  const [descriptionPdfUrl, setDescriptionPdfUrl] = useState<string>("");
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+  const { upload, progress, reset } = useFileUpload();
 
   function toggleClass(id: string) {
     setSelectedClasses((prev) =>
@@ -35,6 +39,10 @@ export function NewAssignmentForm({
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (isUploadingPdf) {
+      toast.error("PDF yuklanishi tugashini kuting");
+      return;
+    }
     const fd = new FormData(e.currentTarget);
 
     if (!fd.get("subject_id")) {
@@ -48,6 +56,7 @@ export function NewAssignmentForm({
     selectedClasses.forEach((c) => fd.append("classIds", c));
     fd.set("difficulty_level", difficulty);
     fd.set("is_for_disabled", String(isForDisabled));
+    if (descriptionPdfUrl) fd.set("file_url", descriptionPdfUrl);
 
     startTransition(async () => {
       const result = await createAssignmentAction(fd);
@@ -58,6 +67,24 @@ export function NewAssignmentForm({
         router.push("/teacher/assignments");
       }
     });
+  }
+
+  async function handlePdfChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      toast.error("Faqat PDF fayl yuklash mumkin");
+      return;
+    }
+    setIsUploadingPdf(true);
+    const result = await upload(file, "assignments");
+    setIsUploadingPdf(false);
+    if (!result?.fileUrl) {
+      toast.error("PDF yuklashda xatolik");
+      return;
+    }
+    setDescriptionPdfUrl(result.fileUrl);
+    toast.success("PDF muvaffaqiyatli yuklandi");
   }
 
   return (
@@ -88,6 +115,45 @@ export function NewAssignmentForm({
               placeholder="Vazifa haqida batafsil ma'lumot..."
               rows={4}
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="description_pdf">Tavsif PDF (ixtiyoriy)</Label>
+            <Input
+              id="description_pdf"
+              name="description_pdf"
+              type="file"
+              accept="application/pdf"
+              onChange={handlePdfChange}
+              disabled={isPending || isUploadingPdf}
+            />
+            {isUploadingPdf && (
+              <p className="text-xs text-muted-foreground">
+                Yuklanmoqda... {progress.percent}%
+              </p>
+            )}
+            {descriptionPdfUrl && (
+              <div className="flex items-center gap-3 text-xs">
+                <a
+                  href={descriptionPdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline"
+                >
+                  Yuklangan PDF&apos;ni ko&apos;rish
+                </a>
+                <button
+                  type="button"
+                  className="text-destructive underline"
+                  onClick={() => {
+                    setDescriptionPdfUrl("");
+                    reset();
+                  }}
+                >
+                  Olib tashlash
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Fan */}

@@ -8,6 +8,7 @@ import { z } from "zod";
 const assignmentSchema = z.object({
   title:            z.string().min(3, "Sarlavha kamida 3 ta belgi"),
   description:      z.string().optional(),
+  file_url:         z.string().url().optional(),
   deadline:         z.string().optional(),
   subject_id:       z.string().min(1, "Fan tanlanishi shart"),
   classIds:         z.array(z.string()).min(1, "Kamida 1 ta sinf tanlang"),
@@ -22,6 +23,7 @@ export async function createAssignmentAction(formData: FormData) {
   const raw = {
     title:            formData.get("title"),
     description:      formData.get("description") || undefined,
+    file_url:         formData.get("file_url") || undefined,
     deadline:         formData.get("deadline")    || undefined,
     subject_id:       formData.get("subject_id")  || "",
     classIds:         formData.getAll("classIds"),
@@ -36,6 +38,7 @@ export async function createAssignmentAction(formData: FormData) {
     const id = await createAssignment({
       title:            parsed.data.title,
       description:      parsed.data.description ?? null,
+      file_url:         parsed.data.file_url ?? null,
       deadline:         parsed.data.deadline    ?? null,
       teacher_id:       user.id,
       subject_id:       parsed.data.subject_id,

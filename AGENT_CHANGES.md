@@ -34,3 +34,13 @@ Qisqa jurnal: agent tomonidan qilingan o'zgarishlar, qachon va qaysi so'rov asos
 ---
 
 Eslatma: keyingi barcha o'zgarishlar ham shu faylga vaqt + sabab + qisqa natija ko'rinishida qo'shib boriladi.
+
+## 2026-05-16 14:11:18 +05
+
+- So'rov: "topshiriq qo'shishda tavsifni xohlasa PDF shaklida ham qo'shish; fayl R2'ga saqlansin"
+  - Nima qilindi:
+    - `teacher` assignment yaratish formasiga ixtiyoriy PDF upload qo'shildi
+    - upload `useFileUpload()` orqali R2 (`/api/upload` yoki `/api/upload/presign`) ga yuboriladi
+    - yaratilayotgan assignment payloadiga `file_url` yuborish qo'shildi
+    - `student` assignment detail sahifasida "Tavsif PDF'ni ochish" havolasi chiqarildi
+  - Nega: topshiriq tavsifini matndan tashqari PDF ko'rinishida berish talabi uchun.

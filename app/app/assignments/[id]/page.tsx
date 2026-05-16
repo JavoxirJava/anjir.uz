@@ -66,6 +66,21 @@ export default async function StudentAssignmentPage({ params }: Props) {
         </Card>
       )}
 
+      {assignment.file_url && (
+        <Card>
+          <CardContent className="pt-4 pb-4">
+            <a
+              href={assignment.file_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-primary underline"
+            >
+              📄 Tavsif PDF&apos;ni ochish
+            </a>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Yuborilgan topshiriq */}
       {submission && (
         <Card>
