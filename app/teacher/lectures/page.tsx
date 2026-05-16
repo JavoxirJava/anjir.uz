@@ -98,7 +98,15 @@ export default async function TeacherLecturesPage() {
                       )
                     )}
                   </div>
-                  <LectureDeleteButton id={lecture.id} fileUrl={lecture.file_url ?? ""} />
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/teacher/lectures/${lecture.id}/edit`}
+                      className="inline-flex items-center rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted focus-visible:outline-2"
+                    >
+                      {uz.common.edit}
+                    </Link>
+                    <LectureDeleteButton id={lecture.id} fileUrl={lecture.file_url ?? ""} />
+                  </div>
                 </CardContent>
               </Card>
             </li>

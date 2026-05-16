@@ -97,3 +97,25 @@ Eslatma: keyingi barcha o'zgarishlar ham shu faylga vaqt + sabab + qisqa natija 
 - So'rov: "teacher lecture video upload formida controlled/uncontrolled input xatosi"
   - Nima qilindi: `app/teacher/lectures/new/NewLectureForm.tsx` ichidagi hidden inputlarda `value={field.value ?? ""}` qo'shildi (2 joy).
   - Nega: `undefined`dan stringga o'tish sababli chiqayotgan React controlled/uncontrolled warningni bartaraf etish uchun.
+
+## 2026-05-16 15:29:50 +05
+
+- So'rov: "ma'ruzalarni update qilish imkonini qo'shish"
+  - Nima qilindi:
+    - Backendga `PUT /lectures/:id` update endpoint qo'shildi (`server/src/routes/lectures.ts`).
+    - Frontend API qatlamiga `updateLecture()` qo'shildi (`lib/api/lectures.ts`).
+    - Server actionga `updateLectureAction()` qo'shildi (`app/actions/lectures.ts`).
+    - Teacher uchun yangi edit sahifa va forma qo'shildi:
+      - `app/teacher/lectures/[id]/edit/page.tsx`
+      - `app/teacher/lectures/[id]/edit/EditLectureForm.tsx`
+    - Teacher lectures ro'yxatida `Tahrirlash` tugmasi qo'shildi (`app/teacher/lectures/page.tsx`).
+  - Nega: teacher mavjud ma'ruzani qayta tahrirlay olishi (title, tavsif, fan/sinf, kontent turi/fayli, subtitr) uchun.
+
+## 2026-05-16 15:33:11 +05
+
+- So'rov: "edit formasida fan/sinfda ID chiqib qolishi, mavjud video/VTT holati ko'rinsin va majburiy qayta kiritish bo'lmasin"
+  - Nima qilindi:
+    - `subject` va `class` select'larda tanlangan qiymat label (nom) ko'rinishida chiqadigan qilindi.
+    - Mavjud media fayl va VTT uchun "Hozirgi fayl/VTT mavjud" havolalari qo'shildi.
+    - Update submit tugmasidan `!hasFile` cheklovi olib tashlandi (faqat pendingda bloklanadi).
+  - Nega: teacher faqat kerakli maydonlarni o'zgartirib saqlay olishi va mavjud resurs holatini ko'rib turishi uchun.

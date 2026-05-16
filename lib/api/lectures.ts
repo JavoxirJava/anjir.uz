@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiDelete } from "./server";
+import { apiGet, apiPost, apiDelete, apiPut } from "./server";
 
 export type LectureRow = {
   id: string;
@@ -59,4 +59,20 @@ export async function createLecture(
 
 export async function deleteLecture(id: string): Promise<void> {
   await apiDelete(`/lectures/${id}`);
+}
+
+export async function updateLecture(
+  id: string,
+  input: CreateLectureInput & { subtitleVttUrl?: string | null; subtitleSource?: "manual" | "ai" }
+): Promise<void> {
+  await apiPut(`/lectures/${id}`, {
+    subject_id:       input.subject_id,
+    class_id:         input.class_id,
+    title:            input.title,
+    description:      input.description ?? null,
+    content_type:     input.content_type,
+    file_url:         input.file_url,
+    subtitle_vtt_url: input.subtitleVttUrl ?? null,
+    subtitle_source:  input.subtitleSource,
+  });
 }
