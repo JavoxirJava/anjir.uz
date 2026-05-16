@@ -2,10 +2,10 @@ import { getCurrentUser } from "@/lib/api/auth";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getAssignmentById, getSubmissionsForAssignment } from "@/lib/db/assignments";
-import { uz } from "@/lib/strings/uz";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { GradeForm } from "./GradeForm";
+import { ProgressReviewActions } from "./ProgressReviewActions";
 
 export const metadata: Metadata = {
   title: "Topshiriqlar — I-Imkon.uz",
@@ -50,7 +50,6 @@ export default async function SubmissionsPage({ params }: Props) {
       ) : (
         <ul className="space-y-4" role="list" aria-label="O'quvchi topshiriqlari">
           {submissions.map((sub) => {
-            const student = sub.users as { first_name: string; last_name: string } | null;
             const isGraded = !!sub.graded_at;
             return (
               <li key={sub.id}>
@@ -58,8 +57,8 @@ export default async function SubmissionsPage({ params }: Props) {
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between gap-3 flex-wrap">
                       <CardTitle className="text-base">
-                        {student
-                          ? `${student.first_name} ${student.last_name}`
+                        {sub.first_name && sub.last_name
+                          ? `${sub.first_name} ${sub.last_name}`
                           : "Noma'lum o'quvchi"}
                       </CardTitle>
                       <div className="flex items-center gap-2">
@@ -72,6 +71,10 @@ export default async function SubmissionsPage({ params }: Props) {
                         ) : (
                           <Badge variant="outline">Topshirilmagan</Badge>
                         )}
+                        {sub.progress_state === "done_pending" && <Badge variant="secondary">Tasdiq kutilmoqda</Badge>}
+                        {sub.progress_state === "done_approved" && <Badge variant="default">Tasdiqlangan</Badge>}
+                        {sub.progress_state === "done_rejected" && <Badge variant="destructive">Tasdiqlanmadi</Badge>}
+                        {sub.progress_state === "cannot_do" && <Badge variant="outline">Bajara olmadi</Badge>}
                         <span className="text-xs text-muted-foreground">
                           {formatDate(sub.submitted_at)}
                         </span>
@@ -107,6 +110,9 @@ export default async function SubmissionsPage({ params }: Props) {
                         currentScore={sub.score}
                         currentComment={sub.teacher_comment}
                       />
+                    )}
+                    {sub.progress_state === "done_pending" && (
+                      <ProgressReviewActions submissionId={sub.id} assignmentId={id} />
                     )}
                   </CardContent>
                 </Card>

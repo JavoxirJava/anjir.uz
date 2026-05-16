@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import type { ContrastMode, ColorBlindMode, FontSize } from "@/lib/supabase/types";
+import type { ContrastMode, ColorBlindMode, FontSize } from "@/lib/types/domain";
 
 interface AccessibilitySettings {
   fontSize: FontSize;

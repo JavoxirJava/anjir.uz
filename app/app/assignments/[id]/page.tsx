@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/api/auth";
 import { getAssignmentById, getStudentSubmission } from "@/lib/db/assignments";
-import { uz } from "@/lib/strings/uz";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SubmissionForm } from "./SubmissionForm";
+import { ProgressActions } from "./ProgressActions";
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -123,6 +123,18 @@ export default async function StudentAssignmentPage({ params }: Props) {
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Topshiriq holati</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ProgressActions
+            assignmentId={id}
+            progressState={submission?.progress_state ?? null}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

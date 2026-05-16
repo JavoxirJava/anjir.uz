@@ -7,7 +7,7 @@ import { uz } from "@/lib/strings/uz";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type { FontSize, ContrastMode } from "@/lib/supabase/types";
+import type { FontSize, ContrastMode } from "@/lib/types/domain";
 
 type Step = "intro" | "vision" | "hearing" | "motor" | "done";
 

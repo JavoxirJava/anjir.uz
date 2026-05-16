@@ -4,7 +4,7 @@ import { useAccessibility } from "@/components/providers/AccessibilityProvider";
 import { uz } from "@/lib/strings/uz";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type { FontSize, ContrastMode, ColorBlindMode } from "@/lib/supabase/types";
+import type { FontSize, ContrastMode, ColorBlindMode } from "@/lib/types/domain";
 
 const FONT_SIZES: { value: FontSize; label: string }[] = [
   { value: "small",   label: uz.a11y.fontSizeSmall },

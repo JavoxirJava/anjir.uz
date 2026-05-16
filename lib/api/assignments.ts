@@ -13,6 +13,7 @@ export type AssignmentRow = {
   difficulty_level?: "low" | "medium" | "high";
   is_for_disabled?: boolean;
   subjects?: { id: string; name: string } | null;
+  my_progress_state?: "done_pending" | "done_approved" | "done_rejected" | "cannot_do" | null;
 };
 
 export type SubmissionRow = {
@@ -26,6 +27,17 @@ export type SubmissionRow = {
   submitted_at: string;
   graded_at?: string | null;
   users?: { id: string; first_name: string; last_name: string } | null;
+  first_name?: string;
+  last_name?: string;
+  difficulty_level?: "low" | "medium" | "high";
+  progress_state?: "done_pending" | "done_approved" | "done_rejected" | "cannot_do" | null;
+};
+
+export type StudentAssignmentsResponse = {
+  assignments: AssignmentRow[];
+  level: "low" | "medium" | "high";
+  visible_level: "low" | "medium" | "high";
+  ready_for_test: boolean;
 };
 
 export async function getAssignmentsByTeacher(teacherId: string): Promise<AssignmentRow[]> {
@@ -36,8 +48,26 @@ export async function getAssignmentById(id: string): Promise<AssignmentRow | nul
   try { return await apiGet(`/assignments/${id}`); } catch { return null; }
 }
 
-export async function getAssignmentsForStudent(_classId: string): Promise<AssignmentRow[]> {
-  return apiGet(`/students/me/assignments`);
+export async function getAssignmentsForStudent(classId: string): Promise<AssignmentRow[]> {
+  void classId;
+  const response = await apiGet<StudentAssignmentsResponse | AssignmentRow[]>(`/students/me/assignments`);
+  if (Array.isArray(response)) {
+    return response;
+  }
+  return response.assignments;
+}
+
+export async function getStudentAssignmentsWithLevel(): Promise<StudentAssignmentsResponse> {
+  const response = await apiGet<StudentAssignmentsResponse | AssignmentRow[]>(`/students/me/assignments`);
+  if (Array.isArray(response)) {
+    return {
+      assignments: response,
+      level: "low",
+      visible_level: "low",
+      ready_for_test: false,
+    };
+  }
+  return response;
 }
 
 export async function createAssignment(input: {
@@ -95,4 +125,12 @@ export async function getSubmissionsForAssignment(assignmentId: string): Promise
 
 export async function gradeSubmission(submissionId: string, grade: number, comment: string | null): Promise<void> {
   await apiPut(`/assignments/submissions/${submissionId}/grade`, { score: grade, teacher_comment: comment });
+}
+
+export async function updateAssignmentProgress(assignmentId: string, action: "done" | "cannot_do"): Promise<void> {
+  await apiPost(`/assignments/${assignmentId}/progress`, { action });
+}
+
+export async function reviewAssignmentProgress(submissionId: string, decision: "approve" | "reject"): Promise<void> {
+  await apiPut(`/assignments/submissions/${submissionId}/progress-review`, { decision });
 }

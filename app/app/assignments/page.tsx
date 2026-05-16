@@ -2,7 +2,7 @@ import { getCurrentUser } from "@/lib/api/auth";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getAssignmentsForStudent } from "@/lib/db/assignments";
+import { getStudentAssignmentsWithLevel } from "@/lib/db/assignments";
 import { uz } from "@/lib/strings/uz";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,11 +23,22 @@ export default async function StudentAssignmentsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const assignments = await getAssignmentsForStudent("").catch(() => []);
+  const payload = await getStudentAssignmentsWithLevel().catch(() => ({
+    assignments: [],
+    level: "low" as const,
+    visible_level: "low" as const,
+    ready_for_test: false,
+  }));
+  const assignments = payload.assignments;
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{uz.student.assignments}</h1>
+      {payload.ready_for_test && (
+        <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-emerald-900">
+          Siz test yechishingiz mumkin.
+        </div>
+      )}
 
       {assignments.length === 0 ? (
         <div className="rounded-lg border border-dashed p-12 text-center">
@@ -71,6 +82,9 @@ export default async function StudentAssignmentsPage() {
                             📅 {due.isOverdue ? "Muddati o'tgan: " : ""}{due.text}
                           </span>
                         )}
+                        {a.my_progress_state === "done_pending" && <span>⏳ Ko&apos;rib chiqilmoqda</span>}
+                        {a.my_progress_state === "done_approved" && <span>✅ Tasdiqlangan</span>}
+                        {a.my_progress_state === "cannot_do" && <span>↘️ Bajara olmadi</span>}
                       </div>
                     </CardContent>
                   </Card>

@@ -1,7 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "@/lib/api/auth";
-import { createAssignment, deleteAssignment, submitAssignment, gradeSubmission } from "@/lib/api/assignments";
+import { createAssignment, deleteAssignment, submitAssignment, gradeSubmission, updateAssignmentProgress, reviewAssignmentProgress } from "@/lib/api/assignments";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -98,5 +98,39 @@ export async function gradeSubmissionAction(
     return { success: true };
   } catch {
     return { error: "Baholashda xatolik" };
+  }
+}
+
+export async function updateAssignmentProgressAction(
+  assignmentId: string,
+  action: "done" | "cannot_do"
+) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Tizimga kiring" };
+
+  try {
+    await updateAssignmentProgress(assignmentId, action);
+    revalidatePath("/app/assignments");
+    revalidatePath(`/app/assignments/${assignmentId}`);
+    return { success: true };
+  } catch {
+    return { error: "Topshiriq holatini yangilashda xatolik" };
+  }
+}
+
+export async function reviewAssignmentProgressAction(
+  submissionId: string,
+  assignmentId: string,
+  decision: "approve" | "reject"
+) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Tizimga kiring" };
+
+  try {
+    await reviewAssignmentProgress(submissionId, decision);
+    revalidatePath(`/teacher/assignments/${assignmentId}/submissions`);
+    return { success: true };
+  } catch {
+    return { error: "Tasdiqlashda xatolik" };
   }
 }

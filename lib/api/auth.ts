@@ -1,10 +1,10 @@
 /**
- * Auth helpers — replaces Supabase Auth.
+ * Auth helpers.
  * Server-side: reads JWT from cookie, decodes user info.
  */
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE, API_URL } from "./config";
-import type { UserRole, UserStatus } from "@/lib/supabase/types";
+import type { UserRole, UserStatus } from "@/lib/types/domain";
 
 export interface CurrentUser {
   id: string;
