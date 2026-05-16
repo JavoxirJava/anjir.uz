@@ -50,3 +50,21 @@ Eslatma: keyingi barcha o'zgarishlar ham shu faylga vaqt + sabab + qisqa natija 
 - So'rov: Netlify build logidagi `Property 'file_url' does not exist on type 'AssignmentRow'` xatosini tuzatish
   - Nima qilindi: `lib/api/assignments.ts` ichidagi `AssignmentRow` type'iga `file_url?: string | null` maydoni qo'shildi.
   - Nega: `app/app/assignments/[id]/page.tsx` da `assignment.file_url` ishlatilgani uchun TypeScript build xatosini bartaraf etish.
+
+## 2026-05-16 14:49:02 +05
+
+- So'rov: "lectures page uzoq loadingdan keyin xatolik beradi"
+  - Nima qilindi:
+    - `lib/api/server.ts` ga server API chaqiriqlari uchun `10s` timeout (`AbortController`) qo'shildi.
+    - timeout holati `ApiError(504)` bilan boshqarildi.
+    - `app/app/lectures/page.tsx` da no-data holatiga qayta urinish haqida foydalanuvchi xabari qo'shildi.
+  - Nega: backend javobi osilib qolsa sahifa cheksiz kutib turmasligi va tezroq fallback berishi uchun.
+
+## 2026-05-16 14:55:49 +05
+
+- So'rov: "localhost'da lectures bo'sh chiqyapti"
+  - Nima qilindi:
+    - `server/src/routes/students.ts` da legacy DB schema uchun fallback qo'shildi:
+      - `/students/me` query'da yangi ustunlar yo'q bo'lsa eski query bilan javob qaytaradi.
+      - `/students/me/assignments` ham eski schema holatida default qiymatlar bilan ishlaydi.
+  - Nega: backend DB migratsiyasi hali to'liq qo'llanmagan holatda ham frontend sahifalar yiqilmasligi uchun.

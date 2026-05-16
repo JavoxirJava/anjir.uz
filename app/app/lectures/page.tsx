@@ -43,6 +43,9 @@ export default async function StudentLecturesPage() {
       {lectures.length === 0 ? (
         <div className="rounded-lg border border-dashed p-12 text-center">
           <p className="text-muted-foreground">{uz.common.noData}</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Server vaqtincha javob bermasa, sahifani yangilab qayta urinib ko&apos;ring.
+          </p>
         </div>
       ) : (
         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4" role="list" aria-label={uz.student.lectures}>
