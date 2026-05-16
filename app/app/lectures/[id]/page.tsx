@@ -6,6 +6,7 @@ import { PdfViewer } from "@/components/lectures/PdfViewer";
 import { VideoPlayer } from "@/components/lectures/VideoPlayer";
 import { AudioPlayer } from "@/components/lectures/AudioPlayer";
 import { ReadAloudButton } from "@/components/lectures/ReadAloudButton";
+import { VttReadAloudButton } from "@/components/lectures/VttReadAloudButton";
 import { Badge } from "@/components/ui/badge";
 import { uz } from "@/lib/strings/uz";
 
@@ -77,6 +78,20 @@ export default async function LecturePage({ params }: Props) {
           <span className="text-xs text-muted-foreground">
             {uz.student.readAloud} — sarlavha va tavsifni o&apos;qib beradi
           </span>
+        </section>
+      )}
+
+      {lecture.content_type === "video" && subtitle && (
+        <section aria-label="Subtitr amallari" className="flex items-center gap-3 flex-wrap">
+          <VttReadAloudButton vttUrl={subtitle.vtt_url} />
+          <a
+            href={subtitle.vtt_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-primary underline"
+          >
+            VTT faylni ochish
+          </a>
         </section>
       )}
 

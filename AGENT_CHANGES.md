@@ -119,3 +119,33 @@ Eslatma: keyingi barcha o'zgarishlar ham shu faylga vaqt + sabab + qisqa natija 
     - Mavjud media fayl va VTT uchun "Hozirgi fayl/VTT mavjud" havolalari qo'shildi.
     - Update submit tugmasidan `!hasFile` cheklovi olib tashlandi (faqat pendingda bloklanadi).
   - Nega: teacher faqat kerakli maydonlarni o'zgartirib saqlay olishi va mavjud resurs holatini ko'rib turishi uchun.
+
+## 2026-05-16 15:36:56 +05
+
+- So'rov: "lecture save paytida backend `ON CONFLICT` xatosi"
+  - Nima qilindi: `server/src/routes/lectures.ts` da subtitle upsert logikasi `ON CONFLICT`dan `UPDATE ... RETURNING` + `INSERT` fallback usuliga o'tkazildi (2 joyda: `/lectures/:id/subtitles` va `PUT /lectures/:id`).
+  - Nega: `lecture_subtitles` jadvalida `(lecture_id, language)` unique constraint yo'qligi sababli upsert xatosini bartaraf etish uchun.
+
+## 2026-05-16 15:39:13 +05
+
+- So'rov: "user page'da ma'ruza videosida VTT bo'lsa ham subtitr ko'rinmayapti"
+  - Nima qilindi: `components/lectures/VideoPlayer.tsx` da `loadedmetadata` paytida text track mode (`showing/hidden`) majburan qo'llanadigan qilindi va subtitle toggle bilan sinxronlandi.
+  - Nega: track yuklanish vaqti sababli subtitr mode apply bo'lmay qolayotgan holatni bartaraf etish uchun.
+
+## 2026-05-16 15:40:43 +05
+
+- So'rov: "`useEffect` dependency array size changed (`[]` -> `[true]`) xatosi"
+  - Nima qilindi:
+    - `VideoPlayer` event-listener effect'i qayta barqarorlashtirildi (`[]`).
+    - `subtitlesOn` qiymati `ref` (`subtitlesOnRef`) orqali `loadedmetadata` callback ichida o'qiladigan qilindi.
+  - Nega: hook dependency array o'lchami renderlar oralig'ida o'zgargandek ko'rinadigan runtime xatoni bartaraf etish uchun.
+
+## 2026-05-16 15:44:00 +05
+
+- So'rov: "description ovozli o'qish tugmasidan tashqari VTT subtitr fayli uchun ham tugma kerak"
+  - Nima qilindi:
+    - `components/lectures/VttReadAloudButton.tsx` qo'shildi (VTT faylni yuklab, cue matnini parse qilib Web Speech orqali o'qib beradi).
+    - `app/app/lectures/[id]/page.tsx` ga video + subtitle mavjud bo'lsa:
+      - `Subtitr matnini o'qish` tugmasi
+      - `VTT faylni ochish` havolasi qo'shildi.
+  - Nega: foydalanuvchi teacher yuklagan VTT subtitr kontentidan ham bevosita foydalanishi uchun.

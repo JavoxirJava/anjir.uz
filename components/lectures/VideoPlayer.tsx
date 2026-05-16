@@ -24,21 +24,31 @@ export function VideoPlayer({ src, title, subtitleUrl, streamUid }: Props) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [subtitlesOn, setSubtitlesOn] = useState(!!subtitleUrl);
+  const subtitlesOnRef = useRef(subtitlesOn);
   const [fullscreen, setFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    subtitlesOnRef.current = subtitlesOn;
+  }, [subtitlesOn]);
 
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
     const onTime = () => setCurrentTime(v.currentTime);
-    const onDur = () => setDuration(v.duration);
     const onEnd = () => setPlaying(false);
+    const onMeta = () => {
+      setDuration(v.duration);
+      if (v.textTracks.length > 0) {
+        v.textTracks[0].mode = subtitlesOnRef.current ? "showing" : "hidden";
+      }
+    };
     v.addEventListener("timeupdate", onTime);
-    v.addEventListener("loadedmetadata", onDur);
+    v.addEventListener("loadedmetadata", onMeta);
     v.addEventListener("ended", onEnd);
     return () => {
       v.removeEventListener("timeupdate", onTime);
-      v.removeEventListener("loadedmetadata", onDur);
+      v.removeEventListener("loadedmetadata", onMeta);
       v.removeEventListener("ended", onEnd);
     };
   }, []);
@@ -46,7 +56,7 @@ export function VideoPlayer({ src, title, subtitleUrl, streamUid }: Props) {
   // Subtitles toggle
   useEffect(() => {
     const v = videoRef.current;
-    if (!v || !v.textTracks[0]) return;
+    if (!v || v.textTracks.length === 0) return;
     v.textTracks[0].mode = subtitlesOn ? "showing" : "hidden";
   }, [subtitlesOn]);
 
