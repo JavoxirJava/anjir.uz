@@ -149,3 +149,13 @@ Eslatma: keyingi barcha o'zgarishlar ham shu faylga vaqt + sabab + qisqa natija 
       - `Subtitr matnini o'qish` tugmasi
       - `VTT faylni ochish` havolasi qo'shildi.
   - Nega: foydalanuvchi teacher yuklagan VTT subtitr kontentidan ham bevosita foydalanishi uchun.
+
+## 2026-05-16 15:53:48 +05
+
+- So'rov: "o'yin qo'shishda tashqi o'yin linkini biriktirish va o'quvchi tashqi platformada o'ynay olishi"
+  - Nima qilindi:
+    - `games` oqimiga ixtiyoriy `external_url` maydoni qo'shildi (frontend action + api + backend route).
+    - Teacher game formiga `Tashqi o'yin havolasi (ixtiyoriy)` input qo'shildi.
+    - Student games ro'yxatida tashqi link borligi indikatori qo'shildi.
+    - Student game detail sahifasida `external_url` bo'lsa ichki runner o'rniga tashqi platformani ochish tugmasi chiqariladigan qilindi.
+  - Nega: o'yinlar faqat platforma ichida emas, tashqi platformalarda ham ishlatilishi talabi uchun.

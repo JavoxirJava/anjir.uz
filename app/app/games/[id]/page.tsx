@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/api/auth";
-import { getGameById, createGameAttempt, getStudentGameAttempts } from "@/lib/db/games";
+import { getGameById, createGameAttempt } from "@/lib/db/games";
 import { uz } from "@/lib/strings/uz";
 import { Badge } from "@/components/ui/badge";
 import { GameRunner } from "./GameRunner";
@@ -33,6 +33,31 @@ export default async function StudentGamePage({ params }: Props) {
 
   const game = await getGameById(id);
   if (!game) notFound();
+
+  if (game.external_url) {
+    return (
+      <div className="max-w-3xl mx-auto space-y-6">
+        <header className="space-y-2">
+          <Badge variant="secondary">
+            {TYPE_EMOJI[game.template_type]} {TYPE_LABELS[game.template_type]}
+          </Badge>
+          <h1 className="text-2xl font-bold">{game.title}</h1>
+          <p className="text-sm text-muted-foreground">
+            Bu o&apos;yin tashqi platformada joylashgan.
+          </p>
+        </header>
+
+        <a
+          href={game.external_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-2"
+        >
+          Tashqi o&apos;yinni ochish ↗
+        </a>
+      </div>
+    );
+  }
 
   // Attempt yaratish
   const attemptId = await createGameAttempt(user.id, id);

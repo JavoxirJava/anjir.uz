@@ -67,6 +67,9 @@ export default async function StudentGamesPage() {
                     <p className="text-sm text-muted-foreground">
                       {TYPE_DESC[game.template_type]}
                     </p>
+                    {game.external_url && (
+                      <p className="text-xs text-primary">↗ Tashqi platformada o&apos;ynash mavjud</p>
+                    )}
                     {game.subjects && (
                       <p className="text-xs text-muted-foreground">
                         📚 {Array.isArray(game.subjects)

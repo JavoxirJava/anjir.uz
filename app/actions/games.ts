@@ -9,6 +9,7 @@ const gameSchema = z.object({
   title:         z.string().min(3, "Sarlavha kamida 3 ta belgi"),
   template_type: z.enum(["word_match", "ordering", "memory"]),
   subject_id:    z.string().min(1, "Fan tanlanishi shart"),
+  external_url:  z.string().url("Tashqi havola noto'g'ri formatda").optional().or(z.literal("")),
   classIds:      z.array(z.string()).min(1, "Kamida 1 ta sinf tanlang"),
   content_json:  z.string().min(2, "O'yin ma'lumotlari kiritilishi shart"),
 });
@@ -21,6 +22,7 @@ export async function createGameAction(formData: FormData) {
     title:         formData.get("title"),
     template_type: formData.get("template_type"),
     subject_id:    formData.get("subject_id") || "",
+    external_url:  (formData.get("external_url") as string) || "",
     classIds:      formData.getAll("classIds"),
     content_json:  formData.get("content_json"),
   };
@@ -37,6 +39,7 @@ export async function createGameAction(formData: FormData) {
       title:         parsed.data.title,
       template_type: parsed.data.template_type,
       subject_id:    parsed.data.subject_id,
+      external_url:  parsed.data.external_url || null,
       teacher_id:    user.id,
       content_json:  parsedData,
       classIds:      parsed.data.classIds,

@@ -4,6 +4,7 @@ export type GameRow = {
   id: string;
   title: string;
   template_type: string;
+  external_url?: string | null;
   subject_id: string | null;
   teacher_id: string;
   content_json: Record<string, unknown>;
@@ -37,6 +38,7 @@ export async function createGame(input: {
   title: string;
   template_type: string;
   subject_id: string;
+  external_url?: string | null;
   teacher_id: string;
   content_json: Record<string, unknown>;
   classIds: string[];
@@ -46,6 +48,7 @@ export async function createGame(input: {
     title:         input.title,
     template_type: input.template_type,
     subject_id:    input.subject_id,
+    external_url:  input.external_url ?? null,
     content_json:  input.content_json,
     class_ids:     input.classIds,
   });

@@ -36,6 +36,7 @@ export function GameBuilderForm({
   const [isPending, startTransition] = useTransition();
 
   const [title, setTitle]           = useState("");
+  const [externalUrl, setExternalUrl] = useState("");
   const [gameType, setGameType]     = useState<GameType>("word_match");
   const [subjectId, setSubjectId]   = useState("");
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
@@ -138,6 +139,7 @@ export function GameBuilderForm({
 
     const fd = new FormData();
     fd.append("title", title.trim());
+    if (externalUrl.trim()) fd.append("external_url", externalUrl.trim());
     fd.append("template_type", gameType);
     fd.append("subject_id", subjectId);
     selectedClasses.forEach((c) => fd.append("classIds", c));
@@ -189,6 +191,20 @@ export function GameBuilderForm({
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
             </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="external_url">Tashqi o&apos;yin havolasi (ixtiyoriy)</Label>
+            <Input
+              id="external_url"
+              type="url"
+              value={externalUrl}
+              onChange={(e) => setExternalUrl(e.target.value)}
+              placeholder="https://example.com/game"
+            />
+            <p className="text-xs text-muted-foreground">
+              Kiritilsa, o&apos;quvchi o&apos;yinni tashqi platformada ochishi mumkin.
+            </p>
           </div>
 
           {/* Sinflar */}
