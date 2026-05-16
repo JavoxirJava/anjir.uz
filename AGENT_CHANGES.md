@@ -44,3 +44,9 @@ Eslatma: keyingi barcha o'zgarishlar ham shu faylga vaqt + sabab + qisqa natija 
     - yaratilayotgan assignment payloadiga `file_url` yuborish qo'shildi
     - `student` assignment detail sahifasida "Tavsif PDF'ni ochish" havolasi chiqarildi
   - Nega: topshiriq tavsifini matndan tashqari PDF ko'rinishida berish talabi uchun.
+
+## 2026-05-16 14:37:33 +05
+
+- So'rov: Netlify build logidagi `Property 'file_url' does not exist on type 'AssignmentRow'` xatosini tuzatish
+  - Nima qilindi: `lib/api/assignments.ts` ichidagi `AssignmentRow` type'iga `file_url?: string | null` maydoni qo'shildi.
+  - Nega: `app/app/assignments/[id]/page.tsx` da `assignment.file_url` ishlatilgani uchun TypeScript build xatosini bartaraf etish.

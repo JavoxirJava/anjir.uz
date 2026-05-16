@@ -4,6 +4,7 @@ export type AssignmentRow = {
   id: string;
   title: string;
   description: string | null;
+  file_url?: string | null;
   deadline: string | null;
   due_date?: string | null;
   max_score?: number | null;
