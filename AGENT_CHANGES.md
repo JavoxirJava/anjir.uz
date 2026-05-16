@@ -91,3 +91,9 @@ Eslatma: keyingi barcha o'zgarishlar ham shu faylga vaqt + sabab + qisqa natija 
 - So'rov: "video link to'g'ridan-to'g'ri ochiladi, lekin sayt playerida ochilmaydi"
   - Nima qilindi: `VideoPlayer` ichidagi `crossOrigin=\"anonymous\"` atributi olib tashlandi.
   - Nega: R2 CORS headerlari to'liq bo'lmasa, aynan `crossOrigin` sabab `<video>` yuklanishi bloklanishi mumkin; direct URL esa ochilaveradi.
+
+## 2026-05-16 15:18:57 +05
+
+- So'rov: "teacher lecture video upload formida controlled/uncontrolled input xatosi"
+  - Nima qilindi: `app/teacher/lectures/new/NewLectureForm.tsx` ichidagi hidden inputlarda `value={field.value ?? ""}` qo'shildi (2 joy).
+  - Nega: `undefined`dan stringga o'tish sababli chiqayotgan React controlled/uncontrolled warningni bartaraf etish uchun.

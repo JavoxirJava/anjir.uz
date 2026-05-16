@@ -250,7 +250,7 @@ export function NewLectureForm({ subjects, classes }: Props) {
                     <FormControl>
                       <div>
                         {/* Hidden input to hold the fileUrl value for the form */}
-                        <input type="hidden" {...field} />
+                        <input type="hidden" {...field} value={field.value ?? ""} />
                         <FileUploadField
                           accept={selectedType.accept}
                           maxSizeMb={selectedType.maxMb}
@@ -305,7 +305,7 @@ export function NewLectureForm({ subjects, classes }: Props) {
                         <FormLabel>{uz.lectures.addSubtitles} (VTT fayl)</FormLabel>
                         <FormControl>
                           <div>
-                            <input type="hidden" {...field} />
+                            <input type="hidden" {...field} value={field.value ?? ""} />
                             <FileUploadField
                               accept="text/vtt,.vtt"
                               maxSizeMb={1}
