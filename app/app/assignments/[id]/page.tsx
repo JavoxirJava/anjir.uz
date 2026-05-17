@@ -4,7 +4,6 @@ import { getCurrentUser } from "@/lib/api/auth";
 import { getAssignmentById, getStudentSubmission } from "@/lib/db/assignments";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SubmissionForm } from "./SubmissionForm";
 import { ProgressActions } from "./ProgressActions";
 
 interface Props { params: Promise<{ id: string }> }
@@ -17,9 +16,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 function formatDate(iso: string | null) {
   if (!iso) return null;
-  return new Date(iso).toLocaleDateString("uz-UZ", {
-    day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit"
-  });
+  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(iso);
+  const d = isDateOnly ? new Date(`${iso}T23:59:59.999`) : new Date(iso);
+  return d.toLocaleDateString("uz-UZ", isDateOnly
+    ? { day: "numeric", month: "long", year: "numeric" }
+    : { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 export default async function StudentAssignmentPage({ params }: Props) {
@@ -33,7 +34,9 @@ export default async function StudentAssignmentPage({ params }: Props) {
   const submission = await getStudentSubmission(id, user.id);
   const isGraded = !!submission?.graded_at;
   const dueRaw = assignment.due_date ?? assignment.deadline ?? null;
-  const dueDate = dueRaw ? new Date(dueRaw) : null;
+  const dueDate = dueRaw
+    ? (/^\d{4}-\d{2}-\d{2}$/.test(dueRaw) ? new Date(`${dueRaw}T23:59:59.999`) : new Date(dueRaw))
+    : null;
   const isOverdue = dueDate ? dueDate < new Date() : false;
 
   return (
@@ -69,14 +72,22 @@ export default async function StudentAssignmentPage({ params }: Props) {
 
       {assignment.file_url && (
         <Card>
-          <CardContent className="pt-4 pb-4">
+          <CardContent className="pt-4 pb-4 space-y-3">
+            <p className="text-sm font-medium">📄 Tavsif PDF</p>
+            <div className="rounded-lg border overflow-hidden bg-muted" style={{ height: "65vh", minHeight: "360px" }}>
+              <iframe
+                src={`${assignment.file_url}#toolbar=1&navpanes=0&scrollbar=1`}
+                title={`${assignment.title} tavsif PDF`}
+                className="w-full h-full border-0"
+              />
+            </div>
             <a
               href={assignment.file_url}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-sm text-primary underline"
             >
-              📄 Tavsif PDF&apos;ni ochish
+              Yangi oynada ochish
             </a>
           </CardContent>
         </Card>
@@ -123,19 +134,10 @@ export default async function StudentAssignmentPage({ params }: Props) {
         </Card>
       )}
 
-      {/* Yuborish formasi (agar baholanmagan bo'lsa yoki hali yuborilmagan bo'lsa) */}
       {!isGraded && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              {submission ? "Topshiriqni yangilash" : "Topshiriq yuborish"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <SubmissionForm
-              assignmentId={id}
-              existingContent={submission?.content ?? ""}
-            />
+          <CardContent className="pt-4 pb-4 text-sm text-muted-foreground">
+            Topshiriqni o&apos;qituvchi tekshiradi.
           </CardContent>
         </Card>
       )}

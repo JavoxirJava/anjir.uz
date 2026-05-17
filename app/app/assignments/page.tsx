@@ -13,10 +13,16 @@ export const metadata: Metadata = {
 
 function formatDate(iso: string | null) {
   if (!iso) return null;
-  const d = new Date(iso);
+  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(iso);
+  const d = isDateOnly
+    ? new Date(`${iso}T23:59:59.999`)
+    : new Date(iso);
   const now = new Date();
   const isOverdue = d < now;
-  return { text: d.toLocaleDateString("uz-UZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }), isOverdue };
+  const text = isDateOnly
+    ? d.toLocaleDateString("uz-UZ", { day: "numeric", month: "short", year: "numeric" })
+    : d.toLocaleDateString("uz-UZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  return { text, isOverdue };
 }
 
 export default async function StudentAssignmentsPage() {
