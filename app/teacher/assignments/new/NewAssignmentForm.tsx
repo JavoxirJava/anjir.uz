@@ -189,7 +189,7 @@ export function NewAssignmentForm({
             <legend className="text-sm font-medium mb-2">O&apos;quvchi darajasi *</legend>
             <div className="flex gap-2" role="radiogroup" aria-label="Daraja tanlang">
               {(["low", "medium", "high"] as const).map((level) => {
-                const labels = { low: "Past", medium: "Oʻrta", high: "Yuqori" };
+                const labels = { low: "Quyi", medium: "Oʻrta", high: "Yuqori" };
                 return (
                   <button
                     key={level}
