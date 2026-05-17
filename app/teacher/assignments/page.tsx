@@ -15,6 +15,12 @@ function formatDate(iso: string | null) {
   return new Date(iso).toLocaleDateString("uz-UZ", { day: "numeric", month: "long", year: "numeric" });
 }
 
+function difficultyLabel(level?: "low" | "medium" | "high") {
+  if (level === "high") return "Yuqori";
+  if (level === "medium") return "O'rta";
+  return "Quyi";
+}
+
 export default async function TeacherAssignmentsPage() {
   const user = await getCurrentUser();
   const assignments = await getAssignmentsByTeacher(user!.id);
@@ -45,6 +51,15 @@ export default async function TeacherAssignmentsPage() {
               <Card>
                 <CardContent className="flex items-center justify-between gap-4 pt-4 pb-4">
                   <div className="flex-1 min-w-0 space-y-1">
+                    {(() => {
+                      const classes = Array.isArray(a.classes)
+                        ? a.classes
+                        : (a.classes ? [a.classes] : []);
+                      const classesText = classes
+                        .map((cls) => `${cls.grade}-${cls.letter}`)
+                        .join(", ");
+                      return (
+                        <>
                     <h2 className="font-medium">{a.title}</h2>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
                       {a.subjects && (
@@ -53,14 +68,23 @@ export default async function TeacherAssignmentsPage() {
                           : (a.subjects as { name: string }).name}
                         </span>
                       )}
-                      {a.due_date && (
-                        <span>📅 {formatDate(a.due_date)}</span>
+                      {(a.due_date || a.deadline) && (
+                        <span>📅 Muddat: {formatDate(a.due_date ?? a.deadline ?? null)}</span>
                       )}
-                      <span>⭐ Maks: {a.max_score} ball</span>
+                      <span>⭐ Maks: {a.max_score ?? 100} ball</span>
+                      <span>🎯 Daraja: {difficultyLabel(a.difficulty_level)}</span>
+                      <span>📎 PDF: {a.file_url ? "Bor" : "Yo'q"}</span>
+                      <span>♿ Imkoniyati cheklanganlar uchun: {a.is_for_disabled ? "Ha" : "Yo'q"}</span>
+                      {classes.length > 0 && (
+                        <span>🏫 Sinflar: {classesText}</span>
+                      )}
                     </div>
                     {a.description && (
                       <p className="text-sm text-muted-foreground line-clamp-1">{a.description}</p>
                     )}
+                        </>
+                      );
+                    })()}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Link

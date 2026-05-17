@@ -179,7 +179,7 @@ export function NewAssignmentForm({
             <Input
               id="deadline"
               name="deadline"
-              type="datetime-local"
+              type="date"
               className="w-full"
             />
           </div>

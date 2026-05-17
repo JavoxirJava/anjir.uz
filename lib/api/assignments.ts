@@ -14,6 +14,7 @@ export type AssignmentRow = {
   difficulty_level?: "low" | "medium" | "high";
   is_for_disabled?: boolean;
   subjects?: { id: string; name: string } | null;
+  classes?: { id: string; grade: number; letter: string }[] | { id: string; grade: number; letter: string } | null;
   my_progress_state?: "done_pending" | "done_approved" | "done_rejected" | "cannot_do" | null;
 };
 
