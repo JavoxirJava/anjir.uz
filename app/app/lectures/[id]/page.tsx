@@ -7,6 +7,8 @@ import { VideoPlayer } from "@/components/lectures/VideoPlayer";
 import { AudioPlayer } from "@/components/lectures/AudioPlayer";
 import { ReadAloudButton } from "@/components/lectures/ReadAloudButton";
 import { VttReadAloudButton } from "@/components/lectures/VttReadAloudButton";
+import { VttSubtitlePreview } from "@/components/lectures/VttSubtitlePreview";
+import { PdfReadAloudButton } from "@/components/lectures/PdfReadAloudButton";
 import { Badge } from "@/components/ui/badge";
 import { uz } from "@/lib/strings/uz";
 
@@ -69,12 +71,20 @@ export default async function LecturePage({ params }: Props) {
         )}
       </section>
 
-      {/* Ovozli o'qish */}
-      {lecture.description && (
+      {/* PDF/PPT uchun matn o'qish */}
+      {(lecture.content_type === "pdf" || lecture.content_type === "ppt") && lecture.file_url && (
         <section aria-label="Qo'shimcha amallar" className="flex items-center gap-3 flex-wrap">
-          <ReadAloudButton
-            text={`${lecture.title}. ${lecture.description}`}
-          />
+          <PdfReadAloudButton pdfUrl={lecture.file_url} />
+          <span className="text-xs text-muted-foreground">
+            PDF ichidagi matnni ovozli o&apos;qib beradi
+          </span>
+        </section>
+      )}
+
+      {/* Ovozli o'qish (sarlavha + tavsif) */}
+      {lecture.description && lecture.content_type !== "pdf" && lecture.content_type !== "ppt" && (
+        <section aria-label="Qo'shimcha amallar" className="flex items-center gap-3 flex-wrap">
+          <ReadAloudButton text={`${lecture.title}. ${lecture.description}`} />
           <span className="text-xs text-muted-foreground">
             {uz.student.readAloud} — sarlavha va tavsifni o&apos;qib beradi
           </span>
@@ -82,16 +92,19 @@ export default async function LecturePage({ params }: Props) {
       )}
 
       {lecture.content_type === "video" && subtitle && (
-        <section aria-label="Subtitr amallari" className="flex items-center gap-3 flex-wrap">
-          <VttReadAloudButton vttUrl={subtitle.vtt_url} />
-          <a
-            href={subtitle.vtt_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-primary underline"
-          >
-            VTT faylni ochish
-          </a>
+        <section aria-label="Subtitr amallari" className="space-y-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <VttReadAloudButton vttUrl={subtitle.vtt_url} />
+            <a
+              href={subtitle.vtt_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-primary underline"
+            >
+              VTT faylni ochish
+            </a>
+          </div>
+          <VttSubtitlePreview vttUrl={subtitle.vtt_url} />
         </section>
       )}
 

@@ -1,38 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import { apiPost } from "@/lib/api/browser";
 
 interface Props {
-  vttUrl: string;
+  pdfUrl: string;
   className?: string;
 }
 
-function vttToPlainText(vtt: string): string {
-  const timingRe = /^((?:\d{2}:)?\d{2}:\d{2}\.\d{3})\s-->\s((?:\d{2}:)?\d{2}:\d{2}\.\d{3})(?:\s+.*)?$/;
-
-  return vtt
-    .replace(/\r/g, "")
-    .split("\n")
-    .filter((line) => {
-      const t = line.trim();
-      if (!t) return false;
-      if (t === "WEBVTT") return false;
-      if (/^\d+$/.test(t)) return false;
-      if (timingRe.test(t)) return false;
-      return true;
-    })
-    .join(" ");
-}
-
-export function VttReadAloudButton({ vttUrl, className }: Props) {
-  const [isReading, setIsReading] = useState(false);
+export function PdfReadAloudButton({ pdfUrl, className }: Props) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isReading, setIsReading] = useState(false);
 
-  async function speakVtt() {
+  async function handleRead() {
     if (!("speechSynthesis" in window)) {
       alert("Brauzeringiz ovozli o'qishni qo'llab-quvvatlamaydi");
       return;
     }
+
     if (isReading) {
       window.speechSynthesis.cancel();
       setIsReading(false);
@@ -41,23 +26,23 @@ export function VttReadAloudButton({ vttUrl, className }: Props) {
 
     setIsLoading(true);
     try {
-      const res = await fetch(vttUrl);
-      const vtt = await res.text();
-      const text = vttToPlainText(vtt);
-      if (!text.trim()) {
-        alert("Subtitr matni bo'sh");
-        setIsLoading(false);
+      const data = await apiPost<{ text: string }>("/lectures/pdf-text", { url: pdfUrl })
+        .catch((e: unknown) => ({ error: e instanceof Error ? e.message : "PDF matnini o'qib bo'lmadi" } as { error: string }));
+
+      if (!("text" in data) || !data.text) {
+        alert((data as { error?: string }).error ?? "PDF matnini o'qib bo'lmadi");
         return;
       }
 
-      const utterance = new SpeechSynthesisUtterance(text);
+      const utterance = new SpeechSynthesisUtterance(data.text);
       utterance.lang = "uz-UZ";
       utterance.onend = () => setIsReading(false);
       utterance.onerror = () => setIsReading(false);
+
       window.speechSynthesis.speak(utterance);
       setIsReading(true);
     } catch {
-      alert("VTT faylni o'qishda xatolik");
+      alert("PDF matnini o'qishda xatolik");
     } finally {
       setIsLoading(false);
     }
@@ -66,7 +51,7 @@ export function VttReadAloudButton({ vttUrl, className }: Props) {
   return (
     <button
       type="button"
-      onClick={speakVtt}
+      onClick={handleRead}
       disabled={isLoading}
       aria-pressed={isReading}
       className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
@@ -75,8 +60,8 @@ export function VttReadAloudButton({ vttUrl, className }: Props) {
           : "border-border hover:bg-muted"
       } ${className ?? ""}`}
     >
-      <span aria-hidden="true">{isReading ? "⏹" : "🎧"}</span>
-      {isLoading ? "Yuklanmoqda..." : isReading ? "Subtitr o'qishni to'xtatish" : "Subtitr matnini o'qish"}
+      <span aria-hidden="true">{isReading ? "⏹" : "📄"}</span>
+      {isLoading ? "Yuklanmoqda..." : isReading ? "PDF o'qishni to'xtatish" : "PDF matnini o'qish"}
     </button>
   );
 }
