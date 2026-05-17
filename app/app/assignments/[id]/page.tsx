@@ -32,7 +32,8 @@ export default async function StudentAssignmentPage({ params }: Props) {
 
   const submission = await getStudentSubmission(id, user.id);
   const isGraded = !!submission?.graded_at;
-  const dueDate = assignment.due_date ? new Date(assignment.due_date) : null;
+  const dueRaw = assignment.due_date ?? assignment.deadline ?? null;
+  const dueDate = dueRaw ? new Date(dueRaw) : null;
   const isOverdue = dueDate ? dueDate < new Date() : false;
 
   return (
@@ -50,7 +51,7 @@ export default async function StudentAssignmentPage({ params }: Props) {
           <span>⭐ Maksimal ball: {assignment.max_score}</span>
           {dueDate && (
             <span className={isOverdue && !submission ? "text-destructive font-medium" : ""}>
-              📅 Muddat: {formatDate(assignment.due_date ?? null)}
+              📅 Muddat: {formatDate(dueRaw)}
               {isOverdue && !submission ? " (o'tib ketdi!)" : ""}
             </span>
           )}

@@ -50,7 +50,7 @@ export default async function StudentAssignmentsPage() {
       ) : (
         <ul className="space-y-3" role="list" aria-label={uz.student.assignments}>
           {assignments.map((a) => {
-            const due = formatDate(a.due_date ?? null);
+            const due = formatDate(a.due_date ?? a.deadline ?? null);
             return (
               <li key={a.id}>
                 <Link
