@@ -15,6 +15,7 @@ export async function createLectureAction(formData: FormData) {
   const raw = {
     title:          formData.get("title") as string,
     description:    (formData.get("description") as string) || undefined,
+    schoolId:       (formData.get("schoolId") as string) || undefined,
     subjectId:      formData.get("subjectId") as string,
     classId:        (formData.get("classId") as string) || undefined,
     contentType:    formData.get("contentType") as string,
@@ -29,6 +30,7 @@ export async function createLectureAction(formData: FormData) {
   try {
     await createLecture({
       creator_id:     user.id,
+      school_id:      parsed.data.schoolId,
       subject_id:     parsed.data.subjectId,
       class_id:       parsed.data.classId ?? null,
       title:          parsed.data.title,
@@ -67,6 +69,7 @@ export async function updateLectureAction(id: string, formData: FormData) {
   const raw = {
     title:          formData.get("title") as string,
     description:    (formData.get("description") as string) || undefined,
+    schoolId:       (formData.get("schoolId") as string) || undefined,
     subjectId:      formData.get("subjectId") as string,
     classId:        (formData.get("classId") as string) || undefined,
     contentType:    formData.get("contentType") as string,

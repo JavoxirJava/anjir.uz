@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { addBookmarkAction, removeBookmarkAction } from "@/app/actions/books";
 import { AudioPlayer } from "@/components/lectures/AudioPlayer";
 import { ReadAloudButton } from "@/components/lectures/ReadAloudButton";
+import { PdfReadAloudButton } from "@/components/lectures/PdfReadAloudButton";
 import { uz } from "@/lib/strings/uz";
 
 interface Props {
@@ -130,6 +131,11 @@ export function BookReader({ bookId, pdfUrl, audioUrl, title, bookmarks: initial
         {/* Ovozli o'qish */}
         <ReadAloudButton
           text={`${title}, ${currentPage}-sahifa`}
+          className="text-xs"
+        />
+
+        <PdfReadAloudButton
+          pdfUrl={pdfUrl}
           className="text-xs"
         />
       </div>

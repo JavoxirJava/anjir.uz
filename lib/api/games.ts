@@ -59,6 +59,10 @@ export async function deleteGame(gameId: string): Promise<void> {
   await apiDelete(`/games/${gameId}`);
 }
 
+export async function updateGameSubject(gameId: string, subjectId: string): Promise<void> {
+  await apiPut(`/games/${gameId}/subject`, { subject_id: subjectId });
+}
+
 export async function createGameAttempt(studentId: string, gameId: string): Promise<string> {
   void studentId;
   const r = await apiPost<{ attempt_id: string }>(`/games/${gameId}/attempts`, {});

@@ -101,6 +101,10 @@ export async function deleteAssignment(id: string): Promise<void> {
   await apiDelete(`/assignments/${id}`);
 }
 
+export async function updateAssignmentSubject(id: string, subjectId: string): Promise<void> {
+  await apiPut(`/assignments/${id}/subject`, { subject_id: subjectId });
+}
+
 export async function submitAssignment(input: {
   assignment_id: string;
   student_id: string;

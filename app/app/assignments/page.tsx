@@ -25,9 +25,15 @@ function formatDate(iso: string | null) {
   return { text, isOverdue };
 }
 
-export default async function StudentAssignmentsPage() {
+interface Props {
+  searchParams: Promise<{ subject?: string | string[] }>;
+}
+
+export default async function StudentAssignmentsPage({ searchParams }: Props) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  const q = await searchParams;
+  const subjectId = typeof q.subject === "string" ? q.subject : undefined;
 
   const payload = await getStudentAssignmentsWithLevel().catch(() => ({
     assignments: [],
@@ -35,11 +41,35 @@ export default async function StudentAssignmentsPage() {
     visible_level: "low" as const,
     ready_for_test: false,
   }));
-  const assignments = payload.assignments;
+  const allAssignments = payload.assignments;
+  const assignments = subjectId
+    ? allAssignments.filter((a) => {
+        const sub = Array.isArray(a.subjects) ? a.subjects[0] : a.subjects;
+        return (a.subject_id ?? sub?.id) === subjectId;
+      })
+    : allAssignments;
+  const activeSubjectName = subjectId
+    ? (() => {
+        const match = allAssignments.find((a) => {
+          const sub = Array.isArray(a.subjects) ? a.subjects[0] : a.subjects;
+          return (a.subject_id ?? sub?.id) === subjectId;
+        });
+        const sub = match ? (Array.isArray(match.subjects) ? match.subjects[0] : match.subjects) : null;
+        return sub?.name ?? "Mavzu";
+      })()
+    : null;
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{uz.student.assignments}</h1>
+      {subjectId && (
+        <div className="flex items-center gap-3 flex-wrap rounded-lg border bg-muted/40 px-4 py-2">
+          <span className="text-sm">📚 Mavzu: <strong>{activeSubjectName}</strong></span>
+          <Link href="/app/assignments" className="text-xs text-primary underline underline-offset-2">
+            Filterni tozalash
+          </Link>
+        </div>
+      )}
       {payload.ready_for_test && (
         <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-emerald-900">
           Siz test yechishingiz mumkin.

@@ -16,6 +16,7 @@ export type LectureRow = {
 };
 
 export type CreateLectureInput = {
+  school_id?: string;
   subject_id: string | null;
   class_id: string | null;
   creator_id?: string;
@@ -45,6 +46,7 @@ export async function createLecture(
   input: CreateLectureInput & { subtitleVttUrl?: string; subtitleSource?: "manual" | "ai" }
 ): Promise<string> {
   const result = await apiPost<{ id: string }>("/lectures", {
+    ...(input.school_id ? { school_id: input.school_id } : {}),
     subject_id:       input.subject_id,
     class_id:         input.class_id,
     title:            input.title,

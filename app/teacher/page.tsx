@@ -34,6 +34,7 @@ export default async function TeacherDashboard() {
 
   const quickActions = [
     { href: "/teacher/lectures/new", label: "Ma'ruza qo'shish", icon: "📄", desc: "Yangi dars yaratish" },
+    { href: "/teacher/topics", label: "Mavzu qo'shish", icon: "🧩", desc: "Fan bo'yicha mavzu yaratish" },
     { href: "/teacher/tests/new", label: "Test yaratish", icon: "📝", desc: "Yangi test qo'shish" },
     { href: "/teacher/games/new", label: "O'yin qo'shish", icon: "🎮", desc: "Interaktiv o'yin" },
     { href: "/teacher/assignments/new", label: "Topshiriq berish", icon: "✏️", desc: "Uy ishi berish" },

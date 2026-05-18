@@ -19,24 +19,45 @@ const TYPE_LABELS: Record<string, string> = {
 
 interface TestItem {
   id: string;
+  subject_id?: string | null;
   title: string;
   description: string | null;
   test_type: string;
   time_limit: number | null;
   max_attempts: number | null;
-  subjects: { name: string } | null;
+  subjects: { id?: string; name: string } | null;
   my_attempts: { score: number | null }[];
 }
 
-export default async function StudentTestsPage() {
+interface Props {
+  searchParams: Promise<{ subject?: string | string[] }>;
+}
+
+export default async function StudentTestsPage({ searchParams }: Props) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  const q = await searchParams;
+  const subjectId = typeof q.subject === "string" ? q.subject : undefined;
 
-  const tests = await apiGet<TestItem[]>("/students/me/tests").catch(() => []);
+  const allTests = await apiGet<TestItem[]>("/students/me/tests").catch(() => []);
+  const tests = subjectId
+    ? allTests.filter((t) => (t.subject_id ?? t.subjects?.id) === subjectId)
+    : allTests;
+  const activeSubjectName = subjectId
+    ? allTests.find((t) => (t.subject_id ?? t.subjects?.id) === subjectId)?.subjects?.name ?? "Mavzu"
+    : null;
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{uz.student.tests}</h1>
+      {subjectId && (
+        <div className="flex items-center gap-3 flex-wrap rounded-lg border bg-muted/40 px-4 py-2">
+          <span className="text-sm">📚 Mavzu: <strong>{activeSubjectName}</strong></span>
+          <Link href="/app/tests" className="text-xs text-primary underline underline-offset-2">
+            Filterni tozalash
+          </Link>
+        </div>
+      )}
 
       {tests.length === 0 ? (
         <div className="rounded-lg border border-dashed p-12 text-center">

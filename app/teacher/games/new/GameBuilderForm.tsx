@@ -28,9 +28,11 @@ const GAME_TYPES: { value: GameType; label: string; desc: string; emoji: string 
 export function GameBuilderForm({
   subjects,
   classes,
+  initialSubjectId,
 }: {
   subjects: Subject[];
   classes: ClassItem[];
+  initialSubjectId?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -38,7 +40,7 @@ export function GameBuilderForm({
   const [title, setTitle]           = useState("");
   const [externalUrl, setExternalUrl] = useState("");
   const [gameType, setGameType]     = useState<GameType>("word_match");
-  const [subjectId, setSubjectId]   = useState("");
+  const [subjectId, setSubjectId]   = useState(initialSubjectId ?? "");
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
 
   // Word match ma'lumotlari

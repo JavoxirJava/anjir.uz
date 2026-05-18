@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AssignmentAIChat } from "./AssignmentAIChat";
 
 interface Subject { id: string; name: string }
 interface ClassItem { id: string; grade: number; letter: string }
@@ -18,18 +19,30 @@ interface ClassItem { id: string; grade: number; letter: string }
 export function NewAssignmentForm({
   subjects,
   classes,
+  initialSubjectId,
 }: {
   subjects: Subject[];
   classes: ClassItem[];
+  initialSubjectId?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [deadline, setDeadline] = useState("");
+  const [subjectId, setSubjectId] = useState(initialSubjectId ?? "");
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [difficulty, setDifficulty] = useState<"low" | "medium" | "high">("medium");
   const [isForDisabled, setIsForDisabled] = useState(false);
   const [descriptionPdfUrl, setDescriptionPdfUrl] = useState<string>("");
   const [isUploadingPdf, setIsUploadingPdf] = useState(false);
   const { upload, progress, reset } = useFileUpload();
+
+  const selectedClassNames = classes
+    .filter((cls) => selectedClasses.includes(cls.id))
+    .map((cls) => `${cls.grade}${cls.letter}`);
+
+  const selectedSubjectName = subjects.find((s) => s.id === subjectId)?.name;
 
   function toggleClass(id: string) {
     setSelectedClasses((prev) =>
@@ -100,6 +113,8 @@ export function NewAssignmentForm({
             <Input
               id="title"
               name="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               placeholder="Vazifa sarlavhasi"
               required
               aria-required="true"
@@ -112,6 +127,8 @@ export function NewAssignmentForm({
             <Textarea
               id="description"
               name="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               placeholder="Vazifa haqida batafsil ma'lumot..."
               rows={4}
             />
@@ -162,6 +179,8 @@ export function NewAssignmentForm({
             <select
               id="subject_id"
               name="subject_id"
+              value={subjectId}
+              onChange={(e) => setSubjectId(e.target.value)}
               required
               aria-required="true"
               className="w-full rounded-lg border px-3 py-2.5 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring bg-background"
@@ -180,6 +199,8 @@ export function NewAssignmentForm({
               id="deadline"
               name="deadline"
               type="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
               className="w-full"
             />
           </div>
@@ -261,6 +282,27 @@ export function NewAssignmentForm({
           </fieldset>
         </CardContent>
       </Card>
+
+      <AssignmentAIChat
+        subjectName={selectedSubjectName}
+        selectedClassNames={selectedClassNames}
+        draft={{
+          title,
+          description,
+          deadline,
+          difficulty_level: difficulty,
+          is_for_disabled: isForDisabled,
+        }}
+        onApplyPatch={(patch) => {
+          if (typeof patch.title === "string") setTitle(patch.title);
+          if (typeof patch.description === "string") setDescription(patch.description);
+          if (typeof patch.deadline === "string" || patch.deadline === null) setDeadline(patch.deadline ?? "");
+          if (patch.difficulty_level === "low" || patch.difficulty_level === "medium" || patch.difficulty_level === "high") {
+            setDifficulty(patch.difficulty_level);
+          }
+          if (typeof patch.is_for_disabled === "boolean") setIsForDisabled(patch.is_for_disabled);
+        }}
+      />
 
       <div className="flex justify-end gap-3">
         <Button

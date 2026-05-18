@@ -1,7 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "@/lib/api/auth";
-import { createGame, deleteGame, finishGameAttempt } from "@/lib/api/games";
+import { createGame, deleteGame, finishGameAttempt, updateGameSubject } from "@/lib/api/games";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -74,5 +74,20 @@ export async function finishGameAction(attemptId: string, score: number, duratio
   } catch (err) {
     console.error(err);
     return { error: "Natija saqlashda xatolik" };
+  }
+}
+
+export async function updateGameSubjectAction(gameId: string, subjectId: string) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Tizimga kiring" };
+  if (!subjectId) return { error: "Fan tanlanishi shart" };
+
+  try {
+    await updateGameSubject(gameId, subjectId);
+    revalidatePath("/teacher/games");
+    revalidatePath("/app/games");
+    return { success: true };
+  } catch {
+    return { error: "Mavzuni yangilashda xatolik" };
   }
 }

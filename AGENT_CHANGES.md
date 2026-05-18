@@ -159,3 +159,59 @@ Eslatma: keyingi barcha o'zgarishlar ham shu faylga vaqt + sabab + qisqa natija 
     - Student games ro'yxatida tashqi link borligi indikatori qo'shildi.
     - Student game detail sahifasida `external_url` bo'lsa ichki runner o'rniga tashqi platformani ochish tugmasi chiqariladigan qilindi.
   - Nega: o'yinlar faqat platforma ichida emas, tashqi platformalarda ham ishlatilishi talabi uchun.
+
+## 2026-05-18 16:49:02 +05
+
+- So'rov: "`/teacher/lectures/new` da oraliq 'Mavzu tanlang' sahifasi kerak emas"
+  - Nima qilindi:
+    - `app/teacher/lectures/new/page.tsx` dan subject kartalari bilan alohida tanlash bosqichi olib tashlandi.
+    - Sahifa endi ma'ruza formasini to'g'ridan-to'g'ri ochadi.
+    - Ixtiyoriy `?subjectId=` bo'lsa, u forma uchun `initialSubjectId` sifatida ishlatiladi.
+  - Nega: teacher ma'ruza qo'shishda ortiqcha oraliq sahifasiz bevosita formaga kirishi uchun.
+
+- So'rov: "ma'ruza qo'shish formasida `Maktab` tanlash bo'lmasin"
+  - Nima qilindi:
+    - `app/teacher/lectures/new/NewLectureForm.tsx` dan `schoolId` field va `Maktab` select UI olib tashlandi.
+    - Fan tanlanganda shu fan biriktirilgan maktab bo'yicha sinflar avtomatik filtrlanadigan qilindi.
+  - Nega: foydalanuvchi talabiga ko'ra maktab tanlashni teacherdan yashirish va formani soddalashtirish uchun.
+
+- So'rov: "maktab tanlovisiz ma'ruza yaratish ishlasin"
+  - Nima qilindi:
+    - `server/src/routes/lectures.ts` dagi `POST /lectures` validatsiyasida `school_id` ixtiyoriy qilindi.
+    - `class_id` berilsa, `school_id` class orqali avtomatik aniqlanadi.
+    - Teacher uchun ruxsat tekshiruvi `class_id + subject_id` yoki `subject_id` asosida moslashtirildi; kerak bo'lsa `school_id` assignmentdan infer qilinadi.
+  - Nega: frontend `Maktab` fieldni yubormagan holatda ham lecture create oqimi xatosiz ishlashi uchun.
+
+- So'rov: "o'zgartirishlardan keyin hook warning qolmasin"
+  - Nima qilindi:
+    - `app/teacher/lectures/new/NewLectureForm.tsx` da `filteredClasses` hisob-kitobi `useMemo` ga o'tkazildi.
+  - Nega: `react-hooks/exhaustive-deps` warningni yo'qotib, effect dependency'ni barqaror qilish uchun.
+
+## 2026-05-18 17:02:53 +05
+
+- So'rov: "`teacher/topics` sahifasida mavzu qo'shishda `Maktab` bo'lmasin, faqat `Fan` va `Sinf` bo'lsin"
+  - Nima qilindi:
+    - `app/teacher/topics/TopicManager.tsx` ichida `Maktab` select olib tashlandi.
+    - Uning o'rniga `Fan` select qo'shildi (`subjectId`).
+    - `Sinf(lar)` ro'yxati tanlangan fan maktabiga mos filtrlanadigan qilindi.
+    - Submit payload `schoolId` o'rniga `subjectId` yuboradigan qilindi.
+  - Nega: foydalanuvchi talabiga ko'ra topic yaratish formasini maktabsiz oqimga o'tkazish uchun.
+
+- So'rov: "`Mening mavzularim` bo'limida fanlar ko'rinmasin"
+  - Nima qilindi:
+    - `app/teacher/topics/TopicManager.tsx` dan pastdagi `Mening mavzularim` ro'yxat card'i olib tashlandi.
+  - Nega: bu blokda mavzu o'rniga fanlar chiqib ketayotgani sababli noto'g'ri UI ni olib tashlash uchun.
+
+- So'rov: "topics create backendi fan tanlovi bilan ishlasin"
+  - Nima qilindi:
+    - `app/actions/teacher-topics.ts` validatsiyasi `schoolId`dan `subjectId`ga o'tkazildi.
+    - `server/src/routes/teachers.ts` dagi `POST /teachers/:id/subjects` endpointi `subject_id` ni qabul qiladigan qilindi.
+    - Endpointda `subject_id` berilganda maktab va ruxsat etilgan sinflar teacher assignmentlardan infer qilinadigan bo'ldi.
+    - Eski `school_id` oqimi backward-compatible holatda qoldirildi.
+  - Nega: frontend yangi `Fan + Sinf` formati bilan backend create oqimi uzilmasdan ishlashi uchun.
+
+- So'rov: "mavzu qo'shishda `Topilmadi` (404) chiqyapti"
+  - Nima qilindi:
+    - `server` paketi qayta build qilindi: `npm --prefix server run build`.
+    - Natijada `server/dist/routes/teachers.js` ichida `POST /teachers/:id/subjects` route paydo bo'lgani tasdiqlandi.
+  - Nega: backend `dist` eski bo'lgani uchun action yuborgan yangi endpoint runtime'da topilmayotgan edi.

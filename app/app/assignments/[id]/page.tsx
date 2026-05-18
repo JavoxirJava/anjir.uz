@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/api/auth";
 import { getAssignmentById, getStudentSubmission } from "@/lib/db/assignments";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PdfReadAloudButton } from "@/components/lectures/PdfReadAloudButton";
 import { ProgressActions } from "./ProgressActions";
 
 interface Props { params: Promise<{ id: string }> }
@@ -74,6 +75,12 @@ export default async function StudentAssignmentPage({ params }: Props) {
         <Card>
           <CardContent className="pt-4 pb-4 space-y-3">
             <p className="text-sm font-medium">📄 Tavsif PDF</p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <PdfReadAloudButton pdfUrl={assignment.file_url} />
+              <span className="text-xs text-muted-foreground">
+                PDF ichidagi matnni ovozli o&apos;qib beradi
+              </span>
+            </div>
             <div className="rounded-lg border overflow-hidden bg-muted" style={{ height: "65vh", minHeight: "360px" }}>
               <iframe
                 src={`${assignment.file_url}#toolbar=1&navpanes=0&scrollbar=1`}

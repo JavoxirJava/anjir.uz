@@ -1,8 +1,8 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { lectureSchema, type LectureInput } from "@/lib/validations/lecture";
 import { createLectureAction } from "@/app/actions/lectures";
@@ -20,8 +20,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-interface Subject { id: string; name: string }
-interface ClassItem { id: string; grade: number; letter: string }
+interface Subject { id: string; name: string; school_id: string }
+interface ClassItem { id: string; grade: number; letter: string; school_id: string }
 
 const CONTENT_TYPES = [
   { value: "pdf", label: uz.lectures.pdf, accept: "application/pdf", maxMb: 5 },
@@ -33,9 +33,10 @@ const CONTENT_TYPES = [
 interface Props {
   subjects: Subject[];
   classes: ClassItem[];
+  initialSubjectId?: string;
 }
 
-export function NewLectureForm({ subjects, classes }: Props) {
+export function NewLectureForm({ subjects, classes, initialSubjectId }: Props) {
   const [isPending, startTransition] = useTransition();
   const [isGeneratingSubtitle, setIsGeneratingSubtitle] = useState(false);
   // SSR-safe: form.watch() hydration mismatch dan saqlanish uchun useState
@@ -46,16 +47,32 @@ export function NewLectureForm({ subjects, classes }: Props) {
     defaultValues: {
       title: "",
       description: "",
-      subjectId: "",
+      subjectId: initialSubjectId ?? "",
       classId: "",
       contentType: "pdf",
       fileUrl: "",
     },
   });
 
-  const contentType = form.watch("contentType");
-  const fileUrl = form.watch("fileUrl");
+  const contentType = useWatch({ control: form.control, name: "contentType" });
+  const fileUrl = useWatch({ control: form.control, name: "fileUrl" });
+  const selectedSubjectId = useWatch({ control: form.control, name: "subjectId" }) ?? "";
+  const subtitleVttUrl = useWatch({ control: form.control, name: "subtitleVttUrl" });
+  const subtitleSource = useWatch({ control: form.control, name: "subtitleSource" });
+  const selectedSchoolId = subjects.find((subject) => subject.id === selectedSubjectId)?.school_id ?? "";
+  const filteredSubjects = subjects;
+  const filteredClasses = useMemo(
+    () => (selectedSchoolId ? classes.filter((classItem) => classItem.school_id === selectedSchoolId) : []),
+    [classes, selectedSchoolId]
+  );
   const selectedType = CONTENT_TYPES.find((t) => t.value === contentType);
+
+  useEffect(() => {
+    const selectedClass = form.getValues("classId");
+    if (selectedClass && !filteredClasses.some((c) => c.id === selectedClass)) {
+      form.setValue("classId", "", { shouldValidate: true });
+    }
+  }, [form, filteredClasses, selectedSchoolId]);
 
   async function generateSubtitle() {
     if (!fileUrl) return;
@@ -131,7 +148,7 @@ export function NewLectureForm({ subjects, classes }: Props) {
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Fan */}
               <FormField
                 control={form.control}
@@ -143,12 +160,12 @@ export function NewLectureForm({ subjects, classes }: Props) {
                       <FormControl>
                         <SelectTrigger aria-required="true">
                           <SelectValue placeholder="Fan tanlang">
-                            {field.value ? (subjects.find(s => s.id === field.value)?.name ?? "Fan tanlang") : undefined}
+                            {field.value ? (filteredSubjects.find((s) => s.id === field.value)?.name ?? "Fan tanlang") : undefined}
                           </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {subjects.map((s) => (
+                        {filteredSubjects.map((s) => (
                           <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                         ))}
                       </SelectContent>
@@ -165,19 +182,22 @@ export function NewLectureForm({ subjects, classes }: Props) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{uz.school.className}</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                    <Select onValueChange={(v) => field.onChange(v === "__all__" ? "" : v)} value={field.value || "__all__"}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Barcha sinflar">
                             {field.value
-                              ? (() => { const c = classes.find(cl => cl.id === field.value); return c ? `${c.grade}-sinf ${c.letter}` : "Barcha sinflar"; })()
+                              ? (() => {
+                                  const c = filteredClasses.find((cl) => cl.id === field.value);
+                                  return c ? `${c.grade}-sinf ${c.letter}` : "Barcha sinflar";
+                                })()
                               : undefined}
                           </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Barcha sinflar</SelectItem>
-                        {classes.map((c) => (
+                        <SelectItem value="__all__">Barcha sinflar</SelectItem>
+                        {filteredClasses.map((c) => (
                           <SelectItem key={c.id} value={c.id}>
                             {c.grade}-sinf {c.letter}
                           </SelectItem>
@@ -323,9 +343,9 @@ export function NewLectureForm({ subjects, classes }: Props) {
                     )}
                   />
 
-                  {form.watch("subtitleVttUrl") && (
+                  {subtitleVttUrl && (
                     <p className="text-xs text-green-600" role="status" aria-live="polite">
-                      ✓ Subtitr tayyor: {form.watch("subtitleSource") === "ai" ? "AI tomonidan" : "Qo'lda yuklangan"}
+                      ✓ Subtitr tayyor: {subtitleSource === "ai" ? "AI tomonidan" : "Qo'lda yuklangan"}
                     </p>
                   )}
                 </div>

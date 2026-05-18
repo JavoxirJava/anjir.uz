@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useTransition } from "react";
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -37,21 +37,22 @@ export function TestBuilderForm({
   subjects,
   classes,
   games,
+  initialSubjectId,
 }: {
   subjects: Subject[];
   classes: ClassItem[];
   games: GameRow[];
+  initialSubjectId?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<TestInput>({
-    resolver: zodResolver(testSchema) as any,
+    resolver: zodResolver(testSchema),
     defaultValues: {
       title: "",
       description: "",
-      subjectId: "",
+      subjectId: initialSubjectId ?? "",
       classIds: [],
       testType: "home_study",
       timeLimit: null,
@@ -93,8 +94,8 @@ export function TestBuilderForm({
     });
   }
 
-  const timeLimitValue = form.watch("timeLimit");
-  const maxAttemptsValue = form.watch("maxAttempts");
+  const timeLimitValue = useWatch({ control: form.control, name: "timeLimit" });
+  const maxAttemptsValue = useWatch({ control: form.control, name: "maxAttempts" });
 
   return (
     <Form {...form}>

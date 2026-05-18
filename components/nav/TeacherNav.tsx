@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { href: "/teacher",             label: "Asosiy",        exact: true, icon: "🏠" },
   { href: "/teacher/students",    label: "O'quvchilar",                icon: "👥" },
   { href: "/teacher/lectures",    label: "Ma'ruzalar",                 icon: "📄" },
+  { href: "/teacher/topics",      label: "Mavzular",                   icon: "🧩" },
   { href: "/teacher/tests",       label: "Testlar",                    icon: "📝" },
   { href: "/teacher/games",       label: "O'yinlar",                   icon: "🎮" },
   { href: "/teacher/assignments", label: "Topshiriqlar",               icon: "✏️" },

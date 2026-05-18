@@ -56,6 +56,16 @@ export default async function LecturePage({ params }: Props) {
         )}
       </header>
 
+      {/* PDF/PPT uchun matn o'qish */}
+      {(lecture.content_type === "pdf" || lecture.content_type === "ppt") && lecture.file_url && (
+        <section aria-label="Qo'shimcha amallar" className="flex items-center gap-3 flex-wrap">
+          <PdfReadAloudButton pdfUrl={lecture.file_url} />
+          <span className="text-xs text-muted-foreground">
+            PDF ichidagi matnni ovozli o&apos;qib beradi
+          </span>
+        </section>
+      )}
+
       {/* Kontent */}
       <section aria-label="Ma'ruza kontenti">
         {lecture.content_type === "pdf" || lecture.content_type === "ppt" ? (
@@ -70,16 +80,6 @@ export default async function LecturePage({ params }: Props) {
           <AudioPlayer src={lecture.file_url ?? ""} title={lecture.title} />
         )}
       </section>
-
-      {/* PDF/PPT uchun matn o'qish */}
-      {(lecture.content_type === "pdf" || lecture.content_type === "ppt") && lecture.file_url && (
-        <section aria-label="Qo'shimcha amallar" className="flex items-center gap-3 flex-wrap">
-          <PdfReadAloudButton pdfUrl={lecture.file_url} />
-          <span className="text-xs text-muted-foreground">
-            PDF ichidagi matnni ovozli o&apos;qib beradi
-          </span>
-        </section>
-      )}
 
       {/* Ovozli o'qish (sarlavha + tavsif) */}
       {lecture.description && lecture.content_type !== "pdf" && lecture.content_type !== "ppt" && (

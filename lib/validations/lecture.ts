@@ -3,6 +3,7 @@ import { z } from "zod";
 export const lectureSchema = z.object({
   title: z.string().min(1, "Sarlavha kiritilishi shart").max(200),
   description: z.string().max(1000).optional(),
+  schoolId: z.string().optional(),
   subjectId: z.string().min(1, "Fan tanlanishi shart"),
   classId: z.string().optional(),
   contentType: z.enum(["pdf", "video", "audio", "ppt"], {

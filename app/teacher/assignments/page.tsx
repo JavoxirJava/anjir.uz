@@ -2,9 +2,11 @@ import { getCurrentUser } from "@/lib/api/auth";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getAssignmentsByTeacher } from "@/lib/db/assignments";
+import { getTeacherSubjectsAndClasses } from "@/lib/db/teacher-assignments";
 import { uz } from "@/lib/strings/uz";
 import { Card, CardContent } from "@/components/ui/card";
 import { AssignmentDeleteButton } from "./AssignmentDeleteButton";
+import { AssignmentSubjectEditor } from "./AssignmentSubjectEditor";
 
 export const metadata: Metadata = {
   title: `${uz.teacher.myAssignments} — I-Imkon.uz`,
@@ -23,7 +25,13 @@ function difficultyLabel(level?: "low" | "medium" | "high") {
 
 export default async function TeacherAssignmentsPage() {
   const user = await getCurrentUser();
-  const assignments = await getAssignmentsByTeacher(user!.id);
+  const [assignments, options] = await Promise.all([
+    getAssignmentsByTeacher(user!.id),
+    getTeacherSubjectsAndClasses(user!.id),
+  ]);
+  const subjects = Array.from(
+    new Map(options.subjects.map((s) => [s.id, { id: s.id, name: s.name }])).values()
+  );
 
   return (
     <div className="space-y-6">
@@ -82,6 +90,11 @@ export default async function TeacherAssignmentsPage() {
                     {a.description && (
                       <p className="text-sm text-muted-foreground line-clamp-1">{a.description}</p>
                     )}
+                    <AssignmentSubjectEditor
+                      assignmentId={a.id}
+                      currentSubjectId={a.subject_id}
+                      subjects={subjects}
+                    />
                         </>
                       );
                     })()}

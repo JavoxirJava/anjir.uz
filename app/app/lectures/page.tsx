@@ -25,20 +25,52 @@ const TYPE_EMOJI: Record<string, string> = {
   ppt:   "📊",
 };
 
-export default async function StudentLecturesPage() {
+interface Props {
+  searchParams: Promise<{ subject?: string | string[] }>;
+}
+
+type LectureItem = {
+  id: string;
+  title: string;
+  description: string | null;
+  content_type: string;
+  subject_id?: string | null;
+  subject_name?: string | null;
+  subjects?: { id?: string; name?: string } | null;
+};
+
+export default async function StudentLecturesPage({ searchParams }: Props) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  const q = await searchParams;
+  const subjectId = typeof q.subject === "string" ? q.subject : undefined;
 
   const profile = await apiGet<{ class_id: string | null } | null>("/students/me").catch(() => null);
   const classId = profile?.class_id ?? null;
 
-  const lectures = classId
-    ? await apiGet<{ id: string; title: string; description: string | null; content_type: string; subject_name: string | null }[]>(`/lectures?class_id=${classId}`).catch(() => [])
+  const allLectures = classId
+    ? await apiGet<LectureItem[]>(`/lectures?class_id=${classId}`).catch(() => [])
     : [];
+  const lectures = subjectId
+    ? allLectures.filter((l) => (l.subject_id ?? l.subjects?.id) === subjectId)
+    : allLectures;
+  const activeSubjectName = subjectId
+    ? allLectures.find((l) => (l.subject_id ?? l.subjects?.id) === subjectId)?.subjects?.name
+      ?? allLectures.find((l) => (l.subject_id ?? l.subjects?.id) === subjectId)?.subject_name
+      ?? "Mavzu"
+    : null;
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{uz.student.lectures}</h1>
+      {subjectId && (
+        <div className="flex items-center gap-3 flex-wrap rounded-lg border bg-muted/40 px-4 py-2">
+          <span className="text-sm">📚 Mavzu: <strong>{activeSubjectName}</strong></span>
+          <Link href="/app/lectures" className="text-xs text-primary underline underline-offset-2">
+            Filterni tozalash
+          </Link>
+        </div>
+      )}
 
       {lectures.length === 0 ? (
         <div className="rounded-lg border border-dashed p-12 text-center">
@@ -65,8 +97,8 @@ export default async function StudentLecturesPage() {
                     {l.description && (
                       <p className="text-sm text-muted-foreground line-clamp-2">{l.description}</p>
                     )}
-                    {l.subject_name && (
-                      <p className="text-xs text-muted-foreground">📚 {l.subject_name}</p>
+                    {(l.subjects?.name || l.subject_name) && (
+                      <p className="text-xs text-muted-foreground">📚 {l.subjects?.name ?? l.subject_name}</p>
                     )}
                   </CardContent>
                 </Card>

@@ -49,6 +49,12 @@ export default async function StudentSubjectsPage() {
                     <Link href={`/app/tests?subject=${s.id}`} className="text-xs text-primary underline underline-offset-2 focus-visible:outline-2">
                       Testlar →
                     </Link>
+                    <Link href={`/app/assignments?subject=${s.id}`} className="text-xs text-primary underline underline-offset-2 focus-visible:outline-2">
+                      Topshiriqlar →
+                    </Link>
+                    <Link href={`/app/games?subject=${s.id}`} className="text-xs text-primary underline underline-offset-2 focus-visible:outline-2">
+                      O&apos;yinlar →
+                    </Link>
                   </div>
                 </CardContent>
               </Card>

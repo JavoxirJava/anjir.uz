@@ -2,10 +2,12 @@ import { getCurrentUser } from "@/lib/api/auth";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getGamesByTeacher } from "@/lib/db/games";
+import { getTeacherSubjectsAndClasses } from "@/lib/db/teacher-assignments";
 import { uz } from "@/lib/strings/uz";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { GameDeleteButton } from "./GameDeleteButton";
+import { GameSubjectEditor } from "./GameSubjectEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +29,13 @@ const TYPE_EMOJI: Record<string, string> = {
 
 export default async function TeacherGamesPage() {
   const user = await getCurrentUser();
-  const games = await getGamesByTeacher(user!.id);
+  const [games, options] = await Promise.all([
+    getGamesByTeacher(user!.id),
+    getTeacherSubjectsAndClasses(user!.id),
+  ]);
+  const subjects = Array.from(
+    new Map(options.subjects.map((s) => [s.id, { id: s.id, name: s.name }])).values()
+  );
 
   return (
     <div className="space-y-6">
@@ -68,6 +76,11 @@ export default async function TeacherGamesPage() {
                       )}
                     </div>
                     <h2 className="font-medium">{game.title}</h2>
+                    <GameSubjectEditor
+                      gameId={game.id}
+                      currentSubjectId={game.subject_id}
+                      subjects={subjects}
+                    />
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <GameDeleteButton id={game.id} />

@@ -1,7 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "@/lib/api/auth";
-import { createAssignment, deleteAssignment, submitAssignment, gradeSubmission, updateAssignmentProgress, reviewAssignmentProgress } from "@/lib/api/assignments";
+import { createAssignment, deleteAssignment, submitAssignment, gradeSubmission, updateAssignmentProgress, reviewAssignmentProgress, updateAssignmentSubject } from "@/lib/api/assignments";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -135,5 +135,20 @@ export async function reviewAssignmentProgressAction(
     return { success: true };
   } catch {
     return { error: "Tasdiqlashda xatolik" };
+  }
+}
+
+export async function updateAssignmentSubjectAction(assignmentId: string, subjectId: string) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Tizimga kiring" };
+  if (!subjectId) return { error: "Fan tanlanishi shart" };
+
+  try {
+    await updateAssignmentSubject(assignmentId, subjectId);
+    revalidatePath("/teacher/assignments");
+    revalidatePath("/app/assignments");
+    return { success: true };
+  } catch {
+    return { error: "Mavzuni yangilashda xatolik" };
   }
 }

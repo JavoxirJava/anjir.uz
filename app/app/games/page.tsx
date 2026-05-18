@@ -30,16 +30,36 @@ const TYPE_DESC: Record<string, string> = {
   memory:     uz.games.memoryDesc,
 };
 
-export default async function StudentGamesPage() {
+interface Props {
+  searchParams: Promise<{ subject?: string | string[] }>;
+}
+
+export default async function StudentGamesPage({ searchParams }: Props) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  const q = await searchParams;
+  const subjectId = typeof q.subject === "string" ? q.subject : undefined;
 
   const profile = await apiGet<{ class_id: string | null } | null>("/students/me").catch(() => null);
-  const games = profile?.class_id ? await getGamesForStudent(profile.class_id) : [];
+  const allGames = profile?.class_id ? await getGamesForStudent(profile.class_id) : [];
+  const games = subjectId
+    ? allGames.filter((g) => g.subject_id === subjectId)
+    : allGames;
+  const activeSubjectName = subjectId
+    ? allGames.find((g) => g.subject_id === subjectId)?.subjects?.name ?? "Mavzu"
+    : null;
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{uz.student.games}</h1>
+      {subjectId && (
+        <div className="flex items-center gap-3 flex-wrap rounded-lg border bg-muted/40 px-4 py-2">
+          <span className="text-sm">📚 Mavzu: <strong>{activeSubjectName}</strong></span>
+          <Link href="/app/games" className="text-xs text-primary underline underline-offset-2">
+            Filterni tozalash
+          </Link>
+        </div>
+      )}
 
       {games.length === 0 ? (
         <div className="rounded-lg border border-dashed p-12 text-center">
