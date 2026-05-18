@@ -37,6 +37,7 @@ type LectureItem = {
   subject_id?: string | null;
   subject_name?: string | null;
   subjects?: { id?: string; name?: string } | null;
+  fans?: { id?: string; name?: string } | null;
 };
 
 export default async function StudentLecturesPage({ searchParams }: Props) {
@@ -97,8 +98,11 @@ export default async function StudentLecturesPage({ searchParams }: Props) {
                     {l.description && (
                       <p className="text-sm text-muted-foreground line-clamp-2">{l.description}</p>
                     )}
+                    {l.fans?.name && (
+                      <p className="text-xs text-muted-foreground">📘 Fan: {l.fans.name}</p>
+                    )}
                     {(l.subjects?.name || l.subject_name) && (
-                      <p className="text-xs text-muted-foreground">📚 {l.subjects?.name ?? l.subject_name}</p>
+                      <p className="text-xs text-muted-foreground">📚 Mavzu: {l.subjects?.name ?? l.subject_name}</p>
                     )}
                   </CardContent>
                 </Card>

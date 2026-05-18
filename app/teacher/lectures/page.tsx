@@ -62,9 +62,14 @@ export default async function TeacherLecturesPage() {
                       <Badge variant={TYPE_COLORS[lecture.content_type]}>
                         {TYPE_LABELS[lecture.content_type]}
                       </Badge>
+                      {lecture.fans && (
+                        <span className="text-xs text-muted-foreground">
+                          Fan: {lecture.fans.name}
+                        </span>
+                      )}
                       {lecture.subjects && (
                         <span className="text-xs text-muted-foreground">
-                          {lecture.subjects.name}
+                          Mavzu: {lecture.subjects.name}
                         </span>
                       )}
                       {lecture.classes && (

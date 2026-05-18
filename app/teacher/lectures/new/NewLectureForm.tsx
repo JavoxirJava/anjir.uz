@@ -20,7 +20,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-interface Subject { id: string; name: string; school_id: string }
+interface FanItem { id: string; name: string }
+interface TopicItem { id: string; name: string; school_id: string; fan_subject_id?: string }
 interface ClassItem { id: string; grade: number; letter: string; school_id: string }
 
 const CONTENT_TYPES = [
@@ -31,14 +32,19 @@ const CONTENT_TYPES = [
 ] as const;
 
 interface Props {
-  subjects: Subject[];
+  fans: FanItem[];
+  topics: TopicItem[];
   classes: ClassItem[];
   initialSubjectId?: string;
 }
 
-export function NewLectureForm({ subjects, classes, initialSubjectId }: Props) {
+export function NewLectureForm({ fans, topics, classes, initialSubjectId }: Props) {
   const [isPending, startTransition] = useTransition();
   const [isGeneratingSubtitle, setIsGeneratingSubtitle] = useState(false);
+  const initialFanId = initialSubjectId
+    ? topics.find((topic) => topic.id === initialSubjectId)?.fan_subject_id ?? ""
+    : "";
+  const [selectedFanId, setSelectedFanId] = useState(initialFanId);
   // SSR-safe: form.watch() hydration mismatch dan saqlanish uchun useState
   const [hasFile, setHasFile] = useState(false);
 
@@ -56,16 +62,29 @@ export function NewLectureForm({ subjects, classes, initialSubjectId }: Props) {
 
   const contentType = useWatch({ control: form.control, name: "contentType" });
   const fileUrl = useWatch({ control: form.control, name: "fileUrl" });
-  const selectedSubjectId = useWatch({ control: form.control, name: "subjectId" }) ?? "";
+  const selectedTopicId = useWatch({ control: form.control, name: "subjectId" }) ?? "";
   const subtitleVttUrl = useWatch({ control: form.control, name: "subtitleVttUrl" });
   const subtitleSource = useWatch({ control: form.control, name: "subtitleSource" });
-  const selectedSchoolId = subjects.find((subject) => subject.id === selectedSubjectId)?.school_id ?? "";
-  const filteredSubjects = subjects;
+  const selectedSchoolId = topics.find((topic) => topic.id === selectedTopicId)?.school_id ?? "";
+  const filteredTopics = useMemo(() => {
+    if (!selectedFanId) return topics;
+    return topics.filter((topic) => !topic.fan_subject_id || topic.fan_subject_id === selectedFanId);
+  }, [selectedFanId, topics]);
   const filteredClasses = useMemo(
-    () => (selectedSchoolId ? classes.filter((classItem) => classItem.school_id === selectedSchoolId) : []),
+    () => (selectedSchoolId ? classes.filter((classItem) => classItem.school_id === selectedSchoolId) : classes),
     [classes, selectedSchoolId]
   );
   const selectedType = CONTENT_TYPES.find((t) => t.value === contentType);
+
+  useEffect(() => {
+    if (!selectedTopicId && filteredTopics.length > 0) {
+      form.setValue("subjectId", filteredTopics[0].id, { shouldValidate: true });
+      return;
+    }
+    if (selectedTopicId && !filteredTopics.some((topic) => topic.id === selectedTopicId)) {
+      form.setValue("subjectId", filteredTopics[0]?.id ?? "", { shouldValidate: true });
+    }
+  }, [form, filteredTopics, selectedTopicId]);
 
   useEffect(() => {
     const selectedClass = form.getValues("classId");
@@ -148,24 +167,42 @@ export function NewLectureForm({ subjects, classes, initialSubjectId }: Props) {
               )}
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Fan */}
+              <div className="space-y-2">
+                <FormLabel>{uz.school.subject} <span aria-hidden="true" className="text-destructive">*</span></FormLabel>
+                <Select onValueChange={setSelectedFanId} value={selectedFanId}>
+                  <SelectTrigger aria-required="true">
+                    <SelectValue placeholder="Fan tanlang">
+                      {selectedFanId ? (fans.find((f) => f.id === selectedFanId)?.name ?? "Fan tanlang") : undefined}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fans.map((f) => (
+                      <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Mavzu */}
               {/* Fan */}
               <FormField
                 control={form.control}
                 name="subjectId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{uz.school.subject} <span aria-hidden="true" className="text-destructive">*</span></FormLabel>
+                    <FormLabel>Mavzu <span aria-hidden="true" className="text-destructive">*</span></FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger aria-required="true">
-                          <SelectValue placeholder="Fan tanlang">
-                            {field.value ? (filteredSubjects.find((s) => s.id === field.value)?.name ?? "Fan tanlang") : undefined}
+                          <SelectValue placeholder="Mavzu tanlang">
+                            {field.value ? (filteredTopics.find((s) => s.id === field.value)?.name ?? "Mavzu tanlang") : undefined}
                           </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {filteredSubjects.map((s) => (
+                        {filteredTopics.map((s) => (
                           <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                         ))}
                       </SelectContent>
@@ -209,6 +246,9 @@ export function NewLectureForm({ subjects, classes, initialSubjectId }: Props) {
                 )}
               />
             </div>
+            {selectedFanId && filteredTopics.length === 0 && (
+              <p className="text-sm text-muted-foreground">Mavzu topilmadi. Avval Mavzular bo&apos;limida mavzu qo&apos;shing.</p>
+            )}
 
             <Separator />
 

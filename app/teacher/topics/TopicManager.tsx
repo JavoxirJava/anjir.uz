@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 interface Subject {
   id: string;
   name: string;
-  school_id: string;
+  school_id?: string;
 }
 
 interface ClassItem {
@@ -24,17 +24,21 @@ interface ClassItem {
 interface Props {
   subjects: Subject[];
   classes: ClassItem[];
+  teacherTopics: Array<{ id: string; name: string }>;
 }
 
-export function TopicManager({ subjects, classes }: Props) {
+export function TopicManager({ subjects, classes, teacherTopics }: Props) {
   const [isPending, startTransition] = useTransition();
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [topics, setTopics] = useState(teacherTopics);
   const [name, setName] = useState("");
   const [subjectId, setSubjectId] = useState(subjects[0]?.id ?? "");
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
+  const effectiveSubjectId = subjectId || subjects[0]?.id || "";
 
-  const selectedSchoolId = subjects.find((subject) => subject.id === subjectId)?.school_id ?? "";
+  const selectedSchoolId = subjects.find((subject) => subject.id === effectiveSubjectId)?.school_id ?? "";
   const filteredClasses = useMemo(
-    () => classes.filter((c) => c.school_id === selectedSchoolId),
+    () => (selectedSchoolId ? classes.filter((c) => c.school_id === selectedSchoolId) : classes),
     [classes, selectedSchoolId]
   );
 
@@ -51,13 +55,13 @@ export function TopicManager({ subjects, classes }: Props) {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!subjectId) { toast.error("Fan tanlang"); return; }
+    if (!effectiveSubjectId) { toast.error("Fan tanlang"); return; }
     if (!name.trim()) { toast.error("Mavzu nomini kiriting"); return; }
     if (selectedClassIds.length === 0) { toast.error("Kamida bitta sinf tanlang"); return; }
 
     const fd = new FormData();
     fd.set("name", name.trim());
-    fd.set("subjectId", subjectId);
+    fd.set("subjectId", effectiveSubjectId);
     selectedClassIds.forEach((id) => fd.append("classIds", id));
 
     startTransition(async () => {
@@ -67,6 +71,13 @@ export function TopicManager({ subjects, classes }: Props) {
       } else {
         toast.success("Mavzu qo'shildi");
         setName("");
+        setSelectedClassIds([]);
+        setIsCreateOpen(false);
+        if (result.topic) {
+          setTopics((prev) => (
+            prev.some((item) => item.id === result.topic!.id) ? prev : [...prev, result.topic!]
+          ));
+        }
       }
     });
   }
@@ -75,10 +86,39 @@ export function TopicManager({ subjects, classes }: Props) {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Yangi mavzu qo&apos;shish</CardTitle>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle>Mavzular ro&apos;yxati</CardTitle>
+            <Button
+              type="button"
+              onClick={() => setIsCreateOpen((prev) => !prev)}
+              variant={isCreateOpen ? "outline" : "default"}
+            >
+              {isCreateOpen ? "Bekor qilish" : "Qo'shish"}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {topics.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Mavzular hali yo&apos;q.</p>
+          ) : (
+            <ul className="space-y-2" role="list" aria-label="Mavzular ro'yxati">
+              {topics.map((topic) => (
+                <li key={topic.id} className="rounded-md border px-3 py-2">
+                  <p className="font-medium text-sm">{topic.name}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      {isCreateOpen && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Yangi mavzu qo&apos;shish</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="topic-name">Mavzu nomi</Label>
               <Input
@@ -93,7 +133,7 @@ export function TopicManager({ subjects, classes }: Props) {
               <Label htmlFor="topic-subject">Fan</Label>
               <select
                 id="topic-subject"
-                value={subjectId}
+                value={effectiveSubjectId}
                 onChange={(e) => handleSubjectChange(e.target.value)}
                 className="w-full rounded-lg border px-3 py-2.5 text-sm bg-background focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               >
@@ -132,9 +172,10 @@ export function TopicManager({ subjects, classes }: Props) {
             <Button type="submit" disabled={isPending}>
               {isPending ? "Saqlanmoqda..." : "Mavzu qo'shish"}
             </Button>
-          </form>
-        </CardContent>
-      </Card>
+            </form>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

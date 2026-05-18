@@ -215,3 +215,68 @@ Eslatma: keyingi barcha o'zgarishlar ham shu faylga vaqt + sabab + qisqa natija 
     - `server` paketi qayta build qilindi: `npm --prefix server run build`.
     - Natijada `server/dist/routes/teachers.js` ichida `POST /teachers/:id/subjects` route paydo bo'lgani tasdiqlandi.
   - Nega: backend `dist` eski bo'lgani uchun action yuborgan yangi endpoint runtime'da topilmayotgan edi.
+
+## 2026-05-18 18:00:04 +05
+
+- So'rov: "`Tanlangan fan sizga biriktirilmagan` xatosi chiqyapti"
+  - Nima qilindi:
+    - `server/src/routes/teachers.ts` dagi `POST /teachers/:id/subjects` validatsiyasi sinf-markaziy oqimga o'tkazildi.
+    - Endi ruxsat tekshiruvi `subject_id` bo'yicha emas, tanlangan `class_ids` bo'yicha qilinadi.
+    - `school_id` kiritilmasa, tanlangan sinflardan avtomatik aniqlanadi.
+    - Teacher/super_admin uchun alohida class tekshiruvlari qo'shildi.
+    - `server` qayta build qilindi (`npm --prefix server run build`).
+  - Nega: mavzu qo'shishda fan biriktirish ma'lumotlari to'liq mos kelmasa ham, tanlangan sinflar to'g'ri bo'lsa create ishlashi uchun.
+
+## 2026-05-18 18:05:52 +05
+
+- So'rov: "Biologiya avtomatik tanlangan, boshqa fanlar chiqmayapti va submitda `Fan tanlang` chiqyapti"
+  - Nima qilindi:
+    - `app/teacher/topics/page.tsx` da topics sahifasi fanlarni teacher assignmentdan emas, to'liq `/subjects` endpointidan oladigan qilindi.
+    - `app/teacher/topics/TopicManager.tsx` da `effectiveSubjectId` joriy qilindi (UI ko'rsatayotgan tanlov va submit qiymati bir xil bo'lishi uchun).
+    - `TopicManager`da sinf filtri fan-school bog'lanishi yo'q holatda barcha teacher sinflarini ko'rsatadigan qilindi.
+    - `app/actions/teacher-topics.ts` da `subjectId` validatsiyasi `uuid`dan `min(1)`ga yumshatildi (`Fan tanlang` false-negative bo'lmasligi uchun).
+  - Nega: select UI va submit qiymati o'rtasidagi nomuvofiqlikni bartaraf etish, hamda topics formasida fanlar ro'yxatini to'liq ko'rsatish uchun.
+
+## 2026-05-18 18:08:46 +05
+
+- So'rov: "mavzular ro'yxati ham ko'rinsin, shu yerda `Qo'shish` tugmasi bo'lsin va shu orqali qo'shilsin"
+  - Nima qilindi:
+    - `app/teacher/topics/page.tsx` da `teacherTopics` (`/teachers/:id/subjects`) alohida olib kelinadigan qilindi.
+    - `app/teacher/topics/TopicManager.tsx` da:
+      - yuqorida `Mavzular ro'yxati` cardi qo'shildi;
+      - `Qo'shish/Bekor qilish` tugmasi qo'shildi;
+      - yaratish formasi faqat tugma bosilganda ochiladigan qilindi;
+      - muvaffaqiyatli qo'shgandan keyin ro'yxat local holatda darhol yangilanadigan qilindi.
+    - `app/actions/teacher-topics.ts` actioni endi yaratilgan mavzu `id/name` ni qaytaradigan qilindi.
+  - Nega: mavzu boshqaruvi (ko'rish + qo'shish)ni bir joyda, bitta aniq UI oqimida ishlatish uchun.
+
+## 2026-05-18 18:14:57 +05
+
+- So'rov: "ma'ruza qo'shishda fan o'rniga mavzular chiqyapti, sinflar bo'sh, alohida mavzu tanlash ham kerak"
+  - Nima qilindi:
+    - `app/teacher/lectures/new/page.tsx` da ma'ruza formasi uchun:
+      - `fans` ro'yxati `/subjects` dan olinadigan qilindi;
+      - `topics` ro'yxati teacher assignmentlardan (mavzu manbasi sifatida) qoldirildi.
+    - `app/teacher/lectures/new/NewLectureForm.tsx` da:
+      - alohida `Fan` select qo'shildi;
+      - alohida `Mavzu` select qo'shildi (`subjectId` shu select orqali yuboriladi);
+      - `Sinf` filtrida school topilmasa bo'sh chiqmasdan barcha teacher sinflari ko'rsatiladigan qilindi;
+    - mavzu bo'lmasa foydalanuvchiga ko'rsatma matni qo'shildi.
+  - Nega: lecture create UI'da `Fan`, `Mavzu`, `Sinf`ni alohida va ishlaydigan oqimga ajratish uchun.
+
+## 2026-05-18 18:37:28 +05
+
+- So'rov: "user panelda fan va mavzu alohida ko'rinsin; teacher lecture qo'shishda fan tanlanganda o'sha fanga oid mavzular chiqsin"
+  - Nima qilindi:
+    - `server/src/routes/teachers.ts` va `server/src/routes/lectures.ts` ga `subject_topic_links` jadvali uchun `CREATE TABLE IF NOT EXISTS` asosida auto-ensure qo'shildi.
+    - Mavzu yaratishda (`POST /teachers/:id/subjects`) tanlangan `subject_id` (fan) bilan yangi mavzu orasida bog'lanish `subject_topic_links`ga yoziladigan qilindi.
+    - `GET /teachers/:id/subjects-and-classes` javobiga `fan_subject_id` qo'shildi.
+    - `GET /lectures` va `GET /lectures/:id` da `fans` (fan obyekti) qaytariladigan qilindi.
+    - `lib/db/teacher-assignments.ts` va `lib/api/lectures.ts` type'lari yangi maydonlarga moslashtirildi.
+    - `app/teacher/lectures/new/page.tsx` va `NewLectureForm.tsx` da:
+      - `Fan` va `Mavzu` selectlari alohida qilindi;
+      - `Fan` tanlanganda `Mavzu` ro'yxati `fan_subject_id` bo'yicha filtrlanadigan qilindi;
+      - eski bog'lanmagan mavzular backward-compatible bo'lishi uchun filtrda ko'rinishi saqlandi.
+    - `app/app/lectures/page.tsx`, `app/app/lectures/[id]/page.tsx`, `app/teacher/lectures/page.tsx` da `Fan` va `Mavzu` alohida ko'rsatiladigan qilindi.
+    - Tekshiruv: frontend lint va `server` build muvaffaqiyatli o'tdi.
+  - Nega: fan/mavzu semantikasini to'g'ri ajratib, lecture create oqimida fanga tegishli mavzu tanlash va list/detail UIlarda fan+mavzuni alohida ko'rsatish uchun.

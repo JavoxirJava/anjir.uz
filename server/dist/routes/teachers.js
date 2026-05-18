@@ -8,6 +8,13 @@ const role_1 = require("../middleware/role");
 const router = (0, express_1.Router)();
 router.use(auth_1.requireAuth);
 router.use((0, role_1.requireRole)("teacher", "director", "super_admin"));
+async function ensureSubjectTopicLinksTable() {
+    await pool_1.pool.query(`CREATE TABLE IF NOT EXISTS subject_topic_links (
+      topic_subject_id UUID PRIMARY KEY REFERENCES subjects(id) ON DELETE CASCADE,
+      fan_subject_id   UUID NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+      created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`);
+}
 // GET /teachers — barcha o'qituvchilar
 router.get("/", async (_req, res) => {
     const { rows } = await pool_1.pool.query(`SELECT u.id, u.first_name, u.last_name, u.phone, u.status,
@@ -141,15 +148,17 @@ router.get("/:id/school-assignments", async (req, res) => {
 // GET /teachers/:id/subjects-and-classes — for content creation forms
 router.get("/:id/subjects-and-classes", async (req, res) => {
     const teacherId = req.params.id;
+    await ensureSubjectTopicLinksTable();
     const [schoolsRes, subjectsRes, classRes] = await Promise.all([
         pool_1.pool.query(`SELECT DISTINCT s.id, s.name
        FROM teacher_assignments ta
        JOIN schools s ON s.id = ta.school_id
        WHERE ta.teacher_id = $1
        ORDER BY s.name`, [teacherId]),
-        pool_1.pool.query(`SELECT DISTINCT sub.id, sub.name, ta.school_id
+        pool_1.pool.query(`SELECT DISTINCT sub.id, sub.name, ta.school_id, stl.fan_subject_id
        FROM teacher_assignments ta
        JOIN subjects sub ON sub.id = ta.subject_id
+       LEFT JOIN subject_topic_links stl ON stl.topic_subject_id = sub.id
        WHERE ta.teacher_id = $1
        ORDER BY sub.name`, [teacherId]),
         pool_1.pool.query(`SELECT DISTINCT c.id, c.grade, c.letter, c.school_id
@@ -224,6 +233,7 @@ router.get("/:id/subjects", async (req, res) => {
 // POST /teachers/:id/subjects — teacher creates new "mavzu/fan" for own classes
 router.post("/:id/subjects", (0, role_1.requireRole)("teacher", "super_admin"), async (req, res) => {
     const teacherId = req.params.id;
+    await ensureSubjectTopicLinksTable();
     if (req.user.role !== "super_admin" && req.user.sub !== teacherId) {
         res.status(403).json({ error: "Ruxsat yo'q" });
         return;
@@ -232,64 +242,91 @@ router.post("/:id/subjects", (0, role_1.requireRole)("teacher", "super_admin"), 
         name: zod_1.z.string().min(2),
         school_id: zod_1.z.string().uuid().optional(),
         subject_id: zod_1.z.string().uuid().optional(),
-        class_ids: zod_1.z.array(zod_1.z.string().uuid()).optional(),
-    }).refine((value) => Boolean(value.school_id || value.subject_id), {
-        message: "Fan yoki maktab tanlang",
-        path: ["subject_id"],
+        class_ids: zod_1.z.array(zod_1.z.string().uuid()).min(1),
     }).safeParse(req.body);
     if (!parsed.success) {
         res.status(400).json({ error: parsed.error.errors[0]?.message });
         return;
     }
     const name = parsed.data.name.trim();
+    const targetClassIds = [...new Set(parsed.data.class_ids)];
     let schoolId = parsed.data.school_id ?? null;
-    let allowedClassIds = new Set();
-    if (parsed.data.subject_id) {
-        const { rows: teacherSubjectAssignments } = await pool_1.pool.query(`SELECT DISTINCT school_id, class_id
+    if (req.user.role !== "super_admin") {
+        const { rows: assignmentRows } = await pool_1.pool.query(`SELECT DISTINCT class_id, school_id
        FROM teacher_assignments
-       WHERE teacher_id = $1 AND subject_id = $2`, [teacherId, parsed.data.subject_id]);
-        if (teacherSubjectAssignments.length === 0) {
-            res.status(400).json({ error: "Tanlangan fan sizga biriktirilmagan" });
+       WHERE teacher_id = $1 AND class_id = ANY($2::uuid[])`, [teacherId, targetClassIds]);
+        const allowedClassIds = new Set(assignmentRows.map((row) => row.class_id));
+        for (const classId of targetClassIds) {
+            if (!allowedClassIds.has(classId)) {
+                res.status(400).json({ error: "Tanlangan sinflardan ba'zilari sizga biriktirilmagan" });
+                return;
+            }
+        }
+        const classSchoolIds = [...new Set(assignmentRows.map((row) => row.school_id))];
+        if (classSchoolIds.length === 0) {
+            res.status(400).json({ error: "Tanlangan sinflar uchun biriktirish topilmadi" });
             return;
         }
-        if (!schoolId) {
-            schoolId = teacherSubjectAssignments[0].school_id;
+        if (schoolId) {
+            if (!classSchoolIds.includes(schoolId)) {
+                res.status(400).json({ error: "Tanlangan sinflar tanlangan maktabga tegishli emas" });
+                return;
+            }
         }
-        const sameSchoolAssignments = teacherSubjectAssignments.filter((row) => row.school_id === schoolId);
-        if (sameSchoolAssignments.length === 0) {
-            res.status(400).json({ error: "Tanlangan fan ushbu maktabga biriktirilmagan" });
+        else if (classSchoolIds.length === 1) {
+            schoolId = classSchoolIds[0];
+        }
+        else {
+            res.status(400).json({ error: "Sinf(lar) turli maktablarga tegishli, maktabni aniqlab bo'lmadi" });
             return;
         }
-        allowedClassIds = new Set(sameSchoolAssignments.map((row) => row.class_id));
     }
-    else if (schoolId) {
-        const { rows: teacherClasses } = await pool_1.pool.query(`SELECT DISTINCT class_id
-       FROM teacher_assignments
-       WHERE teacher_id = $1 AND school_id = $2`, [teacherId, schoolId]);
-        allowedClassIds = new Set(teacherClasses.map((r) => r.class_id));
-    }
-    if (allowedClassIds.size === 0) {
-        res.status(400).json({ error: "Ushbu maktabda sizga biriktirilgan sinf topilmadi" });
-        return;
+    else {
+        const { rows: classRows } = await pool_1.pool.query(`SELECT id, school_id
+       FROM classes
+       WHERE id = ANY($1::uuid[])`, [targetClassIds]);
+        const classIdSet = new Set(classRows.map((row) => row.id));
+        for (const classId of targetClassIds) {
+            if (!classIdSet.has(classId)) {
+                res.status(400).json({ error: "Tanlangan sinflardan ba'zilari topilmadi" });
+                return;
+            }
+        }
+        const classSchoolIds = [...new Set(classRows.map((row) => row.school_id))];
+        if (schoolId) {
+            if (!classSchoolIds.includes(schoolId)) {
+                res.status(400).json({ error: "Tanlangan sinflar tanlangan maktabga tegishli emas" });
+                return;
+            }
+        }
+        else if (classSchoolIds.length === 1) {
+            schoolId = classSchoolIds[0];
+        }
+        else {
+            res.status(400).json({ error: "Sinf(lar) turli maktablarga tegishli, maktabni aniqlab bo'lmadi" });
+            return;
+        }
     }
     if (!schoolId) {
         res.status(400).json({ error: "Maktab aniqlanmadi" });
         return;
-    }
-    const targetClassIds = parsed.data.class_ids?.length
-        ? parsed.data.class_ids
-        : [...allowedClassIds];
-    for (const classId of targetClassIds) {
-        if (!allowedClassIds.has(classId)) {
-            res.status(400).json({ error: "Tanlangan sinflardan ba'zilari sizga biriktirilmagan" });
-            return;
-        }
     }
     const { rows: subjectRows } = await pool_1.pool.query(`INSERT INTO subjects (name)
      VALUES ($1)
      ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
      RETURNING id, name`, [name]);
     const subjectId = subjectRows[0].id;
+    if (parsed.data.subject_id) {
+        const { rows: fanRows } = await pool_1.pool.query(`SELECT id FROM subjects WHERE id = $1 LIMIT 1`, [parsed.data.subject_id]);
+        if (!fanRows[0]) {
+            res.status(400).json({ error: "Tanlangan fan topilmadi" });
+            return;
+        }
+        await pool_1.pool.query(`INSERT INTO subject_topic_links (topic_subject_id, fan_subject_id)
+       VALUES ($1, $2)
+       ON CONFLICT (topic_subject_id) DO UPDATE
+       SET fan_subject_id = EXCLUDED.fan_subject_id`, [subjectId, parsed.data.subject_id]);
+    }
     await pool_1.pool.query(`INSERT INTO school_subjects (school_id, subject_id)
      VALUES ($1, $2)
      ON CONFLICT (school_id, subject_id) DO NOTHING`, [schoolId, subjectId]);

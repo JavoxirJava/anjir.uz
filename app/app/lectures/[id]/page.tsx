@@ -41,8 +41,11 @@ export default async function LecturePage({ params }: Props) {
           <Badge variant="secondary">
             {lecture.content_type.toUpperCase()}
           </Badge>
+          {lecture.fans && (
+            <span className="text-sm text-muted-foreground">Fan: {lecture.fans.name}</span>
+          )}
           {lecture.subjects && (
-            <span className="text-sm text-muted-foreground">{lecture.subjects.name}</span>
+            <span className="text-sm text-muted-foreground">Mavzu: {lecture.subjects.name}</span>
           )}
           {lecture.classes && (
             <span className="text-sm text-muted-foreground">

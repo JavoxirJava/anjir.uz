@@ -11,6 +11,7 @@ export type LectureRow = {
   creator_id: string;
   created_at: string;
   subjects?: { id: string; name: string } | null;
+  fans?: { id: string; name: string } | null;
   classes?: { id: string; grade: number; letter: string } | null;
   lecture_subtitles?: { id: string; vtt_url: string; source: string }[] | null;
 };

@@ -7,7 +7,7 @@ import { apiPost } from "@/lib/api/server";
 
 const createTopicSchema = z.object({
   name: z.string().min(2, "Mavzu nomi kamida 2 ta belgi bo'lishi kerak"),
-  subjectId: z.string().uuid("Fan tanlang"),
+  subjectId: z.string().min(1, "Fan tanlang"),
   classIds: z.array(z.string().uuid()).min(1, "Kamida bitta sinf tanlang"),
 });
 
@@ -23,7 +23,7 @@ export async function createTeacherTopicAction(formData: FormData) {
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   try {
-    await apiPost(`/teachers/${user.id}/subjects`, {
+    const created = await apiPost<{ id: string; name: string }>(`/teachers/${user.id}/subjects`, {
       name: parsed.data.name,
       subject_id: parsed.data.subjectId,
       class_ids: parsed.data.classIds,
@@ -33,7 +33,7 @@ export async function createTeacherTopicAction(formData: FormData) {
     revalidatePath("/teacher/tests/new");
     revalidatePath("/teacher/assignments/new");
     revalidatePath("/teacher/games/new");
-    return { success: true };
+    return { success: true, topic: created };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Mavzu qo'shishda xatolik" };
   }
