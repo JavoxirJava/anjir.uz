@@ -35,6 +35,7 @@ export function NewAssignmentForm({
   const [difficulty, setDifficulty] = useState<"low" | "medium" | "high">("medium");
   const [isForDisabled, setIsForDisabled] = useState(false);
   const [descriptionPdfUrl, setDescriptionPdfUrl] = useState<string>("");
+  const [link, setLink] = useState("");
   const [isUploadingPdf, setIsUploadingPdf] = useState(false);
   const { upload, progress, reset } = useFileUpload();
 
@@ -70,6 +71,7 @@ export function NewAssignmentForm({
     fd.set("difficulty_level", difficulty);
     fd.set("is_for_disabled", String(isForDisabled));
     if (descriptionPdfUrl) fd.set("file_url", descriptionPdfUrl);
+    fd.set("link", link.trim());
 
     startTransition(async () => {
       const result = await createAssignmentAction(fd);
@@ -171,6 +173,24 @@ export function NewAssignmentForm({
                 </button>
               </div>
             )}
+          </div>
+
+          {/* Havola */}
+          <div className="space-y-1.5">
+            <Label htmlFor="link">Havola (ixtiyoriy)</Label>
+            <Input
+              id="link"
+              name="link"
+              type="url"
+              inputMode="url"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              placeholder="https://example.com/material"
+              disabled={isPending}
+            />
+            <p className="text-xs text-muted-foreground">
+              Tashqi material yoki manbaga havola (masalan video, hujjat, sayt).
+            </p>
           </div>
 
           {/* Fan */}

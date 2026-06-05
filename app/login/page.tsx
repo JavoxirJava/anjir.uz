@@ -34,7 +34,7 @@ export default function LoginPage() {
               👋 Qaytib kelganingizdan xursandmiz
             </div>
             <h1 className="text-4xl xl:text-5xl font-black leading-tight">
-              Hamma uchun<br />ta&apos;lim platforma
+              Hamma uchun<br />ta&apos;lim platformasi
             </h1>
             {/* Shior */}
             <div className="relative pl-5 py-1">

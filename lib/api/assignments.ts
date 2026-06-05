@@ -5,6 +5,7 @@ export type AssignmentRow = {
   title: string;
   description: string | null;
   file_url?: string | null;
+  link?: string | null;
   deadline: string | null;
   due_date?: string | null;
   max_score?: number | null;
@@ -77,6 +78,7 @@ export async function createAssignment(input: {
   description: string | null;
   deadline: string | null;
   file_url: string | null;
+  link: string | null;
   teacher_id: string;
   subject_id: string;
   classIds: string[];
@@ -89,6 +91,7 @@ export async function createAssignment(input: {
     description:      input.description,
     deadline:         input.deadline,
     file_url:         input.file_url,
+    link:             input.link,
     subject_id:       input.subject_id,
     class_ids:        input.classIds,
     difficulty_level: input.difficulty_level,

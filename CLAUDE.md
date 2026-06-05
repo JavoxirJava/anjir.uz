@@ -10,15 +10,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
+### Frontend (Next.js 16 + React 19)
 ```bash
-npm run dev      # Start dev server
+npm run dev      # Start dev server (port 3000)
 npm run build    # Production build
 npm run lint     # ESLint check
+```
+
+### Backend (Express + Node.js, `server/`)
+```bash
+npm --prefix server run dev           # Start backend in watch mode (port 4000)
+npm --prefix server run build         # Compile TypeScript → dist/
+npm --prefix server run start         # Run compiled backend
+npm --prefix server run db:migrate:dev  # Run DB migrations (dev, via tsx)
+npm --prefix server run db:migrate    # Run DB migrations (prod, via node dist/)
 ```
 
 No test runner is configured yet.
 
 ## Architecture
+
+### Two-Process Setup
+
+The project is **two separate processes**:
+1. **Frontend** — Next.js app at `localhost:3000` (`NEXT_PUBLIC_API_URL`)
+2. **Backend** — Express + PostgreSQL at `localhost:4000` (`server/`)
+
+Both must be running in development. The frontend never queries the DB directly — all data flows through the backend REST API.
 
 ### Route Structure (App Router)
 
@@ -32,30 +50,55 @@ Role-based top-level routes map to user roles after login:
 | `/admin/` | super_admin |
 | `/login`, `/register`, `/onboarding`, `/pending` | unauthenticated/new users |
 
-After login, `app/actions/auth.ts` reads the user's role from `public.users` and redirects accordingly. Users with `status: "pending"` or `"rejected"` are held at `/pending`.
+After login, `app/actions/auth.ts` reads the user's role and redirects accordingly. Users with `status: "pending"` or `"rejected"` are held at `/pending`.
 
-### Data Layer
+### Auth
 
-- **`lib/supabase/server.ts`** — server-side Supabase client (uses cookies, for Server Components and Server Actions)
-- **`lib/supabase/client.ts`** — browser-side Supabase client
-- **`lib/supabase/admin.ts`** — service-role client that bypasses RLS (for Server Actions only)
-- **`lib/supabase/middleware.ts`** — refreshes sessions in middleware
-- **`lib/db/`** — query helpers grouped by domain (`books.ts`, `games.ts`, `lectures.ts`, etc.). All use `createAdminClient()` since they run server-side.
-- **`lib/supabase/types.ts`** — hand-written TypeScript types for all DB tables/enums. Run `supabase gen types` to regenerate when schema changes.
+JWT-based, phone-number login. Two cookies set by `lib/api/auth.ts`:
+- `anjir_at` — access token (non-httpOnly, 8h) — readable by both server and browser
+- `anjir_rt` — refresh token (httpOnly, 30d)
+
+Server-side auth helper: `getCurrentUser()` in `lib/api/auth.ts` calls `/auth/me`. Backend validates JWT in `server/src/middleware/auth.ts`.
+
+### API Clients
+
+All frontend↔backend communication goes through:
+- **`lib/api/server.ts`** — server-side fetcher (`apiFetch`, `apiGet`, `apiPost`, `apiPut`, `apiDelete`). Reads `anjir_at` from `cookies()`. Throws `ApiError` with HTTP status. 10s timeout.
+- **`lib/api/browser.ts`** — browser-side fetcher (same API shape). Reads `anjir_at` from `document.cookie`.
+- **`lib/api/[domain].ts`** — domain-specific typed wrappers (`books.ts`, `games.ts`, `lectures.ts`, etc.) used in Server Components.
+
+`lib/db/*.ts` files are legacy shim re-exports — they just re-export from `lib/api/`.
 
 ### Server Actions
 
-All mutations live in `app/actions/`. They are `"use server"` functions, accept `FormData`, validate with Zod schemas from `lib/validations/`, and return `{ error: string }` on failure or redirect on success.
+All mutations live in `app/actions/`. They are `"use server"` functions, accept `FormData`, validate with Zod schemas from `lib/validations/`, and call the backend via `lib/api/server.ts`. Return `{ error: string }` on failure or redirect on success.
+
+### Backend Structure (`server/src/`)
+
+- `app.ts` — Express app with helmet, cors, rate-limiting
+- `index.ts` — HTTP server + Socket.io setup
+- `db/pool.ts` — `pg` Pool (reads `DATABASE_URL`)
+- `db/migrate.ts` — runs `db/schema.sql`
+- `routes/` — one file per domain, mounted in `app.ts`
+- `middleware/auth.ts` — JWT verification; attaches `req.user`
+- `middleware/role.ts` — role-based access guard
+- `socket/` — Socket.io real-time events
+
+### Types
+
+- **`lib/types/domain.ts`** — shared frontend types (`UserRole`, `UserStatus`, `ContrastMode`, `ColorBlindMode`, `FontSize`)
+- **`lib/api/[domain].ts`** — domain-specific row types (e.g., `AssignmentRow`, `LectureRow`)
+- **`server/src/types/index.ts`** — backend-only types (`AuthRequest`, `JwtPayload`)
 
 ### Migrations
 
-SQL migrations are in `supabase/migrations/` with the naming convention `YYYYMMDD_NNN_description.sql`. Apply them via Supabase MCP (`mcp__claude_ai_Supabase__apply_migration`) or directly in Supabase Studio. The file `supabase/apply_migration_003.sql` is a pending migration script.
+SQL schema lives in `server/src/db/schema.sql`. Run via `npm --prefix server run db:migrate:dev`. The legacy `supabase/migrations/` directory contains historical SQL for reference only — the project no longer uses Supabase.
 
 ### File Storage
 
-- **Cloudflare R2** — PDFs, audio, and other static files (`lib/storage/r2.ts`)
-- **Cloudflare Stream** — video lectures (`lib/storage/stream.ts`)
-- Remote image patterns are whitelisted in `next.config.ts`
+- **Cloudflare R2** — PDFs, audio, and other static files (`lib/storage/r2.ts`). Upload via `/api/upload` or presigned URL via `/api/upload/presign`.
+- **Cloudflare Stream** — video lectures (`lib/storage/stream.ts`). Upload via `/api/upload/stream`.
+- Remote image patterns are whitelisted in `next.config.ts`.
 
 ### Accessibility System
 
@@ -69,8 +112,9 @@ SVG color-blind filters are defined once in the root layout. Use `useAccessibili
 ## Key Conventions
 
 - **All UI strings are in Uzbek** (Latin script). Never hardcode strings — use `lib/strings/uz.ts`.
-- **No `any` types.** Types are in `lib/supabase/types.ts`.
-- **Auth uses phone numbers** mapped to synthetic emails: `{phone}@anjir.internal`. This is how Supabase Auth is configured.
+- **No `any` types.** Domain types live in `lib/types/domain.ts` and `lib/api/`.
 - **Forms** use React Hook Form + Zod. Validation schemas live in `lib/validations/`.
 - **Toast notifications** use `sonner` via `components/ui/sonner.tsx`. Import `toast` from `sonner`.
+- **Client state** uses Zustand where needed.
 - **Every interactive element** must be keyboard accessible and have visible focus indicators (2px outline). Never convey information through color alone.
+- **After backend changes**, rebuild with `npm --prefix server run build` — the running process uses `dist/`.

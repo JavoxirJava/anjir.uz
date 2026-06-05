@@ -71,6 +71,25 @@ export default async function StudentAssignmentPage({ params }: Props) {
         </Card>
       )}
 
+      {assignment.link && (
+        <Card>
+          <CardContent className="pt-4 pb-4 space-y-2">
+            <p className="text-sm font-medium">🔗 Havola</p>
+            <a
+              href={assignment.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-primary underline break-all focus-visible:outline-2"
+            >
+              {assignment.link}
+            </a>
+            <p className="text-xs text-muted-foreground">
+              Yangi oynada ochiladi
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {assignment.file_url && (
         <Card>
           <CardContent className="pt-4 pb-4 space-y-3">

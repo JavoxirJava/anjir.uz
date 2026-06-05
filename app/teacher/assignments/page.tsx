@@ -82,6 +82,7 @@ export default async function TeacherAssignmentsPage() {
                       <span>⭐ Maks: {a.max_score ?? 100} ball</span>
                       <span>🎯 Daraja: {difficultyLabel(a.difficulty_level)}</span>
                       <span>📎 PDF: {a.file_url ? "Bor" : "Yo'q"}</span>
+                      <span>🔗 Havola: {a.link ? "Bor" : "Yo'q"}</span>
                       <span>♿ Imkoniyati cheklanganlar uchun: {a.is_for_disabled ? "Ha" : "Yo'q"}</span>
                       {classes.length > 0 && (
                         <span>🏫 Sinflar: {classesText}</span>

@@ -4,8 +4,6 @@
 /node_modules
 ./server/node_modules
 /server/node_modules
-./server
-/server
 /.pnp
 .pnp.*
 .yarn/*
