@@ -15,9 +15,9 @@ interface ClassItem { id: string; grade: number; letter: string }
 
 type GameType = "word_match" | "ordering" | "memory";
 
-interface WordPair { word: string; meaning: string }
-interface OrderItem { text: string }
-interface MemoryPair { front: string; back: string }
+interface WordPair { id: string; word: string; meaning: string }
+interface OrderItem { id: string; text: string }
+interface MemoryPair { id: string; front: string; back: string }
 
 const GAME_TYPES: { value: GameType; label: string; desc: string; emoji: string }[] = [
   { value: "word_match", label: uz.games.wordMatch, desc: uz.games.wordMatchDesc, emoji: "🔤" },
@@ -43,38 +43,38 @@ export function GameBuilderForm({
   const [subjectId, setSubjectId]   = useState(initialSubjectId ?? "");
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
 
-  // Word match ma'lumotlari
+  // Word match ma'lumotlari (id — React key uchun barqaror, content_json'ga ketmaydi)
   const [wordPairs, setWordPairs] = useState<WordPair[]>([
-    { word: "", meaning: "" },
-    { word: "", meaning: "" },
+    { id: "wp-1", word: "", meaning: "" },
+    { id: "wp-2", word: "", meaning: "" },
   ]);
 
   // Ordering ma'lumotlari
   const [orderItems, setOrderItems] = useState<OrderItem[]>([
-    { text: "" },
-    { text: "" },
-    { text: "" },
+    { id: "oi-1", text: "" },
+    { id: "oi-2", text: "" },
+    { id: "oi-3", text: "" },
   ]);
 
   // Memory ma'lumotlari
   const [memoryPairs, setMemoryPairs] = useState<MemoryPair[]>([
-    { front: "", back: "" },
-    { front: "", back: "" },
-    { front: "", back: "" },
+    { id: "mp-1", front: "", back: "" },
+    { id: "mp-2", front: "", back: "" },
+    { id: "mp-3", front: "", back: "" },
   ]);
 
   // ---- Word match helpers ----
-  function updateWordPair(idx: number, field: keyof WordPair, val: string) {
+  function updateWordPair(idx: number, field: "word" | "meaning", val: string) {
     setWordPairs((prev) => prev.map((p, i) => (i === idx ? { ...p, [field]: val } : p)));
   }
-  function addWordPair() { setWordPairs((p) => [...p, { word: "", meaning: "" }]); }
+  function addWordPair() { setWordPairs((p) => [...p, { id: crypto.randomUUID(), word: "", meaning: "" }]); }
   function removeWordPair(idx: number) { setWordPairs((p) => p.filter((_, i) => i !== idx)); }
 
   // ---- Ordering helpers ----
   function updateOrderItem(idx: number, val: string) {
-    setOrderItems((prev) => prev.map((it, i) => (i === idx ? { text: val } : it)));
+    setOrderItems((prev) => prev.map((it, i) => (i === idx ? { ...it, text: val } : it)));
   }
-  function addOrderItem() { setOrderItems((p) => [...p, { text: "" }]); }
+  function addOrderItem() { setOrderItems((p) => [...p, { id: crypto.randomUUID(), text: "" }]); }
   function removeOrderItem(idx: number) { setOrderItems((p) => p.filter((_, i) => i !== idx)); }
   function moveOrderItem(idx: number, dir: -1 | 1) {
     const next = [...orderItems];
@@ -85,10 +85,10 @@ export function GameBuilderForm({
   }
 
   // ---- Memory helpers ----
-  function updateMemoryPair(idx: number, field: keyof MemoryPair, val: string) {
+  function updateMemoryPair(idx: number, field: "front" | "back", val: string) {
     setMemoryPairs((prev) => prev.map((p, i) => (i === idx ? { ...p, [field]: val } : p)));
   }
-  function addMemoryPair() { setMemoryPairs((p) => [...p, { front: "", back: "" }]); }
+  function addMemoryPair() { setMemoryPairs((p) => [...p, { id: crypto.randomUUID(), front: "", back: "" }]); }
   function removeMemoryPair(idx: number) { setMemoryPairs((p) => p.filter((_, i) => i !== idx)); }
 
   // ---- Class toggle ----
@@ -101,7 +101,7 @@ export function GameBuilderForm({
   // ---- Submit ----
   function buildGameData(): Record<string, unknown> {
     if (gameType === "word_match") {
-      return { pairs: wordPairs };
+      return { pairs: wordPairs.map(({ word, meaning }) => ({ word, meaning })) };
     } else if (gameType === "ordering") {
       return {
         items: orderItems.map((it) => it.text),
@@ -109,7 +109,7 @@ export function GameBuilderForm({
         correctOrder: orderItems.map((_, i) => i),
       };
     } else {
-      return { pairs: memoryPairs };
+      return { pairs: memoryPairs.map(({ front, back }) => ({ front, back })) };
     }
   }
 
@@ -274,7 +274,7 @@ export function GameBuilderForm({
           </CardHeader>
           <CardContent className="space-y-3">
             {wordPairs.map((pair, idx) => (
-              <div key={idx} className="flex gap-2 items-start">
+              <div key={pair.id} className="flex gap-2 items-start">
                 <span className="text-xs text-muted-foreground mt-3 w-6 shrink-0 text-right">
                   {idx + 1}.
                 </span>
@@ -322,7 +322,7 @@ export function GameBuilderForm({
               Elementlarni to&apos;g&apos;ri tartibda kiriting. O&apos;quvchilar ularni aralashtirilib ko&apos;rsatishadi.
             </p>
             {orderItems.map((item, idx) => (
-              <div key={idx} className="flex gap-2 items-center">
+              <div key={item.id} className="flex gap-2 items-center">
                 <span className="text-xs font-mono text-muted-foreground w-6 shrink-0 text-right">
                   {idx + 1}.
                 </span>
@@ -377,7 +377,7 @@ export function GameBuilderForm({
               Har bir juftning ikkala tomoni alohida kartada ko&apos;rsatiladi.
             </p>
             {memoryPairs.map((pair, idx) => (
-              <div key={idx} className="flex gap-2 items-start">
+              <div key={pair.id} className="flex gap-2 items-start">
                 <span className="text-xs text-muted-foreground mt-3 w-6 shrink-0 text-right">
                   {idx + 1}.
                 </span>

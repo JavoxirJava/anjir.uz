@@ -31,10 +31,6 @@ export async function getLecturesByTeacher(teacherId: string): Promise<LectureRo
   return apiGet(`/lectures?teacher_id=${teacherId}`);
 }
 
-export async function getLecturesByClass(classId: string): Promise<LectureRow[]> {
-  return apiGet(`/lectures?class_id=${classId}`);
-}
-
 export async function getLectureById(id: string): Promise<LectureRow | null> {
   try {
     return await apiGet(`/lectures/${id}`);

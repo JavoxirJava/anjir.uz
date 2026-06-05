@@ -7,7 +7,8 @@ export async function saveEntryTestAction(
   testId: string,
   answers: Record<string, string>,
   correct: number,
-  total: number
+  total: number,
+  correctness: Record<string, boolean> = {}
 ) {
   const user = await getCurrentUser();
   if (!user) return { error: "Tizimga kiring" };
@@ -19,7 +20,7 @@ export async function saveEntryTestAction(
       answers: Object.entries(answers).map(([questionId, optionId]) => ({
         questionId,
         selectedOptionIds: [optionId],
-        isCorrect: false,
+        isCorrect: correctness[questionId] ?? false,
       })),
       score,
     });

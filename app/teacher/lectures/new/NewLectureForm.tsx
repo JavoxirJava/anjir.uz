@@ -171,7 +171,7 @@ export function NewLectureForm({ fans, topics, classes, initialSubjectId }: Prop
               {/* Fan */}
               <div className="space-y-2">
                 <FormLabel>{uz.school.subject} <span aria-hidden="true" className="text-destructive">*</span></FormLabel>
-                <Select onValueChange={setSelectedFanId} value={selectedFanId}>
+                <Select onValueChange={(v) => setSelectedFanId(v ?? "")} value={selectedFanId}>
                   <SelectTrigger aria-required="true">
                     <SelectValue placeholder="Fan tanlang">
                       {selectedFanId ? (fans.find((f) => f.id === selectedFanId)?.name ?? "Fan tanlang") : undefined}

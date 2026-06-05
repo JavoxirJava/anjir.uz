@@ -16,10 +16,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function StudentBookPage({ params }: Props) {
   const { id } = await params;
-  const user = await getCurrentUser();
+  // Foydalanuvchi va kitob bir-biriga bog'liq emas — parallel olamiz.
+  const [user, book] = await Promise.all([getCurrentUser(), getBookById(id)]);
   if (!user) redirect("/login");
-
-  const book = await getBookById(id);
   if (!book || !book.pdf_url) notFound();
 
   const bookmarks = await getUserBookmarks(user.id, id);

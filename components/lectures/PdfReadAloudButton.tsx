@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { apiPost } from "@/lib/api/browser";
 
 interface Props {
@@ -11,6 +11,12 @@ interface Props {
 export function PdfReadAloudButton({ pdfUrl, className }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [isReading, setIsReading] = useState(false);
+
+  useEffect(() => () => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
 
   async function handleRead() {
     if (!("speechSynthesis" in window)) {

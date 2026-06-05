@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -45,9 +45,8 @@ export function TestEditForm({ testId, initialValues, subjects, classes, games }
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<TestInput>({
-    resolver: zodResolver(testSchema) as any,
+    resolver: zodResolver(testSchema) as Resolver<TestInput>,
     defaultValues: initialValues,
   });
 

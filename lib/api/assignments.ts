@@ -51,14 +51,6 @@ export async function getAssignmentById(id: string): Promise<AssignmentRow | nul
   try { return await apiGet(`/assignments/${id}`); } catch { return null; }
 }
 
-export async function getAssignmentsForStudent(classId: string): Promise<AssignmentRow[]> {
-  void classId;
-  const response = await apiGet<StudentAssignmentsResponse | AssignmentRow[]>(`/students/me/assignments`);
-  if (Array.isArray(response)) {
-    return response;
-  }
-  return response.assignments;
-}
 
 export async function getStudentAssignmentsWithLevel(): Promise<StudentAssignmentsResponse> {
   const response = await apiGet<StudentAssignmentsResponse | AssignmentRow[]>(`/students/me/assignments`);

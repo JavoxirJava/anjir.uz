@@ -25,10 +25,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function LecturePage({ params }: Props) {
   const { id } = await params;
 
-  const user = await getCurrentUser();
+  // Foydalanuvchi va ma'ruza bir-biriga bog'liq emas — parallel olamiz.
+  const [user, lecture] = await Promise.all([getCurrentUser(), getLectureById(id)]);
   if (!user) redirect("/login");
-
-  const lecture = await getLectureById(id);
   if (!lecture) notFound();
 
   const subtitle = lecture.lecture_subtitles?.[0];

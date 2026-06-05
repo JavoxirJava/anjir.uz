@@ -28,10 +28,9 @@ const TYPE_EMOJI: Record<string, string> = {
 
 export default async function StudentGamePage({ params }: Props) {
   const { id } = await params;
-  const user = await getCurrentUser();
+  // Foydalanuvchi va o'yin bir-biriga bog'liq emas — parallel olamiz.
+  const [user, game] = await Promise.all([getCurrentUser(), getGameById(id)]);
   if (!user) redirect("/login");
-
-  const game = await getGameById(id);
   if (!game) notFound();
 
   if (game.external_url) {

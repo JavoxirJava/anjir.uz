@@ -16,10 +16,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function TestPage({ params }: Props) {
   const { id } = await params;
-  const user = await getCurrentUser();
+  // Foydalanuvchi va test bir-biriga bog'liq emas — parallel olamiz.
+  const [user, test] = await Promise.all([getCurrentUser(), getTestById(id)]);
   if (!user) redirect("/login");
-
-  const test = await getTestById(id);
   if (!test) notFound();
 
   const attempts = await getStudentAttempts(user.id, id);
