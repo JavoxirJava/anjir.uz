@@ -93,12 +93,13 @@ export async function registerAction(formData: FormData) {
   const userId = data.user.id;
   const token  = data.access_token;
 
-  // Profile setup after registration
+  // Profile setup after registration. Agar bu bosqich muvaffaqiyatsiz bo'lsa,
+  // foydalanuvchini jim ravishda onboarding'ga o'tkazib yubormaymiz — aks holda
+  // u sinf/maktabsiz qoladi.
+  const profileSetupError = "Hisobingiz yaratildi, lekin maktab/sinf biriktirishda xatolik yuz berdi. Profil sozlamalaridan qayta urinib ko'ring.";
   if (parsed.data.role === "teacher") {
     if (parsed.data.teacherSchoolId && parsed.data.teacherClassIds?.length) {
-      // teacher_assignments via backend — would need a dedicated endpoint,
-      // for now done via admin API
-      await fetch(`${API_URL}/teachers/assignments`, {
+      const assignRes = await fetch(`${API_URL}/teachers/assignments`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -107,10 +108,11 @@ export async function registerAction(formData: FormData) {
           class_ids:  parsed.data.teacherClassIds,
         }),
       });
+      if (!assignRes.ok) return { error: profileSetupError };
     }
   } else if (parsed.data.role === "student") {
     if (parsed.data.schoolId && parsed.data.classId) {
-      await fetch(`${API_URL}/students/profile`, {
+      const profileRes = await fetch(`${API_URL}/students/profile`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -118,6 +120,7 @@ export async function registerAction(formData: FormData) {
           class_id:  parsed.data.classId,
         }),
       });
+      if (!profileRes.ok) return { error: profileSetupError };
     }
   }
 

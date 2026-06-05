@@ -87,38 +87,6 @@ export function useFileUpload() {
     return { fileUrl, key };
   }
 
-  async function uploadViaStream(file: File): Promise<UploadResult | null> {
-    setProgress({ percent: 5, status: "uploading" });
-
-    const res = await fetch("/api/upload/stream", { method: "POST" });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({ error: "Stream URL xatolik" }));
-      setProgress({ percent: 0, status: "error", error: body.error ?? "Stream URL xatolik" });
-      return null;
-    }
-
-    const { uploadURL, fileUrl } = await res.json();
-
-    await new Promise<void>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", uploadURL);
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
-          setProgress({ percent: Math.round(5 + (e.loaded / e.total) * 93), status: "uploading" });
-        }
-      };
-      xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Stream xatolik: ${xhr.status} ${xhr.responseText}`));
-      xhr.onerror = () => reject(new Error("Tarmoq xatoligi"));
-
-      const fd = new FormData();
-      fd.append("file", file);
-      xhr.send(fd);
-    });
-
-    setProgress({ percent: 100, status: "done" });
-    return { fileUrl };
-  }
-
   function reset() {
     setProgress({ percent: 0, status: "idle" });
   }

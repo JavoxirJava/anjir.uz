@@ -41,10 +41,6 @@ export async function getTestsByTeacher(teacherId: string): Promise<TestRow[]> {
   return apiGet(`/tests?teacher_id=${teacherId}`);
 }
 
-export async function getTestsByClass(classId: string): Promise<TestRow[]> {
-  return apiGet(`/tests?class_id=${classId}`);
-}
-
 export async function getTestById(id: string): Promise<TestWithQuestions | null> {
   try {
     return await apiGet(`/tests/${id}`);

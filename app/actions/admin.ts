@@ -77,7 +77,9 @@ export async function deleteSubjectAction(id: string) {
 export async function approveUserAction(userId: string) {
   try {
     await apiPut(`/users/${userId}/status`, { status: "active" });
-  } catch { /* ignore */ }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Xatolik" };
+  }
   revalidatePath("/admin/users");
   return { success: true };
 }
@@ -85,7 +87,9 @@ export async function approveUserAction(userId: string) {
 export async function rejectUserAction(userId: string, reason?: string) {
   try {
     await apiPut(`/users/${userId}/status`, { status: "rejected", rejection_reason: reason });
-  } catch { /* ignore */ }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Xatolik" };
+  }
   revalidatePath("/admin/users");
   return { success: true };
 }

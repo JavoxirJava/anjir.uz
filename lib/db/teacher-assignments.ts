@@ -5,16 +5,20 @@ export interface ClassOption  { id: string; grade: number; letter: string; schoo
 export interface SchoolOption { id: string; name: string }
 export interface SubjectBySchoolOption extends SubjectOption { school_id: string; fan_subject_id?: string }
 
+interface TeacherSubjectsAndClassesRaw {
+  schools?: SchoolOption[];
+  subjects?: Array<{ id: string; name: string; school_id?: string; fan_subject_id?: string }>;
+  classes?: Array<{ id: string; grade: number; letter: string; school_id?: string }>;
+}
+
 export async function getTeacherSubjectsAndClasses(teacherId: string): Promise<{
   schools: SchoolOption[];
   subjects: SubjectBySchoolOption[];
   classes: ClassOption[];
 }> {
-  const raw = await apiGet<{
-    schools?: SchoolOption[];
-    subjects?: Array<{ id: string; name: string; school_id?: string; fan_subject_id?: string }>;
-    classes?: Array<{ id: string; grade: number; letter: string; school_id?: string }>;
-  }>(`/teachers/${teacherId}/subjects-and-classes`).catch(() => ({}));
+  const raw = await apiGet<TeacherSubjectsAndClassesRaw>(
+    `/teachers/${teacherId}/subjects-and-classes`
+  ).catch((): TeacherSubjectsAndClassesRaw => ({}));
 
   const schools = Array.isArray(raw.schools) ? raw.schools : [];
   const subjects = Array.isArray(raw.subjects)

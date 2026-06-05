@@ -46,7 +46,7 @@ export function OnboardingFlow({ test, questions }: Props) {
     if (test && questions.length > 0) {
       setPhase("entry_test");
     } else {
-      finishAll(0, 0);
+      finishAll(0, 0, {});
     }
   }
 
@@ -58,25 +58,25 @@ export function OnboardingFlow({ test, questions }: Props) {
     if (currentQ < questions.length - 1) {
       setCurrentQ(c => c + 1);
     } else {
-      // Natijani hisoblash
+      // Natijani hisoblash — har savol uchun to'g'ri/noto'g'rini ham saqlaymiz.
       let correct = 0;
+      const correctness: Record<string, boolean> = {};
       questions.forEach(q => {
         const chosen = answers[q.id];
-        if (chosen) {
-          const opt = q.question_options.find(o => o.id === chosen);
-          if (opt?.is_correct) correct++;
-        }
+        const isCorrect = !!(chosen && q.question_options.find(o => o.id === chosen)?.is_correct);
+        correctness[q.id] = isCorrect;
+        if (isCorrect) correct++;
       });
       setScore(correct);
       setPhase("done");
-      finishAll(correct, questions.length);
+      finishAll(correct, questions.length, correctness);
     }
   }
 
-  function finishAll(correct: number, total: number) {
+  function finishAll(correct: number, total: number, correctness: Record<string, boolean>) {
     startTransition(async () => {
       if (test) {
-        await saveEntryTestAction(test.id, answers, correct, total);
+        await saveEntryTestAction(test.id, answers, correct, total, correctness);
       }
       localStorage.setItem("anjir_onboarding", "1");
     });

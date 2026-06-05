@@ -7,8 +7,6 @@ import { cn } from "@/lib/utils";
 interface Props {
   src: string;
   title: string;
-  /** Keyboard TTS uchun */
-  onReadPage?: (pageText: string) => void;
 }
 
 /**

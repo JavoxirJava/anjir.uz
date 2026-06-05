@@ -72,7 +72,3 @@ export async function createGameAttempt(studentId: string, gameId: string): Prom
 export async function finishGameAttempt(attemptId: string, score: number, durationSec: number): Promise<void> {
   await apiPut(`/games/attempts/${attemptId}/finish`, { score, duration: durationSec });
 }
-
-export async function getStudentGameAttempts(studentId: string, gameId: string): Promise<GameAttemptRow[]> {
-  return apiGet(`/games/${gameId}/attempts?student_id=${studentId}`);
-}

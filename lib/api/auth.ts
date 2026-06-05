@@ -63,9 +63,3 @@ export async function clearAuthCookies() {
   cookieStore.delete(ACCESS_TOKEN_COOKIE);
   cookieStore.delete(REFRESH_TOKEN_COOKIE);
 }
-
-/** Get just the access token (server-side) */
-export async function getAccessToken(): Promise<string | null> {
-  const cookieStore = await cookies();
-  return cookieStore.get(ACCESS_TOKEN_COOKIE)?.value ?? null;
-}

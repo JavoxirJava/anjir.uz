@@ -14,9 +14,12 @@ export default async function TeacherTopicsPage() {
   const user = await getCurrentUser();
   if (!user) return null;
 
-  const { classes } = await getTeacherSubjectsAndClasses(user.id);
-  const subjects = await apiGet<Array<{ id: string; name: string }>>("/subjects").catch(() => []);
-  const teacherTopics = await apiGet<Array<{ id: string; name: string }>>(`/teachers/${user.id}/subjects`).catch(() => []);
+  // Uchala so'rov faqat user.id'ga bog'liq, o'zaro mustaqil — parallel olamiz.
+  const [{ classes }, subjects, teacherTopics] = await Promise.all([
+    getTeacherSubjectsAndClasses(user.id),
+    apiGet<Array<{ id: string; name: string }>>("/subjects").catch(() => []),
+    apiGet<Array<{ id: string; name: string }>>(`/teachers/${user.id}/subjects`).catch(() => []),
+  ]);
 
   return (
     <div className="max-w-3xl space-y-6">

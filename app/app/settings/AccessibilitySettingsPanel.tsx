@@ -56,7 +56,7 @@ export function AccessibilitySettingsPanel() {
               </button>
             ))}
           </div>
-          <p className="mt-3 text-muted-foreground" style={{ fontSize: "var(--font-size)" }}>
+          <p className="mt-3 text-muted-foreground" style={{ fontSize: "var(--user-font-size)" }}>
             Namuna matn — bu shrift o&apos;lchamida ko&apos;rinadi
           </p>
         </CardContent>

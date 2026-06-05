@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ContrastMode, ColorBlindMode, FontSize } from "@/lib/types/domain";
 
 interface AccessibilitySettings {
@@ -48,9 +48,9 @@ export function AccessibilityProvider({ children }: { children: React.ReactNode 
     html.setAttribute("data-color-blind", settings.colorBlindMode);
 
     if (settings.reduceMotion) {
-      html.style.setProperty("--motion-duration", "0.01ms");
+      html.setAttribute("data-reduce-motion", "true");
     } else {
-      html.style.removeProperty("--motion-duration");
+      html.removeAttribute("data-reduce-motion");
     }
 
     if (settings.contrastMode === "dark") {
@@ -60,7 +60,7 @@ export function AccessibilityProvider({ children }: { children: React.ReactNode 
     }
   }, [settings]);
 
-  function updateSettings(partial: Partial<AccessibilitySettings>) {
+  const updateSettings = useCallback((partial: Partial<AccessibilitySettings>) => {
     setSettings((prev) => {
       const next = { ...prev, ...partial };
       try {
@@ -68,10 +68,12 @@ export function AccessibilityProvider({ children }: { children: React.ReactNode 
       } catch {}
       return next;
     });
-  }
+  }, []);
+
+  const value = useMemo(() => ({ settings, updateSettings }), [settings, updateSettings]);
 
   return (
-    <AccessibilityContext.Provider value={{ settings, updateSettings }}>
+    <AccessibilityContext.Provider value={value}>
       {children}
     </AccessibilityContext.Provider>
   );

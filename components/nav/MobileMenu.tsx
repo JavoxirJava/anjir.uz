@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/app/actions/auth";
+import { FocusTrap } from "@/components/a11y/FocusTrap";
 
 interface NavItem {
   href: string;
@@ -33,11 +34,21 @@ export function MobileMenu({ items, userName, userInitial, profileHref, badge }:
     document.body.style.overflow = open ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [open]);
+  // Escape bosilganda menyuni yopamiz (klaviatura foydalanuvchilari uchun)
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
 
   const overlay = open ? (
-    <>
+    <FocusTrap active={open}>
       {/* Qora backdrop */}
       <div
+        aria-hidden="true"
         onClick={() => setOpen(false)}
         style={{
           position: "fixed", inset: 0, zIndex: 9998,
@@ -46,7 +57,7 @@ export function MobileMenu({ items, userName, userInitial, profileHref, badge }:
       />
 
       {/* Panel */}
-      <div style={{
+      <div role="dialog" aria-modal="true" aria-label="Menyu" style={{
         position: "fixed", top: 0, right: 0, bottom: 0,
         width: 300, maxWidth: "88vw", zIndex: 9999,
         display: "flex", flexDirection: "column",
@@ -138,7 +149,7 @@ export function MobileMenu({ items, userName, userInitial, profileHref, badge }:
           </form>
         </div>
       </div>
-    </>
+    </FocusTrap>
   ) : null;
 
   return (

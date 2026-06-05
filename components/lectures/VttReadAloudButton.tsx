@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Props {
   vttUrl: string;
@@ -27,6 +27,12 @@ function vttToPlainText(vtt: string): string {
 export function VttReadAloudButton({ vttUrl, className }: Props) {
   const [isReading, setIsReading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => () => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
 
   async function speakVtt() {
     if (!("speechSynthesis" in window)) {

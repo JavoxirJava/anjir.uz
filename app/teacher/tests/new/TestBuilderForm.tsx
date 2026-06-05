@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { useForm, useFieldArray, useWatch } from "react-hook-form";
+import { useForm, useFieldArray, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -48,7 +48,7 @@ export function TestBuilderForm({
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<TestInput>({
-    resolver: zodResolver(testSchema),
+    resolver: zodResolver(testSchema) as Resolver<TestInput>,
     defaultValues: {
       title: "",
       description: "",

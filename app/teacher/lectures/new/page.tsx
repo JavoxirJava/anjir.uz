@@ -18,17 +18,20 @@ interface Props {
 export default async function NewLecturePage({ searchParams }: Props) {
   const user = await getCurrentUser();
 
-  const options = await getTeacherSubjectsAndClasses(user!.id);
+  // O'qituvchi sozlamalari, barcha fanlar va searchParams o'zaro mustaqil — parallel olamiz.
+  const [options, allSubjects, q] = await Promise.all([
+    getTeacherSubjectsAndClasses(user!.id),
+    apiGet<Array<{ id: string; name: string }>>("/subjects").catch(() => []),
+    searchParams,
+  ]);
   const topics = Array.isArray(options.subjects) ? options.subjects : [];
   const classes = Array.isArray(options.classes) ? options.classes : [];
-  const allSubjects = await apiGet<Array<{ id: string; name: string }>>("/subjects").catch(() => []);
   const fanIds = Array.from(
     new Set(topics.map((topic) => topic.fan_subject_id).filter((id): id is string => Boolean(id)))
   );
   const fans = fanIds.length > 0
     ? allSubjects.filter((subject) => fanIds.includes(subject.id))
     : allSubjects;
-  const q = await searchParams;
   const requestedSubjectId = typeof q.subjectId === "string" ? q.subjectId : undefined;
   const initialSubjectId =
     requestedSubjectId && topics.some((subject) => subject.id === requestedSubjectId)

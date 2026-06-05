@@ -26,10 +26,9 @@ function formatDate(iso: string | null) {
 
 export default async function StudentAssignmentPage({ params }: Props) {
   const { id } = await params;
-  const user = await getCurrentUser();
+  // Foydalanuvchi va topshiriq bir-biriga bog'liq emas — parallel olamiz.
+  const [user, assignment] = await Promise.all([getCurrentUser(), getAssignmentById(id)]);
   if (!user) redirect("/login");
-
-  const assignment = await getAssignmentById(id);
   if (!assignment) notFound();
 
   const submission = await getStudentSubmission(id, user.id);

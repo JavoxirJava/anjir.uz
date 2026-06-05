@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { uz } from "@/lib/strings/uz";
 
 interface Props {
@@ -14,6 +14,13 @@ interface Props {
  */
 export function ReadAloudButton({ text, className }: Props) {
   const [isReading, setIsReading] = useState(false);
+
+  // Komponent unmount bo'lganda o'qishni to'xtatamiz (aks holda ovoz davom etadi).
+  useEffect(() => () => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
 
   const speak = useCallback(() => {
     if (!("speechSynthesis" in window)) {
