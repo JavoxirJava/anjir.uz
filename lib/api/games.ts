@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { apiGet, apiPost, apiPut, apiDelete } from "./server";
 
 export type GameRow = {
@@ -26,9 +27,9 @@ export async function getGamesByTeacher(teacherId: string): Promise<GameRow[]> {
   return apiGet(`/games?teacher_id=${teacherId}`);
 }
 
-export async function getGameById(gameId: string): Promise<GameRow | null> {
+export const getGameById = cache(async (gameId: string): Promise<GameRow | null> => {
   try { return await apiGet(`/games/${gameId}`); } catch { return null; }
-}
+});
 
 export async function getGamesForStudent(classId: string): Promise<GameRow[]> {
   return apiGet(`/games?class_id=${classId}`);

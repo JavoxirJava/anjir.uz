@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { apiGet, apiPost, apiPut, apiDelete } from "./server";
 import type { TestInput } from "@/lib/validations/test";
 
@@ -41,13 +42,13 @@ export async function getTestsByTeacher(teacherId: string): Promise<TestRow[]> {
   return apiGet(`/tests?teacher_id=${teacherId}`);
 }
 
-export async function getTestById(id: string): Promise<TestWithQuestions | null> {
+export const getTestById = cache(async (id: string): Promise<TestWithQuestions | null> => {
   try {
     return await apiGet(`/tests/${id}`);
   } catch {
     return null;
   }
-}
+});
 
 export async function createTest(teacherId: string, input: TestInput): Promise<string> {
   // teacherId is inferred from JWT on the backend

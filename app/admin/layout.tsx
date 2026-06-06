@@ -5,6 +5,7 @@ import { AdminNav } from "@/components/nav/AdminNav";
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const userData = await getCurrentUser();
   if (!userData) redirect("/login");
+  if (userData.status !== "active") redirect("/pending");
   if (userData.role !== "super_admin") redirect("/app");
 
   return (
