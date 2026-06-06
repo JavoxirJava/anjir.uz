@@ -5,6 +5,7 @@ import { DirectorNav } from "@/components/nav/DirectorNav";
 export default async function DirectorLayout({ children }: { children: React.ReactNode }) {
   const userData = await getCurrentUser();
   if (!userData) redirect("/login");
+  if (userData.status !== "active") redirect("/pending");
   if (userData.role !== "director") redirect("/app");
 
   return (

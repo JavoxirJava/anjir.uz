@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { apiGet, apiPost, apiPut, apiDelete } from "./server";
 
 export type AssignmentRow = {
@@ -47,9 +48,9 @@ export async function getAssignmentsByTeacher(teacherId: string): Promise<Assign
   return apiGet(`/assignments?teacher_id=${teacherId}`);
 }
 
-export async function getAssignmentById(id: string): Promise<AssignmentRow | null> {
+export const getAssignmentById = cache(async (id: string): Promise<AssignmentRow | null> => {
   try { return await apiGet(`/assignments/${id}`); } catch { return null; }
-}
+});
 
 
 export async function getStudentAssignmentsWithLevel(): Promise<StudentAssignmentsResponse> {

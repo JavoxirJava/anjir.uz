@@ -23,6 +23,9 @@ interface Child {
 export default async function ParentPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  // Pending/rejected ota-ona faqat /parent/link'dan foydalanadi; bu sahifa esa
+  // (middleware endi statusni tekshirmagani uchun) shu yerda himoyalanadi.
+  if (user.status !== "active") redirect("/pending");
 
   const children = await apiGet<Child[]>("/parents/children").catch(() => []);
 

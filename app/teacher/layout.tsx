@@ -9,6 +9,7 @@ export default async function TeacherLayout({
 }) {
   const userData = await getCurrentUser();
   if (!userData) redirect("/login");
+  if (userData.status !== "active") redirect("/pending");
   if (userData.role !== "teacher") redirect("/app");
 
   return (

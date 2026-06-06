@@ -2,6 +2,7 @@
  * Auth helpers.
  * Server-side: reads JWT from cookie, decodes user info.
  */
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE, API_URL } from "./config";
 import type { UserRole, UserStatus } from "@/lib/types/domain";
@@ -16,8 +17,15 @@ export interface CurrentUser {
   created_at: string;
 }
 
-/** Server-side: get current user via /auth/me */
-export async function getCurrentUser(): Promise<CurrentUser | null> {
+/**
+ * Server-side: get current user via /auth/me.
+ *
+ * React `cache()` bir so'rov davomida natijani memoize qiladi — shuning uchun
+ * bitta sahifa yuklanishida layout + page + generateMetadata uchun faqat BITTA
+ * `/auth/me` chaqiruvi ketadi. `no-store` har bir so'rovda yangi ma'lumot beradi
+ * (foydalanuvchilararo Data Cache aralashuvi bo'lmaydi, status darhol yangilanadi).
+ */
+export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const cookieStore = await cookies();
   const token = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
   if (!token) return null;
@@ -25,14 +33,14 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   try {
     const res = await fetch(`${API_URL}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
-      next: { revalidate: 60 },
+      cache: "no-store",
     });
     if (!res.ok) return null;
     return res.json() as Promise<CurrentUser>;
   } catch {
     return null;
   }
-}
+});
 
 /** Server action: set tokens in cookies after login */
 export async function setAuthCookies(accessToken: string, refreshToken: string) {

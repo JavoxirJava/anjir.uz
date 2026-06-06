@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { apiGet, apiPost, apiDelete, apiPut } from "./server";
 
 export type LectureRow = {
@@ -31,13 +32,13 @@ export async function getLecturesByTeacher(teacherId: string): Promise<LectureRo
   return apiGet(`/lectures?teacher_id=${teacherId}`);
 }
 
-export async function getLectureById(id: string): Promise<LectureRow | null> {
+export const getLectureById = cache(async (id: string): Promise<LectureRow | null> => {
   try {
     return await apiGet(`/lectures/${id}`);
   } catch {
     return null;
   }
-}
+});
 
 export async function createLecture(
   input: CreateLectureInput & { subtitleVttUrl?: string; subtitleSource?: "manual" | "ai" }

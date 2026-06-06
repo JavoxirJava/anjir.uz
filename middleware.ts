@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { ACCESS_TOKEN_COOKIE, API_URL } from "@/lib/api/config";
+import { ACCESS_TOKEN_COOKIE } from "@/lib/api/config";
 
 // Protected route prefixes → required roles
 const PROTECTED: Record<string, string[]> = {
@@ -10,10 +10,41 @@ const PROTECTED: Record<string, string[]> = {
   "/parent":   ["parent"],
 };
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+const DASHBOARD_BY_ROLE: Record<string, string> = {
+  student:     "/app",
+  teacher:     "/teacher",
+  director:    "/director",
+  super_admin: "/admin",
+  parent:      "/parent",
+};
 
-  const token = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
+interface JwtClaims {
+  sub?: string;
+  role?: string;
+  exp?: number;
+}
+
+/**
+ * JWT payload'ini imzosini tekshirmasdan lokal o'qiymiz (faqat marshrutlash uchun).
+ * Haqiqiy autentifikatsiya backend'da har API so'rovida amalga oshadi, status esa
+ * layout'larda `getCurrentUser()` orqali tekshiriladi. Bu middleware'da har
+ * navigatsiyada `/auth/me` tarmoq so'rovini yuborishdan qutqaradi.
+ */
+function decodeJwt(token: string): JwtClaims | null {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+    const json = atob(padded);
+    return JSON.parse(json) as JwtClaims;
+  } catch {
+    return null;
+  }
+}
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
   // Public routes — pass through
   const publicPaths = ["/login", "/register", "/onboarding", "/pending"];
@@ -27,46 +58,26 @@ export async function middleware(request: NextRequest) {
   );
   if (!matchedPrefix) return NextResponse.next();
 
+  const token = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
   if (!token) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Verify token via /auth/me
-  try {
-    const res = await fetch(`${API_URL}/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) {
-      return NextResponse.redirect(new URL("/login", request.url));
-    }
-    const user = await res.json() as { role: string; status: string };
-
-    if (user.status === "pending" || user.status === "rejected") {
-      if (pathname.startsWith("/parent/link")) return NextResponse.next();
-      if (!pathname.startsWith("/pending")) {
-        return NextResponse.redirect(new URL("/pending", request.url));
-      }
-      return NextResponse.next();
-    }
-
-    const allowedRoles = PROTECTED[matchedPrefix];
-    if (!allowedRoles.includes(user.role)) {
-      // Redirect to their correct dashboard
-      const dashboardMap: Record<string, string> = {
-        student:     "/app",
-        teacher:     "/teacher",
-        director:    "/director",
-        super_admin: "/admin",
-        parent:      "/parent",
-      };
-      const target = dashboardMap[user.role] ?? "/login";
-      return NextResponse.redirect(new URL(target, request.url));
-    }
-
-    return NextResponse.next();
-  } catch {
+  const claims = decodeJwt(token);
+  // Token o'qib bo'lmasa yoki muddati o'tgan bo'lsa — login'ga.
+  if (!claims?.role || (claims.exp && claims.exp * 1000 < Date.now())) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
+
+  // Rol bo'limga mos kelmasa — o'z dashboard'iga yo'naltiramiz.
+  // (Status tekshiruvi — pending/rejected → /pending — layout'larda bajariladi.)
+  const allowedRoles = PROTECTED[matchedPrefix];
+  if (!allowedRoles.includes(claims.role)) {
+    const target = DASHBOARD_BY_ROLE[claims.role] ?? "/login";
+    return NextResponse.redirect(new URL(target, request.url));
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
