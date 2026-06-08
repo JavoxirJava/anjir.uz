@@ -12,10 +12,15 @@ export const metadata: Metadata = {
 
 export default async function NewAssignmentPage() {
   const user = await getCurrentUser();
-  const { subjects, classes } = await getTeacherSubjectsAndClasses(user!.id);
+  const { subjects, topics, classes } = await getTeacherSubjectsAndClasses(user!.id);
 
+  const topicIds = new Set(topics.map((t) => t.id));
   const uniqueSubjects = Array.from(
-    new Map(subjects.map((s) => [s.id, { id: s.id, name: s.name }])).values()
+    new Map(
+      subjects
+        .filter((s) => !topicIds.has(s.id))
+        .map((s) => [s.id, { id: s.id, name: s.name }])
+    ).values()
   );
 
   return (

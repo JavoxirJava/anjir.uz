@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface Subject { id: string; name: string }
 interface ClassItem { id: string; grade: number; letter: string }
 
+type Mode = "platform" | "external";
 type GameType = "word_match" | "ordering" | "memory";
 
 interface WordPair { id: string; word: string; meaning: string }
@@ -37,6 +38,7 @@ export function GameBuilderForm({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
+  const [mode, setMode]             = useState<Mode>("platform");
   const [title, setTitle]           = useState("");
   const [externalUrl, setExternalUrl] = useState("");
   const [gameType, setGameType]     = useState<GameType>("word_match");
@@ -118,6 +120,12 @@ export function GameBuilderForm({
     if (!subjectId) return "Fan tanlanishi shart";
     if (selectedClasses.length === 0) return "Kamida 1 ta sinf tanlang";
 
+    if (mode === "external") {
+      if (!externalUrl.trim()) return "Tashqi o'yin havolasi kiritilishi shart";
+      try { new URL(externalUrl.trim()); } catch { return "Havola noto'g'ri formatda (https://... ko'rinishida bo'lishi kerak)"; }
+      return null;
+    }
+
     if (gameType === "word_match") {
       if (wordPairs.length < 2) return "Kamida 2 ta juft kerak";
       if (wordPairs.some((p) => !p.word.trim() || !p.meaning.trim()))
@@ -141,11 +149,18 @@ export function GameBuilderForm({
 
     const fd = new FormData();
     fd.append("title", title.trim());
-    if (externalUrl.trim()) fd.append("external_url", externalUrl.trim());
-    fd.append("template_type", gameType);
     fd.append("subject_id", subjectId);
     selectedClasses.forEach((c) => fd.append("classIds", c));
-    fd.append("content_json", JSON.stringify(buildGameData()));
+
+    if (mode === "external") {
+      fd.append("template_type", "external");
+      fd.append("external_url", externalUrl.trim());
+      fd.append("content_json", "{}");
+    } else {
+      if (externalUrl.trim()) fd.append("external_url", externalUrl.trim());
+      fd.append("template_type", gameType);
+      fd.append("content_json", JSON.stringify(buildGameData()));
+    }
 
     startTransition(async () => {
       const result = await createGameAction(fd);
@@ -160,6 +175,33 @@ export function GameBuilderForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+
+      {/* Rejim toggle */}
+      <div className="flex rounded-lg border overflow-hidden" role="group" aria-label="O'yin qo'shish turi">
+        <button
+          type="button"
+          role="radio"
+          aria-checked={mode === "platform"}
+          onClick={() => setMode("platform")}
+          className={`flex-1 py-2.5 px-4 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+            mode === "platform" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted text-muted-foreground"
+          }`}
+        >
+          Platforma o&apos;yini
+        </button>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={mode === "external"}
+          onClick={() => setMode("external")}
+          className={`flex-1 py-2.5 px-4 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring border-l ${
+            mode === "external" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted text-muted-foreground"
+          }`}
+        >
+          Tashqi o&apos;yin
+        </button>
+      </div>
+
       {/* Umumiy ma'lumotlar */}
       <Card>
         <CardHeader>
@@ -181,11 +223,13 @@ export function GameBuilderForm({
 
           {/* Fan */}
           <div className="space-y-1.5">
-            <Label htmlFor="subject">Fan (ixtiyoriy)</Label>
+            <Label htmlFor="subject">Fan *</Label>
             <select
               id="subject"
               value={subjectId}
               onChange={(e) => setSubjectId(e.target.value)}
+              required
+              aria-required="true"
               className="w-full rounded-lg border px-3 py-2.5 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring bg-background"
             >
               <option value="">— Fan tanlang —</option>
@@ -195,19 +239,25 @@ export function GameBuilderForm({
             </select>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="external_url">Tashqi o&apos;yin havolasi (ixtiyoriy)</Label>
-            <Input
-              id="external_url"
-              type="url"
-              value={externalUrl}
-              onChange={(e) => setExternalUrl(e.target.value)}
-              placeholder="https://example.com/game"
-            />
-            <p className="text-xs text-muted-foreground">
-              Kiritilsa, o&apos;quvchi o&apos;yinni tashqi platformada ochishi mumkin.
-            </p>
-          </div>
+          {/* Tashqi havola — faqat external rejimda */}
+          {mode === "external" && (
+            <div className="space-y-1.5">
+              <Label htmlFor="external_url">Tashqi o&apos;yin havolasi *</Label>
+              <Input
+                id="external_url"
+                type="url"
+                inputMode="url"
+                value={externalUrl}
+                onChange={(e) => setExternalUrl(e.target.value)}
+                placeholder="https://wordwall.net/..."
+                required
+                aria-required="true"
+              />
+              <p className="text-xs text-muted-foreground">
+                Wordwall, Kahoot, Quizlet va boshqa tashqi platformalar
+              </p>
+            </div>
+          )}
 
           {/* Sinflar */}
           <fieldset>
@@ -237,7 +287,8 @@ export function GameBuilderForm({
         </CardContent>
       </Card>
 
-      {/* O'yin turi */}
+      {/* O'yin turi — faqat platform rejimda */}
+      {mode === "platform" && (
       <Card>
         <CardHeader>
           <CardTitle>O&apos;yin turi</CardTitle>
@@ -265,9 +316,10 @@ export function GameBuilderForm({
           </div>
         </CardContent>
       </Card>
+      )}
 
       {/* Word Match editor */}
-      {gameType === "word_match" && (
+      {mode === "platform" && gameType === "word_match" && (
         <Card>
           <CardHeader>
             <CardTitle>So&apos;z–Ma&apos;no juftlari</CardTitle>
@@ -312,7 +364,7 @@ export function GameBuilderForm({
       )}
 
       {/* Ordering editor */}
-      {gameType === "ordering" && (
+      {mode === "platform" && gameType === "ordering" && (
         <Card>
           <CardHeader>
             <CardTitle>Elementlar (to&apos;g&apos;ri tartib yuqoridan pastga)</CardTitle>
@@ -367,7 +419,7 @@ export function GameBuilderForm({
       )}
 
       {/* Memory editor */}
-      {gameType === "memory" && (
+      {mode === "platform" && gameType === "memory" && (
         <Card>
           <CardHeader>
             <CardTitle>Karta juftlari</CardTitle>

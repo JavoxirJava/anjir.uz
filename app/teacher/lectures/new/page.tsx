@@ -1,7 +1,6 @@
 import { getCurrentUser } from "@/lib/api/auth";
 import type { Metadata } from "next";
 import { getTeacherSubjectsAndClasses } from "@/lib/db/teacher-assignments";
-import { apiGet } from "@/lib/api/server";
 import { uz } from "@/lib/strings/uz";
 import { NewLectureForm } from "./NewLectureForm";
 
@@ -11,37 +10,14 @@ export const metadata: Metadata = {
   title: `${uz.teacher.addLecture} — I-Imkon.uz`,
 };
 
-interface Props {
-  searchParams: Promise<{ subjectId?: string | string[] }>;
-}
-
-export default async function NewLecturePage({ searchParams }: Props) {
+export default async function NewLecturePage() {
   const user = await getCurrentUser();
-
-  // O'qituvchi sozlamalari, barcha fanlar va searchParams o'zaro mustaqil — parallel olamiz.
-  const [options, allSubjects, q] = await Promise.all([
-    getTeacherSubjectsAndClasses(user!.id),
-    apiGet<Array<{ id: string; name: string }>>("/subjects").catch(() => []),
-    searchParams,
-  ]);
-  const topics = Array.isArray(options.subjects) ? options.subjects : [];
-  const classes = Array.isArray(options.classes) ? options.classes : [];
-  const fanIds = Array.from(
-    new Set(topics.map((topic) => topic.fan_subject_id).filter((id): id is string => Boolean(id)))
-  );
-  const fans = fanIds.length > 0
-    ? allSubjects.filter((subject) => fanIds.includes(subject.id))
-    : allSubjects;
-  const requestedSubjectId = typeof q.subjectId === "string" ? q.subjectId : undefined;
-  const initialSubjectId =
-    requestedSubjectId && topics.some((subject) => subject.id === requestedSubjectId)
-      ? requestedSubjectId
-      : undefined;
+  const { subjects, classes } = await getTeacherSubjectsAndClasses(user!.id);
 
   return (
     <div className="max-w-2xl space-y-6">
       <h1 className="text-2xl font-bold">{uz.teacher.addLecture}</h1>
-      <NewLectureForm fans={fans} topics={topics} classes={classes} initialSubjectId={initialSubjectId} />
+      <NewLectureForm fans={subjects} classes={classes} />
     </div>
   );
 }

@@ -16,6 +16,8 @@ import { AssignmentAIChat } from "./AssignmentAIChat";
 interface Subject { id: string; name: string }
 interface ClassItem { id: string; grade: number; letter: string }
 
+type AssignmentMode = "regular" | "link";
+
 export function NewAssignmentForm({
   subjects,
   classes,
@@ -27,8 +29,10 @@ export function NewAssignmentForm({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [mode, setMode] = useState<AssignmentMode>("regular");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [linkDescription, setLinkDescription] = useState("");
   const [deadline, setDeadline] = useState("");
   const [subjectId, setSubjectId] = useState(initialSubjectId ?? "");
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
@@ -51,10 +55,20 @@ export function NewAssignmentForm({
     );
   }
 
+  function handleModeChange(newMode: AssignmentMode) {
+    setMode(newMode);
+    setLink("");
+    setLinkDescription("");
+  }
+
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (isUploadingPdf) {
       toast.error("PDF yuklanishi tugashini kuting");
+      return;
+    }
+    if (mode === "link" && !link.trim()) {
+      toast.error("Tashqi havola kiritilishi shart");
       return;
     }
     const fd = new FormData(e.currentTarget);
@@ -71,7 +85,16 @@ export function NewAssignmentForm({
     fd.set("difficulty_level", difficulty);
     fd.set("is_for_disabled", String(isForDisabled));
     if (descriptionPdfUrl) fd.set("file_url", descriptionPdfUrl);
-    fd.set("link", link.trim());
+
+    if (mode === "link") {
+      fd.set("link", link.trim());
+      if (linkDescription.trim()) {
+        const existing = fd.get("description");
+        if (!existing) fd.set("description", linkDescription.trim());
+      }
+    } else {
+      fd.delete("link");
+    }
 
     startTransition(async () => {
       const result = await createAssignmentAction(fd);
@@ -105,9 +128,46 @@ export function NewAssignmentForm({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
     <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+
+      {/* Topshiriq turi */}
+      <div
+        className="flex rounded-lg border overflow-hidden"
+        role="group"
+        aria-label="Topshiriq turi"
+      >
+        <button
+          type="button"
+          role="radio"
+          aria-checked={mode === "regular"}
+          onClick={() => handleModeChange("regular")}
+          className={`flex-1 py-2.5 px-4 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+            mode === "regular"
+              ? "bg-primary text-primary-foreground"
+              : "bg-background hover:bg-muted text-muted-foreground"
+          }`}
+        >
+          Oddiy topshiriq
+        </button>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={mode === "link"}
+          onClick={() => handleModeChange("link")}
+          className={`flex-1 py-2.5 px-4 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring border-l ${
+            mode === "link"
+              ? "bg-primary text-primary-foreground"
+              : "bg-background hover:bg-muted text-muted-foreground"
+          }`}
+        >
+          Tashqi havola
+        </button>
+      </div>
+
       <Card>
         <CardHeader>
-          <CardTitle>Vazifa ma&apos;lumotlari</CardTitle>
+          <CardTitle>
+            {mode === "regular" ? "Vazifa ma'lumotlari" : "Tashqi platforma topshirig'i"}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Sarlavha */}
@@ -124,75 +184,94 @@ export function NewAssignmentForm({
             />
           </div>
 
-          {/* Tavsif */}
-          <div className="space-y-1.5">
-            <Label htmlFor="description">Tavsif / Ko&apos;rsatma (ixtiyoriy)</Label>
-            <Textarea
-              id="description"
-              name="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Vazifa haqida batafsil ma'lumot..."
-              rows={4}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="description_pdf">Tavsif PDF (ixtiyoriy)</Label>
-            <Input
-              id="description_pdf"
-              name="description_pdf"
-              type="file"
-              accept="application/pdf"
-              onChange={handlePdfChange}
-              disabled={isPending || isUploadingPdf}
-            />
-            {isUploadingPdf && (
-              <p className="text-xs text-muted-foreground">
-                Yuklanmoqda... {progress.percent}%
-              </p>
-            )}
-            {descriptionPdfUrl && (
-              <div className="flex items-center gap-3 text-xs">
-                <a
-                  href={descriptionPdfUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary underline"
-                >
-                  Yuklangan PDF&apos;ni ko&apos;rish
-                </a>
-                <button
-                  type="button"
-                  className="text-destructive underline"
-                  onClick={() => {
-                    setDescriptionPdfUrl("");
-                    reset();
-                  }}
-                >
-                  Olib tashlash
-                </button>
+          {mode === "link" ? (
+            <>
+              {/* Tashqi havola */}
+              <div className="space-y-1.5">
+                <Label htmlFor="link_url">Havola *</Label>
+                <Input
+                  id="link_url"
+                  type="url"
+                  inputMode="url"
+                  value={link}
+                  onChange={(e) => setLink(e.target.value)}
+                  placeholder="https://example.com/topshiriq"
+                  required
+                  aria-required="true"
+                  disabled={isPending}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Tashqi platforma (Quizlet, Kahoot, Google Forms va boshqalar)
+                </p>
               </div>
-            )}
-          </div>
 
-          {/* Havola */}
-          <div className="space-y-1.5">
-            <Label htmlFor="link">Havola (ixtiyoriy)</Label>
-            <Input
-              id="link"
-              name="link"
-              type="url"
-              inputMode="url"
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              placeholder="https://example.com/material"
-              disabled={isPending}
-            />
-            <p className="text-xs text-muted-foreground">
-              Tashqi material yoki manbaga havola (masalan video, hujjat, sayt).
-            </p>
-          </div>
+              {/* Qo'shimcha tavsif */}
+              <div className="space-y-1.5">
+                <Label htmlFor="link_description">Qo&apos;shimcha tavsif (ixtiyoriy)</Label>
+                <Textarea
+                  id="link_description"
+                  value={linkDescription}
+                  onChange={(e) => setLinkDescription(e.target.value)}
+                  placeholder="O'quvchilarga qo'shimcha ko'rsatmalar..."
+                  rows={3}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Tavsif */}
+              <div className="space-y-1.5">
+                <Label htmlFor="description">Tavsif / Ko&apos;rsatma (ixtiyoriy)</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Vazifa haqida batafsil ma'lumot..."
+                  rows={4}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="description_pdf">Tavsif PDF (ixtiyoriy)</Label>
+                <Input
+                  id="description_pdf"
+                  name="description_pdf"
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handlePdfChange}
+                  disabled={isPending || isUploadingPdf}
+                />
+                {isUploadingPdf && (
+                  <p className="text-xs text-muted-foreground">
+                    Yuklanmoqda... {progress.percent}%
+                  </p>
+                )}
+                {descriptionPdfUrl && (
+                  <div className="flex items-center gap-3 text-xs">
+                    <a
+                      href={descriptionPdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline"
+                    >
+                      Yuklangan PDF&apos;ni ko&apos;rish
+                    </a>
+                    <button
+                      type="button"
+                      className="text-destructive underline"
+                      onClick={() => {
+                        setDescriptionPdfUrl("");
+                        reset();
+                      }}
+                    >
+                      Olib tashlash
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
           {/* Fan */}
           <div className="space-y-1.5">

@@ -7,11 +7,11 @@ import { z } from "zod";
 
 const gameSchema = z.object({
   title:         z.string().min(3, "Sarlavha kamida 3 ta belgi"),
-  template_type: z.enum(["word_match", "ordering", "memory"]),
+  template_type: z.enum(["word_match", "ordering", "memory", "external"]),
   subject_id:    z.string().min(1, "Fan tanlanishi shart"),
   external_url:  z.string().url("Tashqi havola noto'g'ri formatda").optional().or(z.literal("")),
   classIds:      z.array(z.string()).min(1, "Kamida 1 ta sinf tanlang"),
-  content_json:  z.string().min(2, "O'yin ma'lumotlari kiritilishi shart"),
+  content_json:  z.string().optional().default("{}"),
 });
 
 export async function createGameAction(formData: FormData) {
@@ -31,7 +31,7 @@ export async function createGameAction(formData: FormData) {
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   let parsedData: Record<string, unknown>;
-  try { parsedData = JSON.parse(parsed.data.content_json); }
+  try { parsedData = JSON.parse(parsed.data.content_json ?? "{}"); }
   catch { return { error: "O'yin ma'lumotlari noto'g'ri formatda" }; }
 
   try {
