@@ -103,6 +103,7 @@ export function NewAssignmentForm({
   }
 
   return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
     <form onSubmit={handleSubmit} className="space-y-6" noValidate>
       <Card>
         <CardHeader>
@@ -303,6 +304,22 @@ export function NewAssignmentForm({
         </CardContent>
       </Card>
 
+      <div className="flex justify-end gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.push("/teacher/assignments")}
+          disabled={isPending}
+        >
+          {uz.common.cancel}
+        </Button>
+        <Button type="submit" disabled={isPending} aria-busy={isPending}>
+          {isPending ? uz.common.loading : "Vazifa yaratish"}
+        </Button>
+      </div>
+    </form>
+
+    <div className="lg:sticky lg:top-6">
       <AssignmentAIChat
         subjectName={selectedSubjectName}
         selectedClassNames={selectedClassNames}
@@ -323,20 +340,7 @@ export function NewAssignmentForm({
           if (typeof patch.is_for_disabled === "boolean") setIsForDisabled(patch.is_for_disabled);
         }}
       />
-
-      <div className="flex justify-end gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.push("/teacher/assignments")}
-          disabled={isPending}
-        >
-          {uz.common.cancel}
-        </Button>
-        <Button type="submit" disabled={isPending} aria-busy={isPending}>
-          {isPending ? uz.common.loading : "Vazifa yaratish"}
-        </Button>
-      </div>
-    </form>
+    </div>
+    </div>
   );
 }

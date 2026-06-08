@@ -116,10 +116,10 @@ export function AssignmentAIChat({ subjectName, selectedClassNames, draft, onApp
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">🤖 AI yordamchi (Gemini)</CardTitle>
+        <CardTitle className="text-base">🤖 AI yordamchi</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="max-h-72 overflow-y-auto rounded-md border p-3 space-y-2">
+        <div className="h-72 lg:h-[520px] overflow-y-auto rounded-md border p-3 space-y-2">
           {messages.map((m) => (
             <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
               <div

@@ -168,6 +168,10 @@ router.get("/:id/subjects-and-classes", async (req, res) => {
        LEFT JOIN subject_topic_links stl ON stl.topic_subject_id = sub.id
        JOIN subjects fan ON fan.id = COALESCE(stl.fan_subject_id, sub.id)
        WHERE ta.teacher_id = $1
+         AND (
+           EXISTS (SELECT 1 FROM school_subjects ss WHERE ss.subject_id = fan.id)
+           OR EXISTS (SELECT 1 FROM subject_topic_links stl2 WHERE stl2.fan_subject_id = fan.id)
+         )
        ORDER BY fan.name`, [teacherId]),
         pool_1.pool.query(`SELECT DISTINCT c.id, c.grade, c.letter, c.school_id
        FROM teacher_assignments ta JOIN classes c ON c.id = ta.class_id
