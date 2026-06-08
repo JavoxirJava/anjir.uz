@@ -18,7 +18,7 @@ export default async function TeacherTopicsPage() {
   const [{ classes }, subjects, teacherTopics] = await Promise.all([
     getTeacherSubjectsAndClasses(user.id),
     apiGet<Array<{ id: string; name: string }>>("/subjects").catch(() => []),
-    apiGet<Array<{ id: string; name: string }>>(`/teachers/${user.id}/subjects`).catch(() => []),
+    apiGet<Array<{ id: string; name: string; fan_subject_id: string | null; fan_subject_name: string | null }>>(`/teachers/${user.id}/subjects`).catch(() => []),
   ]);
 
   return (

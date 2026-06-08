@@ -48,6 +48,7 @@ Role-based top-level routes map to user roles after login:
 | `/teacher/` | teacher |
 | `/director/` | director |
 | `/admin/` | super_admin |
+| `/parent/` | parent |
 | `/login`, `/register`, `/onboarding`, `/pending` | unauthenticated/new users |
 
 After login, `app/actions/auth.ts` reads the user's role and redirects accordingly. Users with `status: "pending"` or `"rejected"` are held at `/pending`.
@@ -58,7 +59,7 @@ JWT-based, phone-number login. Two cookies set by `lib/api/auth.ts`:
 - `anjir_at` — access token (non-httpOnly, 8h) — readable by both server and browser
 - `anjir_rt` — refresh token (httpOnly, 30d)
 
-Server-side auth helper: `getCurrentUser()` in `lib/api/auth.ts` calls `/auth/me`. Backend validates JWT in `server/src/middleware/auth.ts`.
+**Middleware** (`middleware.ts`) decodes JWT locally (no network call) — used only for routing. Real auth is enforced in each role's `layout.tsx` via `getCurrentUser()`, which calls `/auth/me`. `getCurrentUser()` is wrapped with React `cache()` so layout + page + metadata share one `/auth/me` request per render. Backend validates JWT in `server/src/middleware/auth.ts`.
 
 ### API Clients
 
@@ -73,6 +74,16 @@ All frontend↔backend communication goes through:
 
 All mutations live in `app/actions/`. They are `"use server"` functions, accept `FormData`, validate with Zod schemas from `lib/validations/`, and call the backend via `lib/api/server.ts`. Return `{ error: string }` on failure or redirect on success.
 
+### Next.js API Route Handlers (`app/api/`)
+
+These are Next.js Route Handlers (not server actions) for operations that can't go through the Express backend:
+- `POST /api/upload` — proxies file upload to R2 (avoids CORS and Netlify body-size limits)
+- `POST /api/upload/presign` — returns presigned R2 URL for direct browser upload
+- `POST /api/upload/stream` — creates a Cloudflare Stream direct upload URL for video
+- `POST /api/whisper` — calls OpenAI Whisper to generate VTT subtitles, saves to R2
+- `POST /api/ai` — AI content generation (OpenAI/Gemini)
+- `POST /api/pdf-text` — extracts text from PDF for processing
+
 ### Backend Structure (`server/src/`)
 
 - `app.ts` — Express app with helmet, cors, rate-limiting
@@ -82,7 +93,8 @@ All mutations live in `app/actions/`. They are `"use server"` functions, accept 
 - `routes/` — one file per domain, mounted in `app.ts`
 - `middleware/auth.ts` — JWT verification; attaches `req.user`
 - `middleware/role.ts` — role-based access guard
-- `socket/` — Socket.io real-time events
+- `socket/` — Socket.io real-time events (parent↔teacher chat)
+- `utils/asyncHandler.ts` — `ah()` wrapper; use it for all async route handlers to forward thrown errors to Express error middleware
 
 ### Types
 
@@ -113,6 +125,7 @@ SVG color-blind filters are defined once in the root layout. Use `useAccessibili
 
 - **All UI strings are in Uzbek** (Latin script). Never hardcode strings — use `lib/strings/uz.ts`.
 - **No `any` types.** Domain types live in `lib/types/domain.ts` and `lib/api/`.
+- **Zod versions differ**: frontend uses Zod v4 (`lib/validations/`), backend uses Zod v3 (`server/`). APIs changed between versions — don't copy validation schemas across the boundary without checking.
 - **Forms** use React Hook Form + Zod. Validation schemas live in `lib/validations/`.
 - **Toast notifications** use `sonner` via `components/ui/sonner.tsx`. Import `toast` from `sonner`.
 - **Client state** uses Zustand where needed.

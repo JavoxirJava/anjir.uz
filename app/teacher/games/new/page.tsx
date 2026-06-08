@@ -22,7 +22,11 @@ export default async function NewGamePage({ searchParams }: Props) {
   const q = await searchParams;
   const requestedSubjectId = typeof q.subjectId === "string" ? q.subjectId : undefined;
   const uniqueSubjects = Array.from(
-    new Map(subjects.map((s) => [s.id, { id: s.id, name: s.name }])).values()
+    new Map(
+      subjects
+        .filter((s) => !s.fan_subject_id)
+        .map((s) => [s.id, { id: s.id, name: s.name }])
+    ).values()
   );
   const selectedSubject = uniqueSubjects.find((s) => s.id === requestedSubjectId);
 
