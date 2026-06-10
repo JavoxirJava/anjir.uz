@@ -68,11 +68,11 @@ export default async function StudentGamePage({ params }: Props) {
           {TYPE_EMOJI[game.template_type]} {TYPE_LABELS[game.template_type]}
         </Badge>
         <h1 className="text-2xl font-bold">{game.title}</h1>
-        {game.subjects && (
+        {game.topics && (
           <p className="text-sm text-muted-foreground">
-            {Array.isArray(game.subjects)
-              ? (game.subjects[0] as { name: string })?.name
-              : (game.subjects as { name: string }).name}
+            {Array.isArray(game.topics)
+              ? (game.topics[0] as { name: string })?.name
+              : (game.topics as { name: string }).name}
           </p>
         )}
       </header>

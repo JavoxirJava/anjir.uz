@@ -24,19 +24,19 @@ export default async function EditLecturePage({ params }: Props) {
   if (!lecture) notFound();
   if (lecture.creator_id !== user.id) redirect("/teacher/lectures");
 
-  const { subjects, classes } = await getTeacherSubjectsAndClasses(user.id);
+  const { topics, classes } = await getTeacherSubjectsAndClasses(user.id);
 
   return (
     <div className="max-w-2xl space-y-6">
       <h1 className="text-2xl font-bold">Ma&apos;ruzani tahrirlash</h1>
       <EditLectureForm
         lectureId={id}
-        subjects={subjects}
+        topics={topics}
         classes={classes}
         initial={{
           title: lecture.title,
           description: lecture.description ?? "",
-          subjectId: lecture.subjects?.id ?? "",
+          topicId: lecture.topics?.id ?? "",
           classId: lecture.classes?.id ?? "",
           contentType: lecture.content_type as "pdf" | "video" | "audio" | "ppt",
           fileUrl: lecture.file_url ?? "",

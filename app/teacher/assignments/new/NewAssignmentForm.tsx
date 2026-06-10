@@ -13,19 +13,19 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AssignmentAIChat } from "./AssignmentAIChat";
 
-interface Subject { id: string; name: string }
+interface TopicItem { id: string; name: string; subject_id: string; subject_name: string }
 interface ClassItem { id: string; grade: number; letter: string }
 
 type AssignmentMode = "regular" | "link";
 
 export function NewAssignmentForm({
-  subjects,
+  topics,
   classes,
-  initialSubjectId,
+  initialTopicId,
 }: {
-  subjects: Subject[];
+  topics: TopicItem[];
   classes: ClassItem[];
-  initialSubjectId?: string;
+  initialTopicId?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -34,7 +34,7 @@ export function NewAssignmentForm({
   const [description, setDescription] = useState("");
   const [linkDescription, setLinkDescription] = useState("");
   const [deadline, setDeadline] = useState("");
-  const [subjectId, setSubjectId] = useState(initialSubjectId ?? "");
+  const [topicId, setTopicId] = useState(initialTopicId ?? "");
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [difficulty, setDifficulty] = useState<"low" | "medium" | "high">("medium");
   const [isForDisabled, setIsForDisabled] = useState(false);
@@ -47,7 +47,7 @@ export function NewAssignmentForm({
     .filter((cls) => selectedClasses.includes(cls.id))
     .map((cls) => `${cls.grade}${cls.letter}`);
 
-  const selectedSubjectName = subjects.find((s) => s.id === subjectId)?.name;
+  const selectedSubjectName = topics.find((t) => t.id === topicId)?.name;
 
   function toggleClass(id: string) {
     setSelectedClasses((prev) =>
@@ -73,10 +73,7 @@ export function NewAssignmentForm({
     }
     const fd = new FormData(e.currentTarget);
 
-    if (!fd.get("subject_id")) {
-      toast.error("Fan tanlanishi shart");
-      return;
-    }
+    if (topicId) fd.set("topic_id", topicId);
     if (selectedClasses.length === 0) {
       toast.error("Kamida 1 ta sinf tanlang");
       return;
@@ -273,21 +270,18 @@ export function NewAssignmentForm({
             </>
           )}
 
-          {/* Fan */}
+          {/* Mavzu */}
           <div className="space-y-1.5">
-            <Label htmlFor="subject_id">Fan *</Label>
+            <Label htmlFor="topic_id">Mavzu</Label>
             <select
-              id="subject_id"
-              name="subject_id"
-              value={subjectId}
-              onChange={(e) => setSubjectId(e.target.value)}
-              required
-              aria-required="true"
+              id="topic_id"
+              value={topicId}
+              onChange={(e) => setTopicId(e.target.value)}
               className="w-full rounded-lg border px-3 py-2.5 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring bg-background"
             >
-              <option value="">— Fan tanlang —</option>
-              {subjects.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+              <option value="">— Mavzu tanlang (ixtiyoriy) —</option>
+              {topics.map((t) => (
+                <option key={t.id} value={t.id}>{t.name} ({t.subject_name})</option>
               ))}
             </select>
           </div>

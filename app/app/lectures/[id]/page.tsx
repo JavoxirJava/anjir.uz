@@ -43,8 +43,8 @@ export default async function LecturePage({ params }: Props) {
           {lecture.fans && (
             <span className="text-sm text-muted-foreground">Fan: {lecture.fans.name}</span>
           )}
-          {lecture.subjects && (
-            <span className="text-sm text-muted-foreground">Mavzu: {lecture.subjects.name}</span>
+          {lecture.topics && (
+            <span className="text-sm text-muted-foreground">Mavzu: {lecture.topics.name}</span>
           )}
           {lecture.classes && (
             <span className="text-sm text-muted-foreground">

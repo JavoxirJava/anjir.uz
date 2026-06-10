@@ -29,9 +29,7 @@ export default async function TeacherAssignmentsPage() {
     getAssignmentsByTeacher(user!.id),
     getTeacherSubjectsAndClasses(user!.id),
   ]);
-  const subjects = Array.from(
-    new Map(options.subjects.map((s) => [s.id, { id: s.id, name: s.name }])).values()
-  );
+  const topics = options.topics;
 
   return (
     <div className="space-y-6">
@@ -93,8 +91,8 @@ export default async function TeacherAssignmentsPage() {
                     )}
                     <AssignmentSubjectEditor
                       assignmentId={a.id}
-                      currentSubjectId={a.subject_id}
-                      subjects={subjects}
+                      currentTopicId={a.topic_id ?? null}
+                      topics={topics}
                     />
                         </>
                       );

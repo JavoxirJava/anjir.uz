@@ -12,12 +12,12 @@ export const metadata: Metadata = {
 
 export default async function NewLecturePage() {
   const user = await getCurrentUser();
-  const { subjects, classes } = await getTeacherSubjectsAndClasses(user!.id);
+  const { topics, classes } = await getTeacherSubjectsAndClasses(user!.id);
 
   return (
     <div className="max-w-2xl space-y-6">
       <h1 className="text-2xl font-bold">{uz.teacher.addLecture}</h1>
-      <NewLectureForm fans={subjects} classes={classes} />
+      <NewLectureForm topics={topics} classes={classes} />
     </div>
   );
 }

@@ -11,7 +11,7 @@ const assignmentSchema = z.object({
   file_url:         z.string().url().optional(),
   link:             z.string().url("Havola noto'g'ri formatda").optional().or(z.literal("")),
   deadline:         z.string().optional(),
-  subject_id:       z.string().min(1, "Fan tanlanishi shart"),
+  topic_id:         z.string().optional(),
   classIds:         z.array(z.string()).min(1, "Kamida 1 ta sinf tanlang"),
   difficulty_level: z.enum(["low", "medium", "high"]).default("medium"),
   is_for_disabled:  z.boolean().default(false),
@@ -27,7 +27,7 @@ export async function createAssignmentAction(formData: FormData) {
     file_url:         formData.get("file_url") || undefined,
     link:             formData.get("link") || undefined,
     deadline:         formData.get("deadline")    || undefined,
-    subject_id:       formData.get("subject_id")  || "",
+    topic_id:         formData.get("topic_id") || undefined,
     classIds:         formData.getAll("classIds"),
     difficulty_level: formData.get("difficulty_level") || "medium",
     is_for_disabled:  formData.get("is_for_disabled") === "true",
@@ -44,7 +44,7 @@ export async function createAssignmentAction(formData: FormData) {
       link:             parsed.data.link || null,
       deadline:         parsed.data.deadline    ?? null,
       teacher_id:       user.id,
-      subject_id:       parsed.data.subject_id,
+      topic_id:         parsed.data.topic_id ?? null,
       classIds:         parsed.data.classIds,
       difficulty_level: parsed.data.difficulty_level,
       is_for_disabled:  parsed.data.is_for_disabled,
@@ -141,13 +141,13 @@ export async function reviewAssignmentProgressAction(
   }
 }
 
-export async function updateAssignmentSubjectAction(assignmentId: string, subjectId: string) {
+export async function updateAssignmentSubjectAction(assignmentId: string, topicId: string) {
   const user = await getCurrentUser();
   if (!user) return { error: "Tizimga kiring" };
-  if (!subjectId) return { error: "Fan tanlanishi shart" };
+  if (!topicId) return { error: "Mavzu tanlanishi shart" };
 
   try {
-    await updateAssignmentSubject(assignmentId, subjectId);
+    await updateAssignmentSubject(assignmentId, topicId);
     revalidatePath("/teacher/assignments");
     revalidatePath("/app/assignments");
     return { success: true };

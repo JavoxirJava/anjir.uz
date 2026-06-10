@@ -16,7 +16,7 @@ export async function createLectureAction(formData: FormData) {
     title:          formData.get("title") as string,
     description:    (formData.get("description") as string) || undefined,
     schoolId:       (formData.get("schoolId") as string) || undefined,
-    subjectId:      formData.get("subjectId") as string,
+    topicId:        formData.get("topicId") as string,
     classId:        (formData.get("classId") as string) || undefined,
     contentType:    formData.get("contentType") as string,
     fileUrl:        formData.get("fileUrl") as string,
@@ -31,7 +31,7 @@ export async function createLectureAction(formData: FormData) {
     await createLecture({
       creator_id:     user.id,
       school_id:      parsed.data.schoolId,
-      subject_id:     parsed.data.subjectId,
+      topic_id:       parsed.data.topicId,
       class_id:       parsed.data.classId ?? null,
       title:          parsed.data.title ?? "",
       description:    parsed.data.description ?? null,
@@ -70,7 +70,7 @@ export async function updateLectureAction(id: string, formData: FormData) {
     title:          formData.get("title") as string,
     description:    (formData.get("description") as string) || undefined,
     schoolId:       (formData.get("schoolId") as string) || undefined,
-    subjectId:      formData.get("subjectId") as string,
+    topicId:        formData.get("topicId") as string,
     classId:        (formData.get("classId") as string) || undefined,
     contentType:    formData.get("contentType") as string,
     fileUrl:        formData.get("fileUrl") as string,
@@ -84,7 +84,7 @@ export async function updateLectureAction(id: string, formData: FormData) {
   try {
     await updateLecture(id, {
       creator_id:     user.id,
-      subject_id:     parsed.data.subjectId,
+      topic_id:       parsed.data.topicId,
       class_id:       parsed.data.classId ?? null,
       title:          parsed.data.title ?? "",
       description:    parsed.data.description ?? null,

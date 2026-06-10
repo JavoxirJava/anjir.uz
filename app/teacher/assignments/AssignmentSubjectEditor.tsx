@@ -5,24 +5,26 @@ import { toast } from "sonner";
 import { updateAssignmentSubjectAction } from "@/app/actions/assignments";
 import { Button } from "@/components/ui/button";
 
-interface SubjectOption {
+interface TopicOption {
   id: string;
   name: string;
+  subject_id: string;
+  subject_name: string;
 }
 
 interface Props {
   assignmentId: string;
-  currentSubjectId: string | null;
-  subjects: SubjectOption[];
+  currentTopicId: string | null;
+  topics: TopicOption[];
 }
 
-export function AssignmentSubjectEditor({ assignmentId, currentSubjectId, subjects }: Props) {
-  const [selectedSubjectId, setSelectedSubjectId] = useState(currentSubjectId ?? "");
+export function AssignmentSubjectEditor({ assignmentId, currentTopicId, topics }: Props) {
+  const [selectedTopicId, setSelectedTopicId] = useState(currentTopicId ?? "");
   const [isPending, startTransition] = useTransition();
 
   function handleSave() {
     startTransition(async () => {
-      const result = await updateAssignmentSubjectAction(assignmentId, selectedSubjectId);
+      const result = await updateAssignmentSubjectAction(assignmentId, selectedTopicId);
       if (result?.error) {
         toast.error(result.error);
       } else {
@@ -34,15 +36,15 @@ export function AssignmentSubjectEditor({ assignmentId, currentSubjectId, subjec
   return (
     <div className="flex items-center gap-2">
       <select
-        value={selectedSubjectId}
-        onChange={(e) => setSelectedSubjectId(e.target.value)}
+        value={selectedTopicId}
+        onChange={(e) => setSelectedTopicId(e.target.value)}
         className="rounded-md border px-2.5 py-1.5 text-xs bg-background focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         aria-label="Mavzuni tanlang"
       >
         <option value="">Mavzu tanlang</option>
-        {subjects.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.name}
+        {topics.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.name} ({t.subject_name})
           </option>
         ))}
       </select>
@@ -50,7 +52,7 @@ export function AssignmentSubjectEditor({ assignmentId, currentSubjectId, subjec
         type="button"
         variant="outline"
         size="sm"
-        disabled={isPending || !selectedSubjectId}
+        disabled={isPending || !selectedTopicId}
         onClick={handleSave}
       >
         {isPending ? "Saqlanmoqda..." : "Mavzuni saqlash"}

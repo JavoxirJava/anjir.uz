@@ -43,10 +43,10 @@ export default async function StudentGamesPage({ searchParams }: Props) {
   const profile = await apiGet<{ class_id: string | null } | null>("/students/me").catch(() => null);
   const allGames = profile?.class_id ? await getGamesForStudent(profile.class_id) : [];
   const games = subjectId
-    ? allGames.filter((g) => g.subject_id === subjectId)
+    ? allGames.filter((g) => g.topic_id === subjectId)
     : allGames;
   const activeSubjectName = subjectId
-    ? allGames.find((g) => g.subject_id === subjectId)?.subjects?.name ?? "Mavzu"
+    ? allGames.find((g) => g.topic_id === subjectId)?.topics?.name ?? "Mavzu"
     : null;
 
   return (
@@ -90,11 +90,11 @@ export default async function StudentGamesPage({ searchParams }: Props) {
                     {game.external_url && (
                       <p className="text-xs text-primary">↗ Tashqi platformada o&apos;ynash mavjud</p>
                     )}
-                    {game.subjects && (
+                    {game.topics && (
                       <p className="text-xs text-muted-foreground">
-                        📚 {Array.isArray(game.subjects)
-                          ? (game.subjects[0] as { name: string })?.name
-                          : (game.subjects as { name: string }).name}
+                        📚 {Array.isArray(game.topics)
+                          ? (game.topics[0] as { name: string })?.name
+                          : (game.topics as { name: string }).name}
                       </p>
                     )}
                   </CardContent>

@@ -24,7 +24,7 @@ import {
 import { QuestionEditor } from "@/app/teacher/tests/new/QuestionEditor";
 import type { GameRow } from "@/lib/api/games";
 
-interface Subject { id: string; name: string }
+interface TopicItem { id: string; name: string; subject_id: string; subject_name: string }
 interface ClassItem { id: string; grade: number; letter: string }
 
 const TEST_TYPES = [
@@ -36,12 +36,12 @@ const TEST_TYPES = [
 interface Props {
   testId: string;
   initialValues: TestInput;
-  subjects: Subject[];
+  topics: TopicItem[];
   classes: ClassItem[];
   games: GameRow[];
 }
 
-export function TestEditForm({ testId, initialValues, subjects, classes, games }: Props) {
+export function TestEditForm({ testId, initialValues, topics, classes, games }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -127,19 +127,21 @@ export function TestEditForm({ testId, initialValues, subjects, classes, games }
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="subjectId"
+                name="topicId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Fan <span aria-hidden="true" className="text-destructive">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <FormLabel>Mavzu</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value ?? ""}>
                       <FormControl>
-                        <SelectTrigger aria-required="true">
-                          <SelectValue placeholder="Fan tanlang" />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Mavzu tanlang (ixtiyoriy)" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {subjects.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                        {topics.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.name} <span className="text-xs text-muted-foreground">({t.subject_name})</span>
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

@@ -20,7 +20,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-interface Subject { id: string; name: string }
+interface TopicItem { id: string; name: string; subject_id: string; subject_name: string }
 interface ClassItem { id: string; grade: number; letter: string }
 
 const CONTENT_TYPES = [
@@ -32,12 +32,12 @@ const CONTENT_TYPES = [
 
 interface Props {
   lectureId: string;
-  subjects: Subject[];
+  topics: TopicItem[];
   classes: ClassItem[];
   initial: {
     title: string;
     description: string;
-    subjectId: string;
+    topicId: string;
     classId: string;
     contentType: "pdf" | "video" | "audio" | "ppt";
     fileUrl: string;
@@ -46,7 +46,7 @@ interface Props {
   };
 }
 
-export function EditLectureForm({ lectureId, subjects, classes, initial }: Props) {
+export function EditLectureForm({ lectureId, topics, classes, initial }: Props) {
   const [isPending, startTransition] = useTransition();
   const [isGeneratingSubtitle, setIsGeneratingSubtitle] = useState(false);
 
@@ -55,7 +55,7 @@ export function EditLectureForm({ lectureId, subjects, classes, initial }: Props
     defaultValues: {
       title: initial.title,
       description: initial.description,
-      subjectId: initial.subjectId,
+      topicId: initial.topicId,
       classId: initial.classId,
       contentType: initial.contentType,
       fileUrl: initial.fileUrl,
@@ -133,21 +133,27 @@ export function EditLectureForm({ lectureId, subjects, classes, initial }: Props
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="subjectId"
+                name="topicId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{uz.school.subject}</FormLabel>
+                    <FormLabel>Mavzu</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Fan tanlang">
+                          <SelectValue placeholder="Mavzu tanlang">
                             {field.value
-                              ? (subjects.find((s) => s.id === field.value)?.name ?? "Fan tanlang")
-                              : "Fan tanlang"}
+                              ? (topics.find((t) => t.id === field.value)?.name ?? "Mavzu tanlang")
+                              : "Mavzu tanlang"}
                           </SelectValue>
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>{subjects.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                      <SelectContent>
+                        {topics.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.name} <span className="text-xs text-muted-foreground">({t.subject_name})</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>

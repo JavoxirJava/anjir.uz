@@ -34,9 +34,8 @@ type LectureItem = {
   title: string;
   description: string | null;
   content_type: string;
-  subject_id?: string | null;
-  subject_name?: string | null;
-  subjects?: { id?: string; name?: string } | null;
+  topic_id?: string | null;
+  topics?: { id?: string; name?: string; subject_id?: string } | null;
   fans?: { id?: string; name?: string } | null;
 };
 
@@ -53,11 +52,10 @@ export default async function StudentLecturesPage({ searchParams }: Props) {
     ? await apiGet<LectureItem[]>(`/lectures?class_id=${classId}`).catch(() => [])
     : [];
   const lectures = subjectId
-    ? allLectures.filter((l) => (l.subject_id ?? l.subjects?.id) === subjectId)
+    ? allLectures.filter((l) => (l.topic_id ?? l.topics?.id) === subjectId)
     : allLectures;
   const activeSubjectName = subjectId
-    ? allLectures.find((l) => (l.subject_id ?? l.subjects?.id) === subjectId)?.subjects?.name
-      ?? allLectures.find((l) => (l.subject_id ?? l.subjects?.id) === subjectId)?.subject_name
+    ? allLectures.find((l) => (l.topic_id ?? l.topics?.id) === subjectId)?.topics?.name
       ?? "Mavzu"
     : null;
 
@@ -101,8 +99,8 @@ export default async function StudentLecturesPage({ searchParams }: Props) {
                     {l.fans?.name && (
                       <p className="text-xs text-muted-foreground">📘 Fan: {l.fans.name}</p>
                     )}
-                    {(l.subjects?.name || l.subject_name) && (
-                      <p className="text-xs text-muted-foreground">📚 Mavzu: {l.subjects?.name ?? l.subject_name}</p>
+                    {(l.topics?.name || l.topics?.name) && (
+                      <p className="text-xs text-muted-foreground">📚 Mavzu: {l.topics?.name ?? l.topics?.name}</p>
                     )}
                   </CardContent>
                 </Card>

@@ -26,9 +26,10 @@ export type TestRow = {
   time_limit: number | null;
   test_type: string;
   max_attempts: number | null;
-  subject_id: string | null;
+  topic_id: string | null;
   teacher_id: string;
   created_at: string;
+  topics?: { id: string; name: string; subject_id: string } | null;
   subjects?: { id: string; name: string } | null;
 };
 
@@ -54,7 +55,7 @@ export async function createTest(teacherId: string, input: TestInput): Promise<s
   // teacherId is inferred from JWT on the backend
   void teacherId;
   const result = await apiPost<{ id: string }>("/tests", {
-    subject_id:   input.subjectId,
+    topic_id:     input.topicId,
     title:        input.title,
     description:  input.description,
     time_limit:   input.timeLimit,
@@ -69,7 +70,7 @@ export async function createTest(teacherId: string, input: TestInput): Promise<s
 
 export async function updateTest(testId: string, input: TestInput): Promise<void> {
   await apiPut(`/tests/${testId}`, {
-    subject_id:   input.subjectId,
+    topic_id:     input.topicId,
     title:        input.title,
     description:  input.description,
     time_limit:   input.timeLimit,

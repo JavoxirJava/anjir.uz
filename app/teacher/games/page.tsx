@@ -33,9 +33,7 @@ export default async function TeacherGamesPage() {
     getGamesByTeacher(user!.id),
     getTeacherSubjectsAndClasses(user!.id),
   ]);
-  const subjects = Array.from(
-    new Map(options.subjects.map((s) => [s.id, { id: s.id, name: s.name }])).values()
-  );
+  const topics = options.topics;
 
   return (
     <div className="space-y-6">
@@ -67,19 +65,19 @@ export default async function TeacherGamesPage() {
                       <Badge variant="secondary">
                         {TYPE_EMOJI[game.template_type]} {TYPE_LABELS[game.template_type]}
                       </Badge>
-                      {game.subjects && (
+                      {game.topics && (
                         <span className="text-xs text-muted-foreground">
-                          {Array.isArray(game.subjects)
-                            ? (game.subjects[0] as { name: string })?.name
-                            : (game.subjects as { name: string }).name}
+                          {Array.isArray(game.topics)
+                            ? (game.topics[0] as { name: string })?.name
+                            : (game.topics as { name: string }).name}
                         </span>
                       )}
                     </div>
                     <h2 className="font-medium">{game.title}</h2>
                     <GameSubjectEditor
                       gameId={game.id}
-                      currentSubjectId={game.subject_id}
-                      subjects={subjects}
+                      currentTopicId={game.topic_id ?? null}
+                      topics={topics}
                     />
                   </div>
                   <div className="flex items-center gap-2 shrink-0">

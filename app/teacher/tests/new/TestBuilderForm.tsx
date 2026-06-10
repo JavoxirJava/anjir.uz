@@ -24,7 +24,7 @@ import {
 import { QuestionEditor } from "./QuestionEditor";
 import type { GameRow } from "@/lib/api/games";
 
-interface Subject { id: string; name: string }
+interface TopicItem { id: string; name: string; subject_id: string; subject_name: string }
 interface ClassItem { id: string; grade: number; letter: string }
 
 const TEST_TYPES = [
@@ -34,15 +34,15 @@ const TEST_TYPES = [
 ] as const;
 
 export function TestBuilderForm({
-  subjects,
+  topics,
   classes,
   games,
-  initialSubjectId,
+  initialTopicId,
 }: {
-  subjects: Subject[];
+  topics: TopicItem[];
   classes: ClassItem[];
   games: GameRow[];
-  initialSubjectId?: string;
+  initialTopicId?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -52,7 +52,7 @@ export function TestBuilderForm({
     defaultValues: {
       title: "",
       description: "",
-      subjectId: initialSubjectId ?? "",
+      topicId: initialTopicId ?? "",
       classIds: [],
       testType: "home_study",
       timeLimit: null,
@@ -140,22 +140,26 @@ export function TestBuilderForm({
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="subjectId"
+                name="topicId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Fan <span aria-hidden="true" className="text-destructive">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <FormLabel>Mavzu</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value ?? ""}>
                       <FormControl>
-                        <SelectTrigger aria-required="true">
-                          <SelectValue placeholder="Fan tanlang">
-                            {field.value ? (subjects.find(s => s.id === field.value)?.name ?? "Fan tanlang") : undefined}
+                        <SelectTrigger>
+                          <SelectValue placeholder="Mavzu tanlang (ixtiyoriy)">
+                            {field.value ? (topics.find(t => t.id === field.value)?.name ?? "Mavzu tanlang") : undefined}
                           </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {subjects.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                        ))}
+                        {topics.length === 0
+                          ? <div className="px-3 py-2 text-sm text-muted-foreground">Avval mavzu yarating</div>
+                          : topics.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.name} <span className="text-xs text-muted-foreground">({t.subject_name})</span>
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />

@@ -43,8 +43,8 @@ export default async function TestPage({ params }: Props) {
       <header className="space-y-2">
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="secondary">{TEST_TYPE_LABELS[test.test_type]}</Badge>
-          {test.subjects?.name && (
-            <Badge variant="outline">📚 {test.subjects.name}</Badge>
+          {test.topics?.name && (
+            <Badge variant="outline">📚 {test.topics.name}</Badge>
           )}
           {test.time_limit && (
             <Badge variant="outline">⏱ {test.time_limit} daqiqa</Badge>

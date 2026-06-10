@@ -4,7 +4,7 @@ export const lectureSchema = z.object({
   title: z.string().max(200).optional(),
   description: z.string().max(1000).optional(),
   schoolId: z.string().optional(),
-  subjectId: z.string().min(1, "Fan tanlanishi shart"),
+  topicId: z.string().min(1, "Mavzu tanlanishi shart"),
   classId: z.string().optional(),
   contentType: z.enum(["pdf", "video", "audio", "ppt", "link"], {
     error: "Kontent turi tanlanishi shart",

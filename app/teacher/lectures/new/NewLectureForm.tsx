@@ -21,7 +21,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-interface FanItem { id: string; name: string; school_id: string }
+interface TopicItem { id: string; name: string; subject_id: string; subject_name: string }
 interface ClassItem { id: string; grade: number; letter: string; school_id: string }
 
 type Mode = "platform" | "external";
@@ -34,11 +34,11 @@ const CONTENT_TYPES = [
 ] as const;
 
 interface Props {
-  fans: FanItem[];
+  topics: TopicItem[];
   classes: ClassItem[];
 }
 
-export function NewLectureForm({ fans, classes }: Props) {
+export function NewLectureForm({ topics, classes }: Props) {
   const [mode, setMode] = useState<Mode>("platform");
   const [isPending, startTransition] = useTransition();
 
@@ -48,33 +48,23 @@ export function NewLectureForm({ fans, classes }: Props) {
 
   const form = useForm<LectureInput>({
     resolver: zodResolver(lectureSchema),
-    defaultValues: { title: "", description: "", subjectId: "", classId: "", contentType: "pdf", fileUrl: "" },
+    defaultValues: { title: "", description: "", topicId: "", classId: "", contentType: "pdf", fileUrl: "" },
   });
 
   const contentType = useWatch({ control: form.control, name: "contentType" });
   const fileUrl = useWatch({ control: form.control, name: "fileUrl" });
   const subtitleVttUrl = useWatch({ control: form.control, name: "subtitleVttUrl" });
   const subtitleSource = useWatch({ control: form.control, name: "subtitleSource" });
-  const selectedSubjectId = useWatch({ control: form.control, name: "subjectId" });
 
-  const platformSchoolId = fans.find((f) => f.id === selectedSubjectId)?.school_id ?? "";
-  const platformClasses = useMemo(
-    () => (platformSchoolId ? classes.filter((c) => c.school_id === platformSchoolId) : classes),
-    [classes, platformSchoolId]
-  );
   const selectedType = CONTENT_TYPES.find((t) => t.value === contentType);
 
   // --- External mode ---
-  const [extSubjectId, setExtSubjectId] = useState("");
+  const [extTopicId, setExtTopicId] = useState("");
   const [extClassId, setExtClassId] = useState("");
   const [extTitle, setExtTitle] = useState("");
   const [extLink, setExtLink] = useState("");
 
-  const extSchoolId = fans.find((f) => f.id === extSubjectId)?.school_id ?? "";
-  const extClasses = useMemo(
-    () => (extSchoolId ? classes.filter((c) => c.school_id === extSchoolId) : classes),
-    [classes, extSchoolId]
-  );
+  const extClasses = classes;
 
   async function generateSubtitle() {
     if (!fileUrl) return;
@@ -111,12 +101,12 @@ export function NewLectureForm({ fans, classes }: Props) {
 
   function onExternalSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!extSubjectId) { toast.error("Fan tanlanishi shart"); return; }
+    if (!extTopicId) { toast.error("Mavzu tanlanishi shart"); return; }
     if (!extClassId) { toast.error("Sinf tanlanishi shart"); return; }
     if (!extLink.trim()) { toast.error("Havola kiritilishi shart"); return; }
     startTransition(async () => {
       const fd = new FormData();
-      fd.set("subjectId", extSubjectId);
+      fd.set("topicId", extTopicId);
       fd.set("classId", extClassId);
       fd.set("contentType", "link");
       fd.set("fileUrl", extLink.trim());
@@ -182,19 +172,25 @@ export function NewLectureForm({ fans, classes }: Props) {
                 )} />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField control={form.control} name="subjectId" render={({ field }) => (
+                  <FormField control={form.control} name="topicId" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{uz.school.subject} <span aria-hidden="true" className="text-destructive">*</span></FormLabel>
+                      <FormLabel>Mavzu <span aria-hidden="true" className="text-destructive">*</span></FormLabel>
                       <Select onValueChange={(v) => { field.onChange(v); form.setValue("classId", ""); }} value={field.value}>
                         <FormControl>
                           <SelectTrigger aria-required="true">
-                            <SelectValue placeholder="Fan tanlang">
-                              {field.value ? fans.find((f) => f.id === field.value)?.name : undefined}
+                            <SelectValue placeholder="Mavzu tanlang">
+                              {field.value ? topics.find((t) => t.id === field.value)?.name : undefined}
                             </SelectValue>
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {fans.map((f) => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
+                          {topics.length === 0
+                            ? <div className="px-3 py-2 text-sm text-muted-foreground">Avval mavzu yarating</div>
+                            : topics.map((t) => (
+                              <SelectItem key={t.id} value={t.id}>
+                                {t.name} <span className="text-muted-foreground text-xs">({t.subject_name})</span>
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -208,13 +204,13 @@ export function NewLectureForm({ fans, classes }: Props) {
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Barcha sinflar">
-                              {field.value ? (() => { const c = platformClasses.find((cl) => cl.id === field.value); return c ? `${c.grade}-sinf ${c.letter}` : "Barcha sinflar"; })() : undefined}
+                              {field.value ? (() => { const c = classes.find((cl) => cl.id === field.value); return c ? `${c.grade}-sinf ${c.letter}` : "Barcha sinflar"; })() : undefined}
                             </SelectValue>
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="__all__">Barcha sinflar</SelectItem>
-                          {platformClasses.map((c) => <SelectItem key={c.id} value={c.id}>{c.grade}-sinf {c.letter}</SelectItem>)}
+                          {classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.grade}-sinf {c.letter}</SelectItem>)}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -325,17 +321,23 @@ export function NewLectureForm({ fans, classes }: Props) {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="ext-subject">
-                    {uz.school.subject} <span aria-hidden="true" className="text-destructive">*</span>
+                  <Label htmlFor="ext-topic">
+                    Mavzu <span aria-hidden="true" className="text-destructive">*</span>
                   </Label>
-                  <Select value={extSubjectId} onValueChange={(v) => { setExtSubjectId(v ?? ""); setExtClassId(""); }}>
-                    <SelectTrigger id="ext-subject" aria-required="true">
-                      <SelectValue placeholder="Fan tanlang">
-                        {extSubjectId ? fans.find((f) => f.id === extSubjectId)?.name : undefined}
+                  <Select value={extTopicId} onValueChange={(v) => { setExtTopicId(v ?? ""); setExtClassId(""); }}>
+                    <SelectTrigger id="ext-topic" aria-required="true">
+                      <SelectValue placeholder="Mavzu tanlang">
+                        {extTopicId ? topics.find((t) => t.id === extTopicId)?.name : undefined}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      {fans.map((f) => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
+                      {topics.length === 0
+                        ? <div className="px-3 py-2 text-sm text-muted-foreground">Avval mavzu yarating</div>
+                        : topics.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.name} <span className="text-xs text-muted-foreground">({t.subject_name})</span>
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -344,9 +346,9 @@ export function NewLectureForm({ fans, classes }: Props) {
                   <Label htmlFor="ext-class">
                     {uz.school.className} <span aria-hidden="true" className="text-destructive">*</span>
                   </Label>
-                  <Select value={extClassId} onValueChange={(v) => setExtClassId(v ?? "")} disabled={!extSubjectId}>
-                    <SelectTrigger id="ext-class" aria-required="true" aria-disabled={!extSubjectId}>
-                      <SelectValue placeholder={extSubjectId ? "Sinf tanlang" : "Avval fan tanlang"}>
+                  <Select value={extClassId} onValueChange={(v) => setExtClassId(v ?? "")} disabled={!extTopicId}>
+                    <SelectTrigger id="ext-class" aria-required="true" aria-disabled={!extTopicId}>
+                      <SelectValue placeholder={extTopicId ? "Sinf tanlang" : "Avval mavzu tanlang"}>
                         {extClassId ? (() => { const c = extClasses.find((cl) => cl.id === extClassId); return c ? `${c.grade}-sinf ${c.letter}` : undefined; })() : undefined}
                       </SelectValue>
                     </SelectTrigger>

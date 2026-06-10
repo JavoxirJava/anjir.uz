@@ -22,7 +22,7 @@ const TYPE_TEST: Record<string, string> = {
 };
 
 interface DashboardData {
-  lectures: { id: string; title: string; content_type: string; subjects: { name: string } | null }[];
+  lectures: { id: string; title: string; content_type: string; topics: { name: string; subject_id?: string } | null }[];
   tests: { id: string; title: string; test_type: string; time_limit: number | null }[];
   completedCount: number;
   bestScore: number | null;
@@ -115,7 +115,7 @@ export default async function StudentDashboard() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary" className="text-xs">{TYPE_LABELS[l.content_type]}</Badge>
-                        {l.subjects && <span className="text-xs text-muted-foreground">{l.subjects.name}</span>}
+                        {l.topics && <span className="text-xs text-muted-foreground">{l.topics.name}</span>}
                       </div>
                     </div>
                     <p className="font-semibold text-sm leading-snug">{l.title}</p>

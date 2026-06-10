@@ -12,15 +12,12 @@ export const metadata: Metadata = {
 
 export default async function NewGamePage() {
   const user = await getCurrentUser();
-  const { subjects, classes } = await getTeacherSubjectsAndClasses(user!.id);
-  const uniqueSubjects = Array.from(
-    new Map(subjects.map((s) => [s.id, { id: s.id, name: s.name }])).values()
-  );
+  const { topics, classes } = await getTeacherSubjectsAndClasses(user!.id);
 
   return (
     <div className="max-w-3xl space-y-6">
       <h1 className="text-2xl font-bold">{uz.teacher.addGame}</h1>
-      <GameBuilderForm subjects={uniqueSubjects} classes={classes} />
+      <GameBuilderForm topics={topics} classes={classes} />
     </div>
   );
 }

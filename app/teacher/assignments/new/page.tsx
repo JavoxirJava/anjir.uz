@@ -12,21 +12,12 @@ export const metadata: Metadata = {
 
 export default async function NewAssignmentPage() {
   const user = await getCurrentUser();
-  const { subjects, topics, classes } = await getTeacherSubjectsAndClasses(user!.id);
-
-  const topicIds = new Set(topics.map((t) => t.id));
-  const uniqueSubjects = Array.from(
-    new Map(
-      subjects
-        .filter((s) => !topicIds.has(s.id))
-        .map((s) => [s.id, { id: s.id, name: s.name }])
-    ).values()
-  );
+  const { topics, classes } = await getTeacherSubjectsAndClasses(user!.id);
 
   return (
     <div className="max-w-6xl space-y-6">
       <h1 className="text-2xl font-bold">{uz.teacher.addAssignment}</h1>
-      <NewAssignmentForm subjects={uniqueSubjects} classes={classes} />
+      <NewAssignmentForm topics={topics} classes={classes} />
     </div>
   );
 }

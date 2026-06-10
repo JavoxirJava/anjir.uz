@@ -6,11 +6,11 @@ export type GameRow = {
   title: string;
   template_type: string;
   external_url?: string | null;
-  subject_id: string | null;
+  topic_id: string | null;
   teacher_id: string;
   content_json: Record<string, unknown>;
   created_at: string;
-  subjects?: { id: string; name: string } | null;
+  topics?: { id: string; name: string; subject_id: string } | null;
 };
 
 export type GameAttemptRow = {
@@ -38,7 +38,7 @@ export async function getGamesForStudent(classId: string): Promise<GameRow[]> {
 export async function createGame(input: {
   title: string;
   template_type: string;
-  subject_id: string;
+  topic_id?: string | null;
   external_url?: string | null;
   teacher_id: string;
   content_json: Record<string, unknown>;
@@ -48,7 +48,7 @@ export async function createGame(input: {
   const r = await apiPost<{ id: string }>("/games", {
     title:         input.title,
     template_type: input.template_type,
-    subject_id:    input.subject_id,
+    topic_id:      input.topic_id ?? null,
     external_url:  input.external_url ?? null,
     content_json:  input.content_json,
     class_ids:     input.classIds,
@@ -60,8 +60,8 @@ export async function deleteGame(gameId: string): Promise<void> {
   await apiDelete(`/games/${gameId}`);
 }
 
-export async function updateGameSubject(gameId: string, subjectId: string): Promise<void> {
-  await apiPut(`/games/${gameId}/subject`, { subject_id: subjectId });
+export async function updateGameSubject(gameId: string, topicId: string): Promise<void> {
+  await apiPut(`/games/${gameId}/subject`, { topic_id: topicId });
 }
 
 export async function createGameAttempt(studentId: string, gameId: string): Promise<string> {

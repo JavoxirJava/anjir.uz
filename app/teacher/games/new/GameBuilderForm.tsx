@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface Subject { id: string; name: string }
+interface TopicItem { id: string; name: string; subject_id: string; subject_name: string }
 interface ClassItem { id: string; grade: number; letter: string }
 
 type Mode = "platform" | "external";
@@ -27,13 +27,13 @@ const GAME_TYPES: { value: GameType; label: string; desc: string; emoji: string 
 ];
 
 export function GameBuilderForm({
-  subjects,
+  topics,
   classes,
-  initialSubjectId,
+  initialTopicId,
 }: {
-  subjects: Subject[];
+  topics: TopicItem[];
   classes: ClassItem[];
-  initialSubjectId?: string;
+  initialTopicId?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -42,7 +42,7 @@ export function GameBuilderForm({
   const [title, setTitle]           = useState("");
   const [externalUrl, setExternalUrl] = useState("");
   const [gameType, setGameType]     = useState<GameType>("word_match");
-  const [subjectId, setSubjectId]   = useState(initialSubjectId ?? "");
+  const [topicId, setTopicId]       = useState(initialTopicId ?? "");
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
 
   // Word match ma'lumotlari (id — React key uchun barqaror, content_json'ga ketmaydi)
@@ -117,7 +117,6 @@ export function GameBuilderForm({
 
   function validate(): string | null {
     if (!title.trim()) return "Sarlavha kiritilishi shart";
-    if (!subjectId) return "Fan tanlanishi shart";
     if (selectedClasses.length === 0) return "Kamida 1 ta sinf tanlang";
 
     if (mode === "external") {
@@ -149,7 +148,7 @@ export function GameBuilderForm({
 
     const fd = new FormData();
     fd.append("title", title.trim());
-    fd.append("subject_id", subjectId);
+    if (topicId) fd.append("topic_id", topicId);
     selectedClasses.forEach((c) => fd.append("classIds", c));
 
     if (mode === "external") {
@@ -221,20 +220,18 @@ export function GameBuilderForm({
             />
           </div>
 
-          {/* Fan */}
+          {/* Mavzu */}
           <div className="space-y-1.5">
-            <Label htmlFor="subject">Fan *</Label>
+            <Label htmlFor="topic">Mavzu</Label>
             <select
-              id="subject"
-              value={subjectId}
-              onChange={(e) => setSubjectId(e.target.value)}
-              required
-              aria-required="true"
+              id="topic"
+              value={topicId}
+              onChange={(e) => setTopicId(e.target.value)}
               className="w-full rounded-lg border px-3 py-2.5 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring bg-background"
             >
-              <option value="">— Fan tanlang —</option>
-              {subjects.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+              <option value="">— Mavzu tanlang (ixtiyoriy) —</option>
+              {topics.map((t) => (
+                <option key={t.id} value={t.id}>{t.name} ({t.subject_name})</option>
               ))}
             </select>
           </div>

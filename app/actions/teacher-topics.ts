@@ -23,10 +23,10 @@ export async function createTeacherTopicAction(formData: FormData) {
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   try {
-    const created = await apiPost<{ id: string; name: string; fan_subject_id: string | null; fan_subject_name: string | null }>(`/teachers/${user.id}/subjects`, {
-      name: parsed.data.name,
+    const created = await apiPost<{ id: string; name: string; subject_id: string; subject_name: string }>(`/topics`, {
+      name:       parsed.data.name,
       subject_id: parsed.data.subjectId,
-      class_ids: parsed.data.classIds,
+      class_ids:  parsed.data.classIds,
     });
     revalidatePath("/teacher/topics");
     revalidatePath("/teacher/lectures/new");

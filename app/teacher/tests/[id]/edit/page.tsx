@@ -20,17 +20,17 @@ export default async function EditTestPage({ params }: Props) {
 
   const [test, sac, games] = await Promise.all([
     getTestById(id),
-    apiGet<{ subjects: { id: string; name: string }[]; classes: { id: string; grade: number; letter: string }[] }>(
+    apiGet<{ topics: { id: string; name: string; subject_id: string; subject_name: string }[]; classes: { id: string; grade: number; letter: string }[] }>(
       `/teachers/${user.id}/subjects-and-classes`
-    ).catch(() => ({ subjects: [], classes: [] })),
+    ).catch(() => ({ topics: [], classes: [] })),
     getGamesByTeacher(user.id).catch(() => []),
   ]);
-  const subjectsList = sac.subjects;
+  const topicsList = sac.topics;
   const classesList = sac.classes;
 
   if (!test || test.teacher_id !== user.id) notFound();
 
-  type SubjectRow = { id: string; name: string };
+  type TopicRow = { id: string; name: string; subject_id: string; subject_name: string };
   type ClassRow = { id: string; grade: number; letter: string };
   type OptionRow = { id?: string; option_text: string; is_correct: boolean };
   type QuestionRow = {
@@ -48,7 +48,7 @@ export default async function EditTestPage({ params }: Props) {
   const initialValues: TestInput = {
     title: test.title,
     description: test.description ?? "",
-    subjectId: test.subject_id ?? "",
+    topicId: test.topic_id ?? "",
     classIds: (test.test_classes as { class_id: string }[] ?? []).map((tc) => tc.class_id),
     testType: test.test_type as "entry" | "post_topic" | "home_study",
     timeLimit: test.time_limit ?? null,
@@ -80,7 +80,7 @@ export default async function EditTestPage({ params }: Props) {
       <TestEditForm
         testId={id}
         initialValues={initialValues}
-        subjects={subjectsList as SubjectRow[]}
+        topics={topicsList as TopicRow[]}
         classes={classesList as ClassRow[]}
         games={games}
       />

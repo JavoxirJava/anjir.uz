@@ -19,13 +19,14 @@ const TYPE_LABELS: Record<string, string> = {
 
 interface TestItem {
   id: string;
-  subject_id?: string | null;
+  topic_id?: string | null;
   title: string;
   description: string | null;
   test_type: string;
   time_limit: number | null;
   max_attempts: number | null;
-  subjects: { id?: string; name: string } | null;
+  topics?: { id?: string; name: string; subject_id?: string } | null;
+  subjects?: { id?: string; name: string } | null;
   my_attempts: { score: number | null }[];
 }
 
@@ -41,10 +42,10 @@ export default async function StudentTestsPage({ searchParams }: Props) {
 
   const allTests = await apiGet<TestItem[]>("/students/me/tests").catch(() => []);
   const tests = subjectId
-    ? allTests.filter((t) => (t.subject_id ?? t.subjects?.id) === subjectId)
+    ? allTests.filter((t) => (t.topic_id ?? t.topics?.id) === subjectId)
     : allTests;
   const activeSubjectName = subjectId
-    ? allTests.find((t) => (t.subject_id ?? t.subjects?.id) === subjectId)?.subjects?.name ?? "Mavzu"
+    ? allTests.find((t) => (t.topic_id ?? t.topics?.id) === subjectId)?.topics?.name ?? "Mavzu"
     : null;
 
   return (
@@ -83,7 +84,7 @@ export default async function StudentTestsPage({ searchParams }: Props) {
                         <div className="space-y-1 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <Badge variant="secondary">{TYPE_LABELS[t.test_type]}</Badge>
-                            {t.subjects && <span className="text-xs text-muted-foreground">{t.subjects.name}</span>}
+                            {t.topics && <span className="text-xs text-muted-foreground">{t.topics.name}</span>}
                             {t.time_limit && <span className="text-xs text-muted-foreground">⏱ {t.time_limit} daq</span>}
                           </div>
                           <h2 className="font-medium">{t.title}</h2>

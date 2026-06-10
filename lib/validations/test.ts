@@ -20,7 +20,7 @@ export const questionSchema = z.object({
 export const testSchema = z.object({
   title: z.string().min(1, "Test nomi kiritilishi shart").max(200),
   description: z.string().max(500).optional(),
-  subjectId: z.string().min(1, "Fan tanlanishi shart"),
+  topicId: z.string().optional(),
   classIds: z.array(z.string()).min(1, "Kamida bitta sinf tanlanishi shart"),
   testType: z.enum(["entry", "post_topic", "home_study"]),
   timeLimit: z.number().int().min(1).nullable().optional(),

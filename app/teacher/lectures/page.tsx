@@ -67,9 +67,9 @@ export default async function TeacherLecturesPage() {
                           Fan: {lecture.fans.name}
                         </span>
                       )}
-                      {lecture.subjects && (
+                      {lecture.topics && (
                         <span className="text-xs text-muted-foreground">
-                          Mavzu: {lecture.subjects.name}
+                          Mavzu: {lecture.topics.name}
                         </span>
                       )}
                       {lecture.classes && (

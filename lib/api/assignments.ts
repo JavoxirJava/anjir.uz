@@ -10,11 +10,12 @@ export type AssignmentRow = {
   deadline: string | null;
   due_date?: string | null;
   max_score?: number | null;
-  subject_id: string | null;
+  topic_id: string | null;
   teacher_id: string;
   created_at: string;
   difficulty_level?: "low" | "medium" | "high";
   is_for_disabled?: boolean;
+  topics?: { id: string; name: string; subject_id: string } | null;
   subjects?: { id: string; name: string } | null;
   classes?: { id: string; grade: number; letter: string }[] | { id: string; grade: number; letter: string } | null;
   my_progress_state?: "done_pending" | "done_approved" | "done_rejected" | "cannot_do" | null;
@@ -73,7 +74,7 @@ export async function createAssignment(input: {
   file_url: string | null;
   link: string | null;
   teacher_id: string;
-  subject_id: string;
+  topic_id?: string | null;
   classIds: string[];
   difficulty_level: "low" | "medium" | "high";
   is_for_disabled: boolean;
@@ -85,7 +86,7 @@ export async function createAssignment(input: {
     deadline:         input.deadline,
     file_url:         input.file_url,
     link:             input.link,
-    subject_id:       input.subject_id,
+    topic_id:         input.topic_id ?? null,
     class_ids:        input.classIds,
     difficulty_level: input.difficulty_level,
     is_for_disabled:  input.is_for_disabled,
@@ -97,8 +98,8 @@ export async function deleteAssignment(id: string): Promise<void> {
   await apiDelete(`/assignments/${id}`);
 }
 
-export async function updateAssignmentSubject(id: string, subjectId: string): Promise<void> {
-  await apiPut(`/assignments/${id}/subject`, { subject_id: subjectId });
+export async function updateAssignmentSubject(id: string, topicId: string): Promise<void> {
+  await apiPut(`/assignments/${id}/subject`, { topic_id: topicId });
 }
 
 export async function submitAssignment(input: {

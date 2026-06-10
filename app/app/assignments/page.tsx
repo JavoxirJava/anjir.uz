@@ -45,14 +45,14 @@ export default async function StudentAssignmentsPage({ searchParams }: Props) {
   const assignments = subjectId
     ? allAssignments.filter((a) => {
         const sub = Array.isArray(a.subjects) ? a.subjects[0] : a.subjects;
-        return (a.subject_id ?? sub?.id) === subjectId;
+        return (a.topic_id ?? sub?.id) === subjectId;
       })
     : allAssignments;
   const activeSubjectName = subjectId
     ? (() => {
         const match = allAssignments.find((a) => {
           const sub = Array.isArray(a.subjects) ? a.subjects[0] : a.subjects;
-          return (a.subject_id ?? sub?.id) === subjectId;
+          return (a.topic_id ?? sub?.id) === subjectId;
         });
         const sub = match ? (Array.isArray(match.subjects) ? match.subjects[0] : match.subjects) : null;
         return sub?.name ?? "Mavzu";

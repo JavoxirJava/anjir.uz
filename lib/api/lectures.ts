@@ -7,11 +7,11 @@ export type LectureRow = {
   description: string | null;
   content_type: string;
   file_url: string | null;
-  subject_id: string | null;
+  topic_id: string | null;
   class_id: string;
   creator_id: string;
   created_at: string;
-  subjects?: { id: string; name: string } | null;
+  topics?: { id: string; name: string; subject_id: string } | null;
   fans?: { id: string; name: string } | null;
   classes?: { id: string; grade: number; letter: string } | null;
   lecture_subtitles?: { id: string; vtt_url: string; source: string }[] | null;
@@ -19,7 +19,7 @@ export type LectureRow = {
 
 export type CreateLectureInput = {
   school_id?: string;
-  subject_id: string | null;
+  topic_id: string | null;
   class_id: string | null;
   creator_id?: string;
   title: string;
@@ -45,7 +45,7 @@ export async function createLecture(
 ): Promise<string> {
   const result = await apiPost<{ id: string }>("/lectures", {
     ...(input.school_id ? { school_id: input.school_id } : {}),
-    subject_id:       input.subject_id,
+    topic_id:         input.topic_id,
     class_id:         input.class_id,
     title:            input.title,
     description:      input.description,
@@ -66,7 +66,7 @@ export async function updateLecture(
   input: CreateLectureInput & { subtitleVttUrl?: string | null; subtitleSource?: "manual" | "ai" }
 ): Promise<void> {
   await apiPut(`/lectures/${id}`, {
-    subject_id:       input.subject_id,
+    topic_id:         input.topic_id,
     class_id:         input.class_id,
     title:            input.title,
     description:      input.description ?? null,

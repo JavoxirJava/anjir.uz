@@ -8,7 +8,7 @@ import { z } from "zod";
 const gameSchema = z.object({
   title:         z.string().min(3, "Sarlavha kamida 3 ta belgi"),
   template_type: z.enum(["word_match", "ordering", "memory", "external"]),
-  subject_id:    z.string().min(1, "Fan tanlanishi shart"),
+  topic_id:      z.string().optional(),
   external_url:  z.string().url("Tashqi havola noto'g'ri formatda").optional().or(z.literal("")),
   classIds:      z.array(z.string()).min(1, "Kamida 1 ta sinf tanlang"),
   content_json:  z.string().optional().default("{}"),
@@ -21,7 +21,7 @@ export async function createGameAction(formData: FormData) {
   const raw = {
     title:         formData.get("title"),
     template_type: formData.get("template_type"),
-    subject_id:    formData.get("subject_id") || "",
+    topic_id:      formData.get("topic_id") || undefined,
     external_url:  (formData.get("external_url") as string) || "",
     classIds:      formData.getAll("classIds"),
     content_json:  formData.get("content_json"),
@@ -38,7 +38,7 @@ export async function createGameAction(formData: FormData) {
     const id = await createGame({
       title:         parsed.data.title,
       template_type: parsed.data.template_type,
-      subject_id:    parsed.data.subject_id,
+      topic_id:      parsed.data.topic_id ?? null,
       external_url:  parsed.data.external_url || null,
       teacher_id:    user.id,
       content_json:  parsedData,
@@ -77,13 +77,13 @@ export async function finishGameAction(attemptId: string, score: number, duratio
   }
 }
 
-export async function updateGameSubjectAction(gameId: string, subjectId: string) {
+export async function updateGameSubjectAction(gameId: string, topicId: string) {
   const user = await getCurrentUser();
   if (!user) return { error: "Tizimga kiring" };
-  if (!subjectId) return { error: "Fan tanlanishi shart" };
+  if (!topicId) return { error: "Mavzu tanlanishi shart" };
 
   try {
-    await updateGameSubject(gameId, subjectId);
+    await updateGameSubject(gameId, topicId);
     revalidatePath("/teacher/games");
     revalidatePath("/app/games");
     return { success: true };

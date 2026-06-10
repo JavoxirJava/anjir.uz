@@ -24,8 +24,8 @@ interface ClassItem {
 interface TopicItem {
   id: string;
   name: string;
-  fan_subject_id: string | null;
-  fan_subject_name: string | null;
+  subject_id: string | null;
+  subject_name: string | null;
 }
 
 interface Props {
@@ -86,8 +86,8 @@ export function TopicManager({ subjects, classes, teacherTopics }: Props) {
           const newTopic: TopicItem = {
             id: result.topic.id,
             name: result.topic.name,
-            fan_subject_id: result.topic.fan_subject_id ?? selectedSubject?.id ?? null,
-            fan_subject_name: result.topic.fan_subject_name ?? selectedSubject?.name ?? null,
+            subject_id:   result.topic.subject_id ?? selectedSubject?.id ?? null,
+            subject_name: result.topic.subject_name ?? selectedSubject?.name ?? null,
           };
           setTopics((prev) => (
             prev.some((item) => item.id === newTopic.id) ? prev : [...prev, newTopic]
@@ -101,8 +101,8 @@ export function TopicManager({ subjects, classes, teacherTopics }: Props) {
   const grouped = useMemo(() => {
     const map = new Map<string, { label: string; items: TopicItem[] }>();
     for (const topic of topics) {
-      const key = topic.fan_subject_id ?? "__none__";
-      const label = topic.fan_subject_name ?? "Fansiz";
+      const key = topic.subject_id ?? "__none__";
+      const label = topic.subject_name ?? "Fansiz";
       if (!map.has(key)) map.set(key, { label, items: [] });
       map.get(key)!.items.push(topic);
     }
@@ -140,7 +140,7 @@ export function TopicManager({ subjects, classes, teacherTopics }: Props) {
                     {group.items.map((topic) => (
                       <li key={topic.id} className="flex items-center gap-3 rounded-md border px-3 py-2">
                         <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20 shrink-0">
-                          {topic.fan_subject_name ?? "—"}
+                          {topic.subject_name ?? "—"}
                         </span>
                         <p className="font-medium text-sm">{topic.name}</p>
                       </li>
