@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 import { loginAction } from "@/app/actions/auth";
 import { uz } from "@/lib/strings/uz";
@@ -24,6 +25,7 @@ import {
 export function LoginForm() {
   const [isPending, startTransition] = useTransition();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -98,15 +100,25 @@ export function LoginForm() {
                 {uz.auth.password}
               </FormLabel>
               <FormControl>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  placeholder={uz.auth.passwordPlaceholder}
-                  aria-required="true"
-                  className="h-11 rounded-xl"
-                  {...field}
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    placeholder={uz.auth.passwordPlaceholder}
+                    aria-required="true"
+                    className="h-11 rounded-xl pr-11"
+                    {...field}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Parolni yashirish" : "Parolni ko'rsatish"}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>

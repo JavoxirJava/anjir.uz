@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default async function NewTestPage() {
   const user = await getCurrentUser();
 
-  const [{ topics, classes }, games] = await Promise.all([
+  const [{ topics, subjects, classes }, games] = await Promise.all([
     getTeacherSubjectsAndClasses(user!.id),
     getGamesByTeacher(user!.id).catch(() => []),
   ]);
@@ -22,7 +22,7 @@ export default async function NewTestPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <h1 className="text-2xl font-bold">{uz.teacher.addTest}</h1>
-      <TestBuilderForm topics={topics} classes={classes} games={games} />
+      <TestBuilderForm topics={topics} subjects={subjects} classes={classes} games={games} />
     </div>
   );
 }

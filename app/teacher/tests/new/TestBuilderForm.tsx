@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useForm, useFieldArray, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ import { QuestionEditor } from "./QuestionEditor";
 import type { GameRow } from "@/lib/api/games";
 
 interface TopicItem { id: string; name: string; subject_id: string; subject_name: string }
+interface SubjectItem { id: string; name: string }
 interface ClassItem { id: string; grade: number; letter: string }
 
 const TEST_TYPES = [
@@ -35,17 +36,20 @@ const TEST_TYPES = [
 
 export function TestBuilderForm({
   topics,
+  subjects,
   classes,
   games,
   initialTopicId,
 }: {
   topics: TopicItem[];
+  subjects: SubjectItem[];
   classes: ClassItem[];
   games: GameRow[];
   initialTopicId?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [selectedSubjectId, setSelectedSubjectId] = useState("");
 
   const form = useForm<TestInput>({
     resolver: zodResolver(testSchema) as Resolver<TestInput>,
@@ -97,6 +101,11 @@ export function TestBuilderForm({
   const timeLimitValue = useWatch({ control: form.control, name: "timeLimit" });
   const maxAttemptsValue = useWatch({ control: form.control, name: "maxAttempts" });
 
+  const filteredTopics = useMemo(
+    () => selectedSubjectId ? topics.filter((t) => t.subject_id === selectedSubjectId) : topics,
+    [topics, selectedSubjectId]
+  );
+
   return (
     <Form {...form}>
       <form
@@ -138,27 +147,54 @@ export function TestBuilderForm({
             />
 
             <div className="grid grid-cols-2 gap-4">
+              {/* Fan tanlash */}
+              <FormItem>
+                <FormLabel>Fan</FormLabel>
+                <Select
+                  value={selectedSubjectId}
+                  onValueChange={(v) => {
+                    setSelectedSubjectId(v === "__all__" ? "" : (v ?? ""));
+                    form.setValue("topicId", "");
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Fan tanlang (ixtiyoriy)">
+                      {selectedSubjectId ? subjects.find(s => s.id === selectedSubjectId)?.name : undefined}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">Barcha fanlar</SelectItem>
+                    {subjects.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
+
               <FormField
                 control={form.control}
                 name="topicId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Mavzu</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value ?? ""}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Mavzu tanlang (ixtiyoriy)">
-                            {field.value ? (topics.find(t => t.id === field.value)?.name ?? "Mavzu tanlang") : undefined}
+                            {field.value ? (filteredTopics.find(t => t.id === field.value)?.name ?? "Mavzu tanlang") : undefined}
                           </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {topics.length === 0
-                          ? <div className="px-3 py-2 text-sm text-muted-foreground">Avval mavzu yarating</div>
-                          : topics.map((t) => (
-                            <SelectItem key={t.id} value={t.id}>
-                              {t.name} <span className="text-xs text-muted-foreground">({t.subject_name})</span>
-                            </SelectItem>
+                        {filteredTopics.length === 0
+                          ? <div className="px-3 py-2 text-sm text-muted-foreground">
+                              {selectedSubjectId ? "Bu fan uchun mavzu yo'q" : "Avval mavzu yarating"}
+                            </div>
+                          : filteredTopics.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                           ))}
                       </SelectContent>
                     </Select>
