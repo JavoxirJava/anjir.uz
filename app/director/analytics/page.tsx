@@ -34,10 +34,10 @@ export default async function DirectorAnalyticsPage() {
   }
 
   const colorMap: Record<string, string> = {
-    "A'lo (86–100%)": "bg-green-500",
-    "Yaxshi (71–85%)": "bg-blue-500",
-    "Qoniqarli (56–70%)": "bg-yellow-500",
-    "Qoniqarsiz (0–55%)": "bg-red-500",
+    "5 — A'lo (86–100%)": "bg-green-500",
+    "4 — Yaxshi (65–85%)": "bg-blue-500",
+    "3 — Qoniqarli (30–64%)": "bg-yellow-500",
+    "Qoniqarsiz (0–29%)": "bg-red-500",
   };
 
   return (

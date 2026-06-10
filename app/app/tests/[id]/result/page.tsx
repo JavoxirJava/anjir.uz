@@ -5,6 +5,7 @@ import { apiGet } from "@/lib/api/server";
 import { redirect } from "next/navigation";
 import { uz } from "@/lib/strings/uz";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { scoreGrade, formatScore } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Test natijasi — I-Imkon.uz" };
 
@@ -24,13 +25,6 @@ interface TestData {
   attempts: AttemptData[];
 }
 
-function getGrade(s: number) {
-  if (s >= 86) return { label: "A'lo", color: "text-green-600", emoji: "🏆" };
-  if (s >= 71) return { label: "Yaxshi", color: "text-blue-600", emoji: "⭐" };
-  if (s >= 56) return { label: "Qoniqarli", color: "text-yellow-600", emoji: "👍" };
-  return { label: "Qoniqarsiz", color: "text-destructive", emoji: "📚" };
-}
-
 export default async function TestResultPage({ params, searchParams }: Props) {
   const { id } = await params;
   const { score: scoreParam } = await searchParams;
@@ -40,13 +34,13 @@ export default async function TestResultPage({ params, searchParams }: Props) {
 
   const testData = await apiGet<TestData>(`/tests/${id}/result?student_id=${user.id}`).catch(() => null);
 
-  let score = scoreParam ? parseInt(scoreParam) : null;
+  let score = scoreParam ? parseFloat(scoreParam) : null;
   if (score === null && testData?.attempts?.length) {
     const last = testData.attempts[0];
-    if (last.score !== null) score = Math.round(last.score);
+    if (last.score !== null) score = last.score;
   }
 
-  const grade = score !== null ? getGrade(score) : null;
+  const grade = score !== null ? scoreGrade(score) : null;
   const completedAttempts = testData?.attempts ?? [];
   const maxAttempts = testData?.max_attempts ?? null;
 
@@ -58,11 +52,11 @@ export default async function TestResultPage({ params, searchParams }: Props) {
         <CardHeader className="text-center pb-2">
           <div className="text-5xl mb-2" aria-hidden="true">{grade?.emoji ?? "📊"}</div>
           <CardTitle className="text-3xl">
-            {score !== null ? `${score}%` : "—"}
+            {score !== null ? formatScore(score) : "—"}
           </CardTitle>
           {grade && (
             <p className={`text-lg font-semibold ${grade.color}`} role="status">
-              {grade.label}
+              {grade.numeric !== null ? `${grade.numeric} baho` : grade.label}
             </p>
           )}
         </CardHeader>
@@ -86,7 +80,7 @@ export default async function TestResultPage({ params, searchParams }: Props) {
                 <li key={i} className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">{i + 1}-urinish</span>
                   <span className="font-medium">
-                    {a.score !== null ? `${Math.round(a.score)}%` : "—"}
+                    {a.score !== null ? formatScore(a.score) : "—"}
                   </span>
                 </li>
               ))}

@@ -108,9 +108,9 @@ export function TestRunner({ test, attemptId, timeLimitMinutes }: TestRunnerProp
       };
     });
 
-    const score = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0;
+    const score = totalPoints > 0 ? parseFloat(((earnedPoints / totalPoints) * 100).toFixed(2)) : 0;
 
-    const result = await submitTestAction(attemptId, answersPayload, Math.round(score));
+    const result = await submitTestAction(attemptId, answersPayload, score);
 
     // Local storage tozalash
     try { localStorage.removeItem(`test_${attemptId}`); } catch {}
@@ -120,7 +120,7 @@ export function TestRunner({ test, attemptId, timeLimitMinutes }: TestRunnerProp
       submitRef.current = false;
       setIsSubmitting(false);
     } else {
-      router.push(`/app/tests/${test.id}/result?attemptId=${attemptId}&score=${Math.round(score)}`);
+      router.push(`/app/tests/${test.id}/result?attemptId=${attemptId}&score=${score}`);
     }
   }, [answers, attemptId, questions, router, test.id]);
 
