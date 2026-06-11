@@ -37,6 +37,7 @@ type LectureItem = {
   topic_id?: string | null;
   topics?: { id?: string; name?: string; subject_id?: string } | null;
   fans?: { id?: string; name?: string } | null;
+  subjects?: { id?: string; name?: string } | null;
 };
 
 export default async function StudentLecturesPage({ searchParams }: Props) {
@@ -52,11 +53,11 @@ export default async function StudentLecturesPage({ searchParams }: Props) {
     ? await apiGet<LectureItem[]>(`/lectures?class_id=${classId}`).catch(() => [])
     : [];
   const lectures = subjectId
-    ? allLectures.filter((l) => (l.topic_id ?? l.topics?.id) === subjectId)
+    ? allLectures.filter((l) => l.topics?.subject_id === subjectId)
     : allLectures;
   const activeSubjectName = subjectId
-    ? allLectures.find((l) => (l.topic_id ?? l.topics?.id) === subjectId)?.topics?.name
-      ?? "Mavzu"
+    ? allLectures.find((l) => l.topics?.subject_id === subjectId)?.fans?.name
+      ?? "Fan"
     : null;
 
   return (
@@ -64,7 +65,7 @@ export default async function StudentLecturesPage({ searchParams }: Props) {
       <h1 className="text-2xl font-bold">{uz.student.lectures}</h1>
       {subjectId && (
         <div className="flex items-center gap-3 flex-wrap rounded-lg border bg-muted/40 px-4 py-2">
-          <span className="text-sm">📚 Mavzu: <strong>{activeSubjectName}</strong></span>
+          <span className="text-sm">📘 Fan: <strong>{activeSubjectName}</strong></span>
           <Link href="/app/lectures" className="text-xs text-primary underline underline-offset-2">
             Filterni tozalash
           </Link>
