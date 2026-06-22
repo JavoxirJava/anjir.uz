@@ -121,11 +121,11 @@ export default async function ProfilePage() {
                       : "—"}
                   </span>
                   <Badge variant={
-                    (a.score ?? 0) >= 86 ? "default"
-                      : (a.score ?? 0) >= 65 ? "secondary"
+                    Number(a.score ?? 0) >= 86 ? "default"
+                      : Number(a.score ?? 0) >= 65 ? "secondary"
                         : "destructive"
                   }>
-                    {Number.isInteger(a.score ?? 0) ? `${a.score ?? 0}%` : `${(a.score ?? 0).toFixed(1)}%`}
+                    {Number.isInteger(Number(a.score ?? 0)) ? `${Number(a.score ?? 0)}%` : `${Number(a.score ?? 0).toFixed(1)}%`}
                   </Badge>
                 </li>
               ))}
