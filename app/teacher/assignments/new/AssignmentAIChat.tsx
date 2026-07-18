@@ -12,7 +12,6 @@ type AssignmentPatch = {
   title?: string | null;
   description?: string | null;
   deadline?: string | null;
-  difficulty_level?: "low" | "medium" | "high" | null;
   is_for_disabled?: boolean | null;
 };
 
@@ -30,7 +29,6 @@ interface Props {
     title: string;
     description: string;
     deadline: string;
-    difficulty_level: "low" | "medium" | "high";
     is_for_disabled: boolean;
   };
   onApplyPatch: (patch: AssignmentPatch) => void;
@@ -46,7 +44,7 @@ export function AssignmentAIChat({ subjectName, selectedClassNames, draft, onApp
     {
       id: "init-assistant",
       role: "assistant",
-      content: "Salom. Men topshiriqni yaxshilashda yordam beraman. Maqsad, sinf darajasi yoki cheklovlarni yozing.",
+      content: "Salom. Men topshiriqni yaxshilashda yordam beraman. Maqsad, sinf yoki cheklovlarni yozing.",
       patch: null,
     },
   ]);
@@ -175,4 +173,3 @@ export function AssignmentAIChat({ subjectName, selectedClassNames, draft, onApp
     </Card>
   );
 }
-

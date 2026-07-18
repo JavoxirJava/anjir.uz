@@ -36,7 +36,6 @@ export function NewAssignmentForm({
   const [deadline, setDeadline] = useState("");
   const [topicId, setTopicId] = useState(initialTopicId ?? "");
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
-  const [difficulty, setDifficulty] = useState<"low" | "medium" | "high">("medium");
   const [isForDisabled, setIsForDisabled] = useState(false);
   const [descriptionPdfUrl, setDescriptionPdfUrl] = useState<string>("");
   const [link, setLink] = useState("");
@@ -79,7 +78,6 @@ export function NewAssignmentForm({
       return;
     }
     selectedClasses.forEach((c) => fd.append("classIds", c));
-    fd.set("difficulty_level", difficulty);
     fd.set("is_for_disabled", String(isForDisabled));
     if (descriptionPdfUrl) fd.set("file_url", descriptionPdfUrl);
 
@@ -299,32 +297,6 @@ export function NewAssignmentForm({
             />
           </div>
 
-          {/* Daraja */}
-          <fieldset>
-            <legend className="text-sm font-medium mb-2">O&apos;quvchi darajasi *</legend>
-            <div className="flex gap-2" role="radiogroup" aria-label="Daraja tanlang">
-              {(["low", "medium", "high"] as const).map((level) => {
-                const labels = { low: "Quyi", medium: "Oʻrta", high: "Yuqori" };
-                return (
-                  <button
-                    key={level}
-                    type="button"
-                    role="radio"
-                    aria-checked={difficulty === level}
-                    onClick={() => setDifficulty(level)}
-                    className={`rounded-lg border px-4 py-2 text-sm transition-colors focus-visible:outline-2 ${
-                      difficulty === level
-                        ? "border-primary bg-primary/10 font-medium"
-                        : "border-border hover:bg-muted"
-                    }`}
-                  >
-                    {labels[level]}
-                  </button>
-                );
-              })}
-            </div>
-          </fieldset>
-
           {/* Imkoniyati cheklangan */}
           <div className="flex items-center gap-3">
             <button
@@ -400,16 +372,12 @@ export function NewAssignmentForm({
           title,
           description,
           deadline,
-          difficulty_level: difficulty,
           is_for_disabled: isForDisabled,
         }}
         onApplyPatch={(patch) => {
           if (typeof patch.title === "string") setTitle(patch.title);
           if (typeof patch.description === "string") setDescription(patch.description);
           if (typeof patch.deadline === "string" || patch.deadline === null) setDeadline(patch.deadline ?? "");
-          if (patch.difficulty_level === "low" || patch.difficulty_level === "medium" || patch.difficulty_level === "high") {
-            setDifficulty(patch.difficulty_level);
-          }
           if (typeof patch.is_for_disabled === "boolean") setIsForDisabled(patch.is_for_disabled);
         }}
       />

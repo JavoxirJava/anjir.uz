@@ -2,7 +2,7 @@ import { getCurrentUser } from "@/lib/api/auth";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getStudentAssignmentsWithLevel } from "@/lib/db/assignments";
+import { getStudentAssignments } from "@/lib/db/assignments";
 import { uz } from "@/lib/strings/uz";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,13 +35,7 @@ export default async function StudentAssignmentsPage({ searchParams }: Props) {
   const q = await searchParams;
   const subjectId = typeof q.subject === "string" ? q.subject : undefined;
 
-  const payload = await getStudentAssignmentsWithLevel().catch(() => ({
-    assignments: [],
-    level: "low" as const,
-    visible_level: "low" as const,
-    ready_for_test: false,
-  }));
-  const allAssignments = payload.assignments;
+  const allAssignments = await getStudentAssignments().catch(() => []);
   const assignments = subjectId
     ? allAssignments.filter((a) => {
         const sub = Array.isArray(a.subjects) ? a.subjects[0] : a.subjects;
@@ -70,12 +64,6 @@ export default async function StudentAssignmentsPage({ searchParams }: Props) {
           </Link>
         </div>
       )}
-      {payload.ready_for_test && (
-        <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-emerald-900">
-          Siz test yechishingiz mumkin.
-        </div>
-      )}
-
       {assignments.length === 0 ? (
         <div className="rounded-lg border border-dashed p-12 text-center">
           <p className="text-muted-foreground">{uz.common.noData}</p>

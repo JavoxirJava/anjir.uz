@@ -13,7 +13,6 @@ export type AssignmentRow = {
   topic_id: string | null;
   teacher_id: string;
   created_at: string;
-  difficulty_level?: "low" | "medium" | "high";
   is_for_disabled?: boolean;
   topics?: { id: string; name: string; subject_id: string } | null;
   subjects?: { id: string; name: string } | null;
@@ -34,15 +33,11 @@ export type SubmissionRow = {
   users?: { id: string; first_name: string; last_name: string } | null;
   first_name?: string;
   last_name?: string;
-  difficulty_level?: "low" | "medium" | "high";
   progress_state?: "done_pending" | "done_approved" | "done_rejected" | "cannot_do" | null;
 };
 
-export type StudentAssignmentsResponse = {
+type LegacyStudentAssignmentsResponse = {
   assignments: AssignmentRow[];
-  level: "low" | "medium" | "high";
-  visible_level: "low" | "medium" | "high";
-  ready_for_test: boolean;
 };
 
 export async function getAssignmentsByTeacher(teacherId: string): Promise<AssignmentRow[]> {
@@ -54,17 +49,9 @@ export const getAssignmentById = cache(async (id: string): Promise<AssignmentRow
 });
 
 
-export async function getStudentAssignmentsWithLevel(): Promise<StudentAssignmentsResponse> {
-  const response = await apiGet<StudentAssignmentsResponse | AssignmentRow[]>(`/students/me/assignments`);
-  if (Array.isArray(response)) {
-    return {
-      assignments: response,
-      level: "low",
-      visible_level: "low",
-      ready_for_test: false,
-    };
-  }
-  return response;
+export async function getStudentAssignments(): Promise<AssignmentRow[]> {
+  const response = await apiGet<LegacyStudentAssignmentsResponse | AssignmentRow[]>(`/students/me/assignments`);
+  return Array.isArray(response) ? response : response.assignments;
 }
 
 export async function createAssignment(input: {
@@ -76,7 +63,6 @@ export async function createAssignment(input: {
   teacher_id: string;
   topic_id?: string | null;
   classIds: string[];
-  difficulty_level: "low" | "medium" | "high";
   is_for_disabled: boolean;
 }): Promise<string> {
   void input.teacher_id;
@@ -88,7 +74,6 @@ export async function createAssignment(input: {
     link:             input.link,
     topic_id:         input.topic_id ?? null,
     class_ids:        input.classIds,
-    difficulty_level: input.difficulty_level,
     is_for_disabled:  input.is_for_disabled,
   });
   return r.id;

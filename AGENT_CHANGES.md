@@ -280,3 +280,17 @@ Eslatma: keyingi barcha o'zgarishlar ham shu faylga vaqt + sabab + qisqa natija 
     - `app/app/lectures/page.tsx`, `app/app/lectures/[id]/page.tsx`, `app/teacher/lectures/page.tsx` da `Fan` va `Mavzu` alohida ko'rsatiladigan qilindi.
     - Tekshiruv: frontend lint va `server` build muvaffaqiyatli o'tdi.
   - Nega: fan/mavzu semantikasini to'g'ri ajratib, lecture create oqimida fanga tegishli mavzu tanlash va list/detail UIlarda fan+mavzuni alohida ko'rsatish uchun.
+
+## 2026-07-18 14:35:37 +05
+
+- So'rov: assignmentlardan `O'quvchi darajasi` tanlovi va darajaga bog'liq oqimlarni vaqtincha olib tashlash.
+  - Nima qilindi:
+    - teacher assignment formasi, ro'yxati va AI draftidan daraja maydoni olib tashlandi;
+    - studentga assignmentlar daraja bo'yicha filtrlanmay, sinf bo'yicha to'liq qaytariladigan qilindi;
+    - `ready_for_test` va visible-level metadata olib tashlandi;
+    - `cannot_do` hamda teacher approve/reject endi student profil darajasini o'zgartirmaydi;
+    - backend create contracti daraja maydonisiz ishlaydigan qilindi va `server/dist` qayta build qilindi;
+    - eski frontend/backend versiyalari navbatma-navbat deploy qilinishi uchun response compatibility saqlandi.
+  - DB holati: difficulty ustunlari va eski qiymatlar keyinchalik qayta yoqish uchun saqlandi; migratsiya kerak emas.
+  - Tekshiruv: changed-file ESLint, frontend TypeScript, Next production build va backend TypeScript build muvaffaqiyatli o'tdi.
+  - Nega: hozir assignment darajasini tanlash va o'quvchi darajasiga qarab kontent chiqarish talab qilinmaydi.

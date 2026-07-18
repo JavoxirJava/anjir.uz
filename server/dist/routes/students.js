@@ -8,15 +8,6 @@ const asyncHandler_1 = require("../utils/asyncHandler");
 const zod_1 = require("zod");
 const router = (0, express_1.Router)();
 router.use(auth_1.requireAuth);
-function canSeeHigherLevel(baseLevel, pendingLevels) {
-    if (baseLevel === "low" && pendingLevels.has("low"))
-        return "medium";
-    if (baseLevel === "medium" && pendingLevels.has("medium"))
-        return "high";
-    if (baseLevel === "low" && pendingLevels.has("medium"))
-        return "high";
-    return baseLevel;
-}
 // `assignment_classes` jadvali mavjudligini keshlaymiz: jadval bir marta
 // yaratilgandan keyin yo'qolmaydi, shuning uchun har so'rovda tekshirish shart emas.
 let assignmentClassesTableExists = false;
@@ -32,7 +23,7 @@ router.get("/me", (0, role_1.requireRole)("student"), async (req, res) => {
     try {
         const { rows } = await pool_1.pool.query(`SELECT u.id, u.first_name, u.last_name, u.phone, u.status,
               sp.class_id, sp.school_id, sp.approved_at,
-              sp.difficulty_level, sp.level_progress_score, sp.is_disabled,
+              sp.is_disabled,
               c.grade, c.letter,
               s.name AS school_name
        FROM users u
@@ -43,7 +34,7 @@ router.get("/me", (0, role_1.requireRole)("student"), async (req, res) => {
         res.json(rows[0] ?? null);
     }
     catch {
-        // Legacy schema fallback (difficulty columns not yet migrated)
+        // Legacy schema fallback (`is_disabled` ustuni hali qo'shilmagan bo'lishi mumkin)
         const { rows } = await pool_1.pool.query(`SELECT u.id, u.first_name, u.last_name, u.phone, u.status,
               sp.class_id, sp.school_id, sp.approved_at,
               c.grade, c.letter,
@@ -60,82 +51,32 @@ router.get("/me", (0, role_1.requireRole)("student"), async (req, res) => {
         }
         res.json({
             ...row,
-            difficulty_level: "low",
-            level_progress_score: 3,
             is_disabled: false,
         });
     }
 });
-// GET /students/me/assignments — darajaga qarab filtrlangan vazifalar
+// GET /students/me/assignments — o'quvchining sinfiga biriktirilgan barcha vazifalar
 router.get("/me/assignments", (0, role_1.requireRole)("student"), (0, asyncHandler_1.ah)(async (req, res) => {
     const studentId = req.user.sub;
-    let profileRes;
-    try {
-        profileRes = await pool_1.pool.query(`SELECT class_id, difficulty_level, is_disabled FROM student_profiles WHERE user_id = $1`, [studentId]);
-    }
-    catch {
-        profileRes = await pool_1.pool.query(`SELECT class_id FROM student_profiles WHERE user_id = $1`, [studentId]);
-        profileRes.rows = profileRes.rows.map((r) => ({
-            ...r,
-            difficulty_level: "low",
-            is_disabled: false,
-        }));
-    }
+    const profileRes = await pool_1.pool.query(`SELECT class_id FROM student_profiles WHERE user_id = $1`, [studentId]);
     const profile = profileRes.rows[0];
     if (!profile?.class_id) {
         res.json([]);
         return;
     }
-    let pendingRes;
-    try {
-        pendingRes = await pool_1.pool.query(`SELECT DISTINCT a.difficulty_level
-       FROM assignment_submissions asub
-       JOIN assignments a ON a.id = asub.assignment_id
-       WHERE asub.student_id = $1
-         AND asub.progress_state = 'done_pending'`, [studentId]);
-    }
-    catch {
-        // Legacy schema: assignment_submissions.progress_state bo'lmasligi mumkin
-        pendingRes = { rows: [] };
-    }
-    const pendingLevels = new Set(pendingRes.rows.map((r) => r.difficulty_level));
-    const rawLevel = profile.difficulty_level;
-    const baseLevel = rawLevel === "medium" || rawLevel === "high" ? rawLevel : "low";
-    const visibleLevel = canSeeHigherLevel(baseLevel, pendingLevels);
-    const visibleLevels = visibleLevel === "high"
-        ? ["low", "medium", "high"]
-        : visibleLevel === "medium"
-            ? ["low", "medium"]
-            : ["low"];
     const hasAssignmentClasses = await hasAssignmentClassesTable();
     const classMatchSql = hasAssignmentClasses
         ? `(a.class_id = $1 OR EXISTS (SELECT 1 FROM assignment_classes ac WHERE ac.assignment_id = a.id AND ac.class_id = $1))`
         : `a.class_id = $1`;
     // Topshiriqlar va o'quvchining submission'lari bir-biriga bog'liq emas — parallel olamiz.
     async function loadAssignments() {
-        try {
-            const result = await pool_1.pool.query(`SELECT a.*, a.deadline AS due_date, CASE WHEN sub.id IS NOT NULL THEN json_build_object('id', sub.id, 'name', sub.name) ELSE NULL END AS subjects
-         FROM assignments a
-         LEFT JOIN topics top ON top.id = a.topic_id
-         LEFT JOIN subjects sub ON sub.id = top.subject_id
-         WHERE ${classMatchSql}
-           AND (
-             COALESCE(a.difficulty_level::text, 'low') = ANY($2::text[])
-             OR (COALESCE(a.is_for_disabled, FALSE) = TRUE AND $3 = TRUE)
-           )
-         ORDER BY a.created_at DESC`, [profile.class_id, visibleLevels, Boolean(profile.is_disabled)]);
-            return result.rows;
-        }
-        catch {
-            // Legacy fallback: difficulty/is_for_disabled columns bo'lmasa ham class bo'yicha topshiriqlar chiqsin.
-            const result = await pool_1.pool.query(`SELECT a.*, a.deadline AS due_date, CASE WHEN sub.id IS NOT NULL THEN json_build_object('id', sub.id, 'name', sub.name) ELSE NULL END AS subjects
-         FROM assignments a
-         LEFT JOIN topics top ON top.id = a.topic_id
-         LEFT JOIN subjects sub ON sub.id = top.subject_id
-         WHERE ${classMatchSql}
-         ORDER BY a.created_at DESC`, [profile.class_id]);
-            return result.rows;
-        }
+        const result = await pool_1.pool.query(`SELECT a.*, a.deadline AS due_date, CASE WHEN sub.id IS NOT NULL THEN json_build_object('id', sub.id, 'name', sub.name) ELSE NULL END AS subjects
+       FROM assignments a
+       LEFT JOIN topics top ON top.id = a.topic_id
+       LEFT JOIN subjects sub ON sub.id = top.subject_id
+       WHERE ${classMatchSql}
+       ORDER BY a.created_at DESC`, [profile.class_id]);
+        return result.rows;
     }
     async function loadSubmissions() {
         try {
@@ -155,14 +96,7 @@ router.get("/me/assignments", (0, role_1.requireRole)("student"), (0, asyncHandl
         ...a,
         my_progress_state: progressByAssignment.get(a.id) ?? null,
     }));
-    const noMoreAtHigh = baseLevel === "high" &&
-        !enriched.some((a) => a.difficulty_level === "high" && a.my_progress_state !== "done_approved");
-    res.json({
-        assignments: enriched,
-        level: baseLevel,
-        visible_level: visibleLevel,
-        ready_for_test: noMoreAtHigh,
-    });
+    res.json(enriched);
 }));
 // GET /students/me/dashboard — student dashboard data
 router.get("/me/dashboard", (0, role_1.requireRole)("student"), async (req, res) => {

@@ -28,6 +28,21 @@ npm --prefix server run db:migrate    # Run DB migrations (prod, via node dist/)
 
 No test runner is configured yet.
 
+## Environment Variables
+
+No `.env.example` exists; required vars are only discoverable by grepping `process.env`. Frontend (`.env.local`):
+- `NEXT_PUBLIC_API_URL` — backend URL (defaults to `http://localhost:4000`)
+- `CLOUDFLARE_R2_ACCOUNT_ID`, `CLOUDFLARE_R2_ACCESS_KEY_ID`, `CLOUDFLARE_R2_SECRET_ACCESS_KEY`, `CLOUDFLARE_R2_BUCKET_NAME`, `CLOUDFLARE_R2_PUBLIC_URL` — R2 storage (`lib/storage/r2.ts`)
+- `CLOUDFLARE_STREAM_TOKEN` — video upload (`lib/storage/stream.ts`)
+- `OPENAI_API_KEY` — Whisper subtitle generation (`/api/whisper`)
+- `GEMINI_API_KEY` (falls back to `GOOGLE_GEMINI_API_KEY`, then `GOOGLE_API_KEY`), `GEMINI_MODEL` (defaults to `gemini-1.5-flash`) — `/api/ai/assignment-chat`
+
+Backend (`server/.env`):
+- `DATABASE_URL` — PostgreSQL connection string
+- `JWT_SECRET`, `JWT_REFRESH_SECRET`, `JWT_EXPIRES_IN`, `JWT_REFRESH_EXPIRES_IN` — auth tokens
+- `PORT` — defaults to `4000`
+- `FRONTEND_URL` — Socket.io CORS origin (defaults to `http://localhost:3000`)
+
 ## Architecture
 
 ### Two-Process Setup
@@ -81,12 +96,13 @@ These are Next.js Route Handlers (not server actions) for operations that can't 
 - `POST /api/upload/presign` — returns presigned R2 URL for direct browser upload
 - `POST /api/upload/stream` — creates a Cloudflare Stream direct upload URL for video
 - `POST /api/whisper` — calls OpenAI Whisper to generate VTT subtitles, saves to R2
-- `POST /api/ai` — AI content generation (OpenAI/Gemini)
-- `POST /api/pdf-text` — extracts text from PDF for processing
+- `POST /api/ai/assignment-chat` — Gemini-only chat assistant that helps a teacher draft an assignment (title/description/deadline); teacher/super_admin only
+
+PDF-to-speech text extraction is a backend endpoint instead (`POST /lectures/pdf-text`, used by `components/lectures/PdfReadAloudButton.tsx`) — not a Next.js route.
 
 ### Backend Structure (`server/src/`)
 
-- `app.ts` — Express app with helmet, cors, rate-limiting
+- `app.ts` — Express app: helmet, cors, JSON body limit (2mb), structured request logging (`utils/logger.ts`); no rate-limiting is configured
 - `index.ts` — HTTP server + Socket.io setup
 - `db/pool.ts` — `pg` Pool (reads `DATABASE_URL`)
 - `db/migrate.ts` — runs `db/schema.sql`
@@ -102,9 +118,17 @@ These are Next.js Route Handlers (not server actions) for operations that can't 
 - **`lib/api/[domain].ts`** — domain-specific row types (e.g., `AssignmentRow`, `LectureRow`)
 - **`server/src/types/index.ts`** — backend-only types (`AuthRequest`, `JwtPayload`)
 
+### Content Model: Subjects vs. Topics
+
+`subjects` (e.g. "Matematika") and `topics` (e.g. "Kasrlar") are separate tables — each topic belongs to one subject via `topics.subject_id`. `lectures`, `assignments`, `tests`, and `games` all reference `topic_id`; **none of them have a `subject_id` column**. To filter or join content by subject, join through `topics`. This split replaced an older flat model where content linked to subjects directly — `server/src/db/migration_topics.sql` is the one-time production migration that moved existing rows (already applied; not run by any script).
+
+### Assignment Difficulty (Temporarily Disabled)
+
+Assignment difficulty selection, level-based student filtering, and automatic student-level updates are disabled. Students see every assignment attached to their class. The legacy `assignments.difficulty_level`, `student_profiles.difficulty_level`, and `student_profiles.level_progress_score` columns remain in the schema only for backward compatibility and a possible future re-enable; active code must not read or update them.
+
 ### Migrations
 
-SQL schema lives in `server/src/db/schema.sql`. Run via `npm --prefix server run db:migrate:dev`. The legacy `supabase/migrations/` directory contains historical SQL for reference only — the project no longer uses Supabase.
+SQL schema lives in `server/src/db/schema.sql`. Run via `npm --prefix server run db:migrate:dev`. Most `CREATE TABLE` statements have no `IF NOT EXISTS` guard, so this is meant to bootstrap a fresh database, not to run again against one that already has tables — re-running it will error. For incremental schema changes against an existing database, either apply a hand-written `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` directly, or follow the pattern in `assignments.ts` (`ensureAssignmentLinkColumn()`) of lazily running a guarded `ALTER`/`CREATE ... IF NOT EXISTS` at request time. The legacy `supabase/migrations/` directory contains historical SQL for reference only — the project no longer uses Supabase.
 
 ### File Storage
 
@@ -118,6 +142,7 @@ SQL schema lives in `server/src/db/schema.sql`. Run via `npm --prefix server run
 - `data-font-size` — `small | medium | large | xlarge`
 - `data-contrast` — `normal | high | dark` (dark also toggles `.dark` class)
 - `data-color-blind` — `normal | protanopia | deuteranopia | tritanopia`
+- `data-reduce-motion` — present (`"true"`) only when reduced motion is on, otherwise absent (presence/absence, not a 3-value enum like the others)
 
 SVG color-blind filters are defined once in the root layout. Use `useAccessibility()` hook to read/write settings.
 
@@ -129,5 +154,6 @@ SVG color-blind filters are defined once in the root layout. Use `useAccessibili
 - **Forms** use React Hook Form + Zod. Validation schemas live in `lib/validations/`.
 - **Toast notifications** use `sonner` via `components/ui/sonner.tsx`. Import `toast` from `sonner`.
 - **Client state** uses Zustand where needed.
+- **Grading scale is 5/4/3** (no 2/1): `scoreGrade()` in `lib/utils.ts` maps a score percentage to `A'lo` (≥86 → 5), `Yaxshi` (≥65 → 4), `Qoniqarli` (≥30 → 3), or `Qoniqarsiz` (below 30 → no numeric grade). Scores can be floats — use `formatScore()` to display them, not raw `.toFixed()`.
 - **Every interactive element** must be keyboard accessible and have visible focus indicators (2px outline). Never convey information through color alone.
 - **After backend changes**, rebuild with `npm --prefix server run build` — the running process uses `dist/`.

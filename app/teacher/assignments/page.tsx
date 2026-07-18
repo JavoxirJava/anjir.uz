@@ -17,12 +17,6 @@ function formatDate(iso: string | null) {
   return new Date(iso).toLocaleDateString("uz-UZ", { day: "numeric", month: "long", year: "numeric" });
 }
 
-function difficultyLabel(level?: "low" | "medium" | "high") {
-  if (level === "high") return "Yuqori";
-  if (level === "medium") return "O'rta";
-  return "Quyi";
-}
-
 export default async function TeacherAssignmentsPage() {
   const user = await getCurrentUser();
   const [assignments, options] = await Promise.all([
@@ -78,7 +72,6 @@ export default async function TeacherAssignmentsPage() {
                         <span>📅 Muddat: {formatDate(a.due_date ?? a.deadline ?? null)}</span>
                       )}
                       <span>⭐ Maks: {a.max_score ?? 100} ball</span>
-                      <span>🎯 Daraja: {difficultyLabel(a.difficulty_level)}</span>
                       <span>📎 PDF: {a.file_url ? "Bor" : "Yo'q"}</span>
                       <span>🔗 Havola: {a.link ? "Bor" : "Yo'q"}</span>
                       <span>♿ Imkoniyati cheklanganlar uchun: {a.is_for_disabled ? "Ha" : "Yo'q"}</span>

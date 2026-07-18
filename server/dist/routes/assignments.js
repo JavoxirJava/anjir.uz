@@ -9,39 +9,6 @@ const asyncHandler_1 = require("../utils/asyncHandler");
 const logger_1 = require("../utils/logger");
 const router = (0, express_1.Router)();
 router.use(auth_1.requireAuth);
-function promoteLevel(level) {
-    if (level === "low")
-        return "medium";
-    if (level === "medium")
-        return "high";
-    return "high";
-}
-function demoteLevel(level) {
-    if (level === "high")
-        return "medium";
-    if (level === "medium")
-        return "low";
-    return "low";
-}
-async function applyLevelDelta(studentId, delta) {
-    const profileRes = await pool_1.pool.query("SELECT difficulty_level, level_progress_score FROM student_profiles WHERE user_id=$1", [studentId]);
-    const profile = profileRes.rows[0];
-    if (!profile)
-        return;
-    const baseScore = profile.level_progress_score ?? 3;
-    const nextScore = Math.max(0, Math.min(6, baseScore + delta));
-    if (nextScore >= 6) {
-        const nextLevel = promoteLevel(profile.difficulty_level);
-        await pool_1.pool.query("UPDATE student_profiles SET difficulty_level=$1, level_progress_score=3 WHERE user_id=$2", [nextLevel, studentId]);
-        return;
-    }
-    if (nextScore <= 0) {
-        const nextLevel = demoteLevel(profile.difficulty_level);
-        await pool_1.pool.query("UPDATE student_profiles SET difficulty_level=$1, level_progress_score=3 WHERE user_id=$2", [nextLevel, studentId]);
-        return;
-    }
-    await pool_1.pool.query("UPDATE student_profiles SET level_progress_score=$1 WHERE user_id=$2", [nextScore, studentId]);
-}
 // `link` ustuni eski bazalarda bo'lmasligi mumkin — bir marta idempotent qo'shamiz.
 let assignmentLinkColumnEnsured = false;
 async function ensureAssignmentLinkColumn() {
@@ -218,7 +185,6 @@ const AssignmentSchema = zod_1.z.object({
     max_score: zod_1.z.number().int().positive().default(100),
     file_url: zod_1.z.string().url().nullable().optional(),
     link: zod_1.z.string().url().nullable().optional(),
-    difficulty_level: zod_1.z.enum(["low", "medium", "high"]).default("medium"),
     is_for_disabled: zod_1.z.boolean().default(false),
 });
 router.post("/", (0, role_1.requireRole)("teacher", "super_admin"), (0, asyncHandler_1.ah)(async (req, res) => {
@@ -233,9 +199,9 @@ router.post("/", (0, role_1.requireRole)("teacher", "super_admin"), (0, asyncHan
     await ensureAssignmentLinkColumn();
     const uniqueClassIds = [...new Set(d.class_ids)];
     const primaryClassId = uniqueClassIds[0];
-    const { rows } = await pool_1.pool.query(`INSERT INTO assignments (teacher_id, topic_id, class_id, title, description, deadline, max_score, file_url, link, difficulty_level, is_for_disabled)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`, [req.user.sub, d.topic_id ?? null, primaryClassId, d.title, d.description ?? null,
-        d.deadline ?? null, d.max_score, d.file_url ?? null, d.link ?? null, d.difficulty_level, d.is_for_disabled]);
+    const { rows } = await pool_1.pool.query(`INSERT INTO assignments (teacher_id, topic_id, class_id, title, description, deadline, max_score, file_url, link, is_for_disabled)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`, [req.user.sub, d.topic_id ?? null, primaryClassId, d.title, d.description ?? null,
+        d.deadline ?? null, d.max_score, d.file_url ?? null, d.link ?? null, d.is_for_disabled]);
     const assignmentId = rows[0].id;
     let multiClassMappingSaved = false;
     try {
@@ -295,7 +261,7 @@ router.put("/:id/subject", (0, role_1.requireRole)("teacher", "super_admin"), (0
 }));
 // GET /assignments/:id/submissions
 router.get("/:id/submissions", (0, role_1.requireRole)("teacher", "director", "super_admin"), (0, asyncHandler_1.ah)(async (req, res) => {
-    const { rows } = await pool_1.pool.query(`SELECT asub.*, a.difficulty_level, u.first_name, u.last_name
+    const { rows } = await pool_1.pool.query(`SELECT asub.*, u.first_name, u.last_name
      FROM assignment_submissions asub
      JOIN assignments a ON a.id = asub.assignment_id
      JOIN users u ON u.id = asub.student_id
@@ -330,7 +296,7 @@ router.post("/:id/progress", (0, role_1.requireRole)("student"), (0, asyncHandle
     }
     const studentId = req.user.sub;
     const assignmentId = req.params.id;
-    const assignmentRes = await pool_1.pool.query("SELECT id, class_id, difficulty_level FROM assignments WHERE id=$1", [assignmentId]);
+    const assignmentRes = await pool_1.pool.query("SELECT id, class_id FROM assignments WHERE id=$1", [assignmentId]);
     const assignment = assignmentRes.rows[0];
     if (!assignment) {
         res.status(404).json({ error: "Topshiriq topilmadi" });
@@ -373,8 +339,6 @@ router.post("/:id/progress", (0, role_1.requireRole)("student"), (0, asyncHandle
        VALUES ($1,$2,$3) RETURNING id`, [assignmentId, studentId, progressState]);
         submissionId = inserted.rows[0].id;
     }
-    if (parsed.data.action === "cannot_do")
-        await applyLevelDelta(studentId, -1);
     res.status(200).json({ id: submissionId, progress_state: progressState });
 }));
 // GET /assignments/:id/submission (student o'zining topshirig'ini ko'radi)
@@ -391,7 +355,7 @@ router.put("/submissions/:submissionId/progress-review", (0, role_1.requireRole)
         res.status(400).json({ error: "decision noto'g'ri" });
         return;
     }
-    const subRes = await pool_1.pool.query(`SELECT asub.id, asub.student_id, asub.progress_state, a.teacher_id, a.difficulty_level
+    const subRes = await pool_1.pool.query(`SELECT asub.id, asub.student_id, asub.progress_state, a.teacher_id
      FROM assignment_submissions asub
      JOIN assignments a ON a.id = asub.assignment_id
      WHERE asub.id=$1`, [req.params.submissionId]);
@@ -408,7 +372,6 @@ router.put("/submissions/:submissionId/progress-review", (0, role_1.requireRole)
         res.status(400).json({ error: "Tasdiqlash uchun holat mos emas" });
         return;
     }
-    await applyLevelDelta(submission.student_id, parsed.data.decision === "approve" ? 1 : -1);
     await pool_1.pool.query(`UPDATE assignment_submissions
      SET progress_state=$1, teacher_reviewed_at=NOW(), teacher_reviewed_by=$2
      WHERE id=$3`, [parsed.data.decision === "approve" ? "done_approved" : "done_rejected", req.user.sub, req.params.submissionId]);

@@ -14,7 +14,6 @@ const requestSchema = z.object({
       title: z.string().optional(),
       description: z.string().optional(),
       deadline: z.string().optional(),
-      difficulty_level: z.enum(["low", "medium", "high"]).optional(),
       is_for_disabled: z.boolean().optional(),
     }).optional(),
   }).optional(),
@@ -24,7 +23,6 @@ type AssignmentPatch = {
   title?: string | null;
   description?: string | null;
   deadline?: string | null;
-  difficulty_level?: "low" | "medium" | "high" | null;
   is_for_disabled?: boolean | null;
 };
 
@@ -49,11 +47,6 @@ function normalizePatch(value: unknown): AssignmentPatch | null {
   if ("title" in v) out.title = typeof v.title === "string" ? v.title : null;
   if ("description" in v) out.description = typeof v.description === "string" ? v.description : null;
   if ("deadline" in v) out.deadline = typeof v.deadline === "string" ? v.deadline : null;
-  if ("difficulty_level" in v) {
-    out.difficulty_level = v.difficulty_level === "low" || v.difficulty_level === "medium" || v.difficulty_level === "high"
-      ? v.difficulty_level
-      : null;
-  }
   if ("is_for_disabled" in v) out.is_for_disabled = typeof v.is_for_disabled === "boolean" ? v.is_for_disabled : null;
 
   return Object.keys(out).length > 0 ? out : null;
@@ -87,7 +80,6 @@ export async function POST(req: NextRequest) {
     context?.draft?.title ? `Joriy sarlavha: ${context.draft.title}` : null,
     context?.draft?.description ? `Joriy tavsif: ${context.draft.description}` : null,
     context?.draft?.deadline ? `Joriy deadline: ${context.draft.deadline}` : null,
-    context?.draft?.difficulty_level ? `Joriy daraja: ${context.draft.difficulty_level}` : null,
     typeof context?.draft?.is_for_disabled === "boolean"
       ? `Imkoniyati cheklanganlar uchun: ${context.draft.is_for_disabled ? "ha" : "yo'q"}`
       : null,
@@ -105,7 +97,6 @@ export async function POST(req: NextRequest) {
     '    "title": "string yoki null",',
     '    "description": "string yoki null",',
     '    "deadline": "YYYY-MM-DD yoki null",',
-    '    "difficulty_level": "low|medium|high yoki null",',
     '    "is_for_disabled": true|false|null',
     "  }",
     "}",
@@ -158,4 +149,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ reply: rawText, patch: null });
   }
 }
-

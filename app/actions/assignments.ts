@@ -13,7 +13,6 @@ const assignmentSchema = z.object({
   deadline:         z.string().optional(),
   topic_id:         z.string().optional(),
   classIds:         z.array(z.string()).min(1, "Kamida 1 ta sinf tanlang"),
-  difficulty_level: z.enum(["low", "medium", "high"]).default("medium"),
   is_for_disabled:  z.boolean().default(false),
 });
 
@@ -29,7 +28,6 @@ export async function createAssignmentAction(formData: FormData) {
     deadline:         formData.get("deadline")    || undefined,
     topic_id:         formData.get("topic_id") || undefined,
     classIds:         formData.getAll("classIds"),
-    difficulty_level: formData.get("difficulty_level") || "medium",
     is_for_disabled:  formData.get("is_for_disabled") === "true",
   };
 
@@ -46,7 +44,6 @@ export async function createAssignmentAction(formData: FormData) {
       teacher_id:       user.id,
       topic_id:         parsed.data.topic_id ?? null,
       classIds:         parsed.data.classIds,
-      difficulty_level: parsed.data.difficulty_level,
       is_for_disabled:  parsed.data.is_for_disabled,
     });
     revalidatePath("/teacher/assignments");
